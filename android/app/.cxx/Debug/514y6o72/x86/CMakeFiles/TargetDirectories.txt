@@ -1,0 +1,2 @@
+C:/Users/eric_dias/StudioProjects/servblu/android/app/.cxx/Debug/514y6o72/x86/CMakeFiles/edit_cache.dir
+C:/Users/eric_dias/StudioProjects/servblu/android/app/.cxx/Debug/514y6o72/x86/CMakeFiles/rebuild_cache.dir
