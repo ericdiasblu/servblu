@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
 import 'package:servblu/screens/login_screen.dart';
 
@@ -48,25 +49,7 @@ class SignUpScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Botão de inscrição
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF017DFE),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  minimumSize: const Size(double.infinity, 40),
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: () {},
-                child: const Text(
-                  "Inscrever-se",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              BuildButton(textButton: "Inscrever-se"),
 
               const SizedBox(height: 40),
 

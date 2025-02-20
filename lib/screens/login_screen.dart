@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
+import 'package:servblu/screens/email_validate_screen.dart';
 import 'signup_screen.dart'; // Importe a tela de cadastro
 
 class LoginScreen extends StatelessWidget {
@@ -43,7 +45,7 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   TextButton(
                     onPressed: () {
-                      // Ação para a recuperação de senha
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EmailValidateScreen()));
                     },
                     child: const Text(
                       "Esqueceu sua senha?",
@@ -57,25 +59,7 @@ class LoginScreen extends StatelessWidget {
               ),
 
               // Botão de login
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF017DFE),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  minimumSize: const Size(double.infinity, 40),
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: () {},
-                child: const Text(
-                  "Entrar",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              BuildButton(textButton: "Entrar"),
 
               const SizedBox(height: 40),
 
