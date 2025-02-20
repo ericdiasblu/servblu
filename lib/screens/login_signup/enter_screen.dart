@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/screens/login_screen.dart';
-import 'package:servblu/screens/signup_screen.dart';
+import 'package:servblu/screens/login_signup/login_screen.dart';
+import 'package:servblu/screens/login_signup/signup_screen.dart';
 
 class EnterScreen extends StatelessWidget {
   const EnterScreen({super.key});

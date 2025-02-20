@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
-import 'package:servblu/screens/login_screen.dart';
+import 'package:servblu/screens/login_signup/login_screen.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -65,16 +65,33 @@ class ForgotPasswordScreen extends StatelessWidget {
                                   ]),
                             ),
                           ),
-                          Padding(padding: const EdgeInsets.symmetric(
-                              horizontal: 36), // Adicionando padding global
-                            child: Column(children: [
-                              InputField(
-                                  icon: Icons.lock, hintText: "New Password"),
-                              InputField(icon: Icons.lock,
-                                  hintText: "Confirm New Password"),
-                              SizedBox(height: 20,),
-                              BuildButton(textButton: "Atualize sua senha",screenRoute: LoginScreen(),)
-                            ],),),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 36), // Adicionando padding global
+                            child: Column(
+                              children: [
+                                InputField(
+                                  icon: Icons.lock,
+                                  hintText: "New Password",
+                                  // Adicione o controller se necessário
+                                ),
+                                InputField(
+                                  icon: Icons.lock,
+                                  hintText: "Confirm New Password",
+                                  // Adicione o controller se necessário
+                                ),
+                                const SizedBox(height: 20),
+                                BuildButton(
+                                  textButton: "Atualize sua senha",
+                                  onPressed: () {
+                                    // Aqui você pode adicionar a lógica para atualizar a senha
+                                    print("Botão 'Atualize sua senha' pressionado!");
+                                    // Exemplo: lógica de atualização de senha
+                                  },
+                                  screenRoute: () => LoginScreen(), // Passando a função que retorna a tela
+                                ),
+                              ],
+                            ),
+                          ),
 
                           SizedBox(height: 30,),
                         ],

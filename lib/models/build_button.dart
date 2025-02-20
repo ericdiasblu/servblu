@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class BuildButton extends StatelessWidget {
   final String textButton;
-  final Widget? screenRoute; // Renomeado para 'screenRoute' para seguir a convenção de nomenclatura
+  final VoidCallback? onPressed; // Método opcional
+  final Widget Function()? screenRoute; // Função opcional que retorna um Widget
 
   const BuildButton({
     Key? key,
     required this.textButton,
+    this.onPressed,
     this.screenRoute,
   }) : super(key: key);
 
@@ -22,14 +24,17 @@ class BuildButton extends StatelessWidget {
         padding: EdgeInsets.zero,
       ),
       onPressed: () {
-        if (screenRoute != null) { // Verifica se 'screenRoute' não é null
+        // Primeiro executa o método, se definido
+        if (onPressed != null) {
+          onPressed!();
+        }
+
+        // Depois navega para a tela, se definido
+        if (screenRoute != null) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => screenRoute!),
+            MaterialPageRoute(builder: (context) => screenRoute!()),
           );
-        } else {
-          // Aqui você pode adicionar um comportamento padrão ou um alerta, se necessário
-          print("ScreenRoute is null!");
         }
       },
       child: Text(

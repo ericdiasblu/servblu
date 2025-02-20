@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
-import 'package:servblu/screens/forgot_password_screen.dart';
+import 'package:servblu/screens/login_signup/forgot_password_screen.dart';
 
 class EmailValidateScreen extends StatelessWidget {
   const EmailValidateScreen({super.key});
@@ -65,14 +65,28 @@ class EmailValidateScreen extends StatelessWidget {
                       ),
 
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 36), // Adicionando padding global
-                        child: Column(children: [
-                          InputField(icon: Icons.email, hintText: "Email"),
-                          SizedBox(height: 10,),
-                          BuildButton(textButton: "Valide seu Email",screenRoute: ForgotPasswordScreen(),)
-                        ],)
+                        padding: const EdgeInsets.symmetric(horizontal: 36), // Adicionando padding global
+                        child: Column(
+                          children: [
+                            InputField(
+                              icon: Icons.email,
+                              hintText: "Email",
+                              controller: null, // Coloque aqui o controller se necessário
+                            ),
+                            const SizedBox(height: 10),
+                            BuildButton(
+                              textButton: "Valide seu Email",
+                              onPressed: () {
+                                // Aqui você pode adicionar a lógica que deseja executar
+                                print("Botão 'Valide seu Email' pressionado!");
+                                // Você pode adicionar lógica para validar o email aqui
+                              },
+                              screenRoute: () => ForgotPasswordScreen(), // Passando a função que retorna a tela
+                            ),
+                          ],
+                        ),
                       ),
+
 
                       SizedBox(height: 40,),
 

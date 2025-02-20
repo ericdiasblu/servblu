@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
-import 'package:servblu/screens/login_screen.dart';
+import 'package:servblu/screens/login_signup/login_screen.dart';
+import '../../auth/auth_service.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -10,17 +11,59 @@ class SignUpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
 
+    final authService = AuthService();
+
+    // Controllers
+    final _nameController = TextEditingController(); // Controlador para o nome
+    final _emailController = TextEditingController();
+    final _passwordController = TextEditingController();
+    final _confirmPasswordController = TextEditingController();
+    final _phoneController = TextEditingController(); // Controlador para o telefone
+
+    // Botão de cadastro
+    void signUp() async {
+      final name = _nameController.text;
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      final confirmPassword = _confirmPasswordController.text;
+      final phone = _phoneController.text;
+
+      if (password != confirmPassword) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("As senhas não coincidem")));
+        return;
+      }
+
+      try {
+        // Cadastro do usuário
+        final response = await authService.signUpWithEmailPassword(email, password);
+
+        // Verifica se o cadastro foi bem-sucedido
+        if (response.user != null) {
+          // Atualiza os detalhes do usuário
+          await authService.updateUserDetails(name, phone);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cadastro realizado com sucesso!")));
+
+          // Volta para a tela de login após o cadastro
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Falha ao cadastrar usuário.")));
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: ${e.toString()}")));
+      }
+    }
+
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       resizeToAvoidBottomInset: true,
-      // Evita o problema de overflow ao abrir o teclado
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 37),
           child: ListView(
-            // Permite rolagem automática se necessário
             children: [
-              SizedBox(height: screenHeight * 0.1), // Espaço no topo
+              SizedBox(height: screenHeight * 0.1),
               const Text(
                 "Criar uma conta",
                 style: TextStyle(
@@ -41,23 +84,23 @@ class SignUpScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               // Campos de entrada
-              InputField(icon: Icons.person, hintText: "Nome"),
-              InputField(icon: Icons.email, hintText: "Email"),
-              InputField(icon: Icons.lock, hintText: "Senha"),
-              InputField(icon: Icons.phone, hintText: "Telefone"),
+              InputField(icon: Icons.person, hintText: "Nome", controller: _nameController),
+              InputField(icon: Icons.email, hintText: "Email", controller: _emailController),
+              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController),
+              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController),
+              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController),
 
               const SizedBox(height: 20),
 
               // Botão de inscrição
-              BuildButton(textButton: "Inscrever-se"),
+              BuildButton(textButton: "Inscrever-se", onPressed: signUp),
 
               const SizedBox(height: 40),
 
               // Linha divisória
               Row(
                 children: [
-                  const Expanded(
-                      child: Divider(color: Colors.black, thickness: 1)),
+                  const Expanded(child: Divider(color: Colors.black, thickness: 1)),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
@@ -68,8 +111,7 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Expanded(
-                      child: Divider(color: Colors.black, thickness: 1)),
+                  const Expanded(child: Divider(color: Colors.black, thickness: 1)),
                 ],
               ),
 
@@ -122,7 +164,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.05), // Espaço no final
+              SizedBox(height: screenHeight * 0.05),
             ],
           ),
         ),
