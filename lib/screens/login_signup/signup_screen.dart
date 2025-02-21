@@ -19,6 +19,7 @@ class SignUpScreen extends StatelessWidget {
     final _passwordController = TextEditingController();
     final _confirmPasswordController = TextEditingController();
     final _phoneController = TextEditingController(); // Controlador para o telefone
+    final _addressController = TextEditingController();
 
     // Botão de cadastro
     void signUp() async {
@@ -27,32 +28,42 @@ class SignUpScreen extends StatelessWidget {
       final password = _passwordController.text;
       final confirmPassword = _confirmPasswordController.text;
       final phone = _phoneController.text;
+      final address = _addressController.text;
 
       if (password != confirmPassword) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("As senhas não coincidem")));
+          const SnackBar(content: Text("As senhas não coincidem")),
+        );
         return;
       }
 
       try {
         // Cadastro do usuário
-        final response = await authService.signUpWithEmailPassword(email, password);
+        final response = await authService.signUpWithEmailPassword(email, password, name, phone, address);
 
         // Verifica se o cadastro foi bem-sucedido
         if (response.user != null) {
-          // Atualiza os detalhes do usuário
-          await authService.updateUserDetails(name, phone);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cadastro realizado com sucesso!")));
+          // Atualiza os detalhes do usuário no banco
+          await authService.updateUserDetails(name, phone, address, password); // Remover email aqui, pois já é obtido no updateUserDetails
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Cadastro realizado com sucesso!")),
+          );
 
           // Volta para a tela de login após o cadastro
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Falha ao cadastrar usuário.")));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Falha ao cadastrar usuário.")),
+          );
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: ${e.toString()}")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erro: ${e.toString()}")),
+        );
       }
     }
+
+
 
 
     return Scaffold(
@@ -89,6 +100,7 @@ class SignUpScreen extends StatelessWidget {
               InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController),
               InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController),
               InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController),
+              InputField(icon: Icons.home, hintText: "Endereço", controller: _addressController),
 
               const SizedBox(height: 20),
 
