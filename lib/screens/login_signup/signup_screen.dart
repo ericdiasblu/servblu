@@ -1,25 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/build_button.dart';
+import 'package:servblu/models/input_dropdown_field.dart';
 import 'package:servblu/models/input_field.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import '../../auth/auth_service.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
+
+  @override
+  _SignUpScreenState createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  // Controllers
+  final TextEditingController _nameController = TextEditingController(); // Controlador para o nome
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(); // Controlador para o telefone
+  final TextEditingController _addressController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Descartar os controladores quando o widget for removido da árvore
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     final authService = AuthService();
-
-    // Controllers
-    final _nameController = TextEditingController(); // Controlador para o nome
-    final _emailController = TextEditingController();
-    final _passwordController = TextEditingController();
-    final _confirmPasswordController = TextEditingController();
-    final _phoneController = TextEditingController(); // Controlador para o telefone
-    final _addressController = TextEditingController();
 
     // Botão de cadastro
     void signUp() async {
@@ -100,13 +118,12 @@ class SignUpScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               // Campos de entrada
-              InputField(icon: Icons.person, hintText: "Nome", controller: _nameController),
-              InputField(icon: Icons.email, hintText: "Email", controller: _emailController),
-              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController),
-              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController),
-              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController),
-              InputField(icon: Icons.home, hintText: "Endereço", controller: _addressController),
-
+              InputField(icon: Icons.person, hintText: "Nome", controller: _nameController, obscureText: false),
+              InputField(icon: Icons.email, hintText: "Email", controller: _emailController, obscureText: false),
+              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true),
+              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true),
+              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false),
+              BuildDropdownField(icon: Icons.home,hintText: "Bairro",controller: _addressController,),
               const SizedBox(height: 20),
 
               // Botão de inscrição

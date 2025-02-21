@@ -68,39 +68,38 @@ class LoginScreen extends StatelessWidget {
 
             // Campos de entrada
             InputField(
+              obscureText: false,
               icon: Icons.email,
               hintText: "Email",
               controller: _emailController,
             ),
             InputField(
+              obscureText: true,
               icon: Icons.lock,
               hintText: "Senha",
-              margin: EdgeInsets.only(bottom: 0),
               controller: _passwordController,
             ),
 
             // Link "Esqueceu sua senha?" à direita
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EmailValidateScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    "Esqueceu sua senha?",
-                    style: TextStyle(
-                      color: Color(0xFF017DFE),
-                      fontSize: 13,
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EmailValidateScreen(),
                     ),
+                  );
+                },
+                child: const Text(
+                  "Esqueceu sua senha?",
+                  style: TextStyle(
+                    color: Color(0xFF017DFE),
+                    fontSize: 13,
                   ),
                 ),
-              ],
+              ),
             ),
 
             // Botão de login

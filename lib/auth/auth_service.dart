@@ -9,10 +9,8 @@ class AuthService {
     return await _supabase.auth.signUp(email: email, password: password);
   }
 
-  // Atualiza os detalhes do usuário na tabela 'usuarios'
-  // newPassword é opcional (para update de senha em outra situação)
   Future<void> updateUserDetails(String userId, String email, String name, String phone, String address, String? newPassword) async {
-    // Atualiza a senha somente se for realmente desejado atualizar (em cadastro, passamos null)
+    // Atualiza a senha somente se for desejado (em cadastro, passamos null)
     if (newPassword != null && newPassword.isNotEmpty) {
       final passwordResponse = await _supabase.auth.updateUser(
         UserAttributes(password: newPassword),
@@ -23,18 +21,27 @@ class AuthService {
     }
 
     // Insere (ou atualiza) os dados extras na tabela 'usuarios'
-    final response = await _supabase.from('usuarios').upsert({
-      'id_usuario': userId, // Certifique-se de que esta coluna exista na tabela
+    // Usamos .select() para forçar o retorno dos dados
+    final response = await _supabase
+        .from('usuarios')
+        .upsert({
+      'id_usuario': userId,
       'nome': name,
       'telefone': phone,
       'endereco': address,
       'email': email,
-    });
+    })
+        .select();
 
-    if (response.error != null) {
-      throw Exception('Erro ao atualizar os detalhes do usuário: ${response.error!.message}');
+    // Como response é um PostgrestList (uma lista), verificamos se ela está vazia.
+    if (response == null || (response is List && response.isEmpty)) {
+      throw Exception('A resposta da operação foi nula ou vazia.');
     }
   }
+
+
+
+
 
   // Entrar com email e senha
   Future<AuthResponse> signInWithEmailPassword(String email, String password) async {
