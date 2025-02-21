@@ -38,18 +38,26 @@ class SignUpScreen extends StatelessWidget {
       }
 
       try {
-        // Cadastro do usuário
+        // Realiza o cadastro (cria o registro na tabela de auth)
         final response = await authService.signUpWithEmailPassword(email, password, name, phone, address);
 
-        // Verifica se o cadastro foi bem-sucedido
+        // Se o cadastro foi realizado com sucesso, response.user conterá o usuário
         if (response.user != null) {
-          // Atualiza os detalhes do usuário no banco
-          await authService.updateUserDetails(name, phone, address, password); // Remover email aqui, pois já é obtido no updateUserDetails
+          // Atualiza os detalhes do usuário na tabela 'usuarios'
+          // Note que passamos null para newPassword, pois não precisamos atualizar a senha
+          await authService.updateUserDetails(
+            response.user!.id,
+            response.user!.email ?? email,
+            name,
+            phone,
+            address,
+            null,
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Cadastro realizado com sucesso!")),
           );
 
-          // Volta para a tela de login após o cadastro
+          // Volta para a tela de login
           Navigator.pop(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -62,9 +70,6 @@ class SignUpScreen extends StatelessWidget {
         );
       }
     }
-
-
-
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
