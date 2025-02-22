@@ -43,7 +43,7 @@ class EnterScreen extends StatelessWidget {
                           "Olá",
                           style: TextStyle(
                             color: Color(0xFF000000),
-                            fontSize: 45,
+                            fontSize: 40,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

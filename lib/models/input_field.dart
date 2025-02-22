@@ -5,11 +5,13 @@ class InputField extends StatelessWidget {
   final String hintText;
   final TextEditingController? controller; // Adicionado como required
   final EdgeInsetsGeometry? margin; // Parâmetro opcional
+  final bool obscureText;
 
   const InputField({
     Key? key,
     required this.icon,
     required this.hintText,
+    required this.obscureText,
     this.controller, // Agora é obrigatório
     this.margin,
   }) : super(key: key);
@@ -32,6 +34,7 @@ class InputField extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              obscureText: obscureText,
               controller: controller, // Adicionado
               decoration: InputDecoration(
                 hintText: hintText,
