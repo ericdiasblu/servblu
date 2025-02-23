@@ -3,13 +3,17 @@ import 'package:flutter/material.dart';
 class InputField extends StatelessWidget {
   final IconData icon;
   final String hintText;
-  final EdgeInsetsGeometry? margin; // Novo parâmetro opcional
+  final TextEditingController? controller; // Adicionado como required
+  final EdgeInsetsGeometry? margin; // Parâmetro opcional
+  final bool obscureText;
 
   const InputField({
     Key? key,
     required this.icon,
     required this.hintText,
-    this.margin, // Adicione o novo parâmetro
+    required this.obscureText,
+    this.controller, // Agora é obrigatório
+    this.margin,
   }) : super(key: key);
 
   @override
@@ -23,13 +27,15 @@ class InputField extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      margin: margin ?? const EdgeInsets.only(bottom: 20), // Use o parâmetro ou um valor padrão
+      margin: margin ?? const EdgeInsets.only(bottom: 20),
       child: Row(
         children: [
           Icon(icon, color: const Color(0xFF017DFE)),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              obscureText: obscureText,
+              controller: controller, // Adicionado
               decoration: InputDecoration(
                 hintText: hintText,
                 border: InputBorder.none,

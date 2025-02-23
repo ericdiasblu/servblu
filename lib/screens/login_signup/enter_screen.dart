@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/screens/login_screen.dart';
-import 'package:servblu/screens/signup_screen.dart';
+import 'package:servblu/screens/login_signup/login_screen.dart';
+import 'package:servblu/screens/login_signup/signup_screen.dart';
 
 class EnterScreen extends StatelessWidget {
   const EnterScreen({super.key});
@@ -43,7 +43,7 @@ class EnterScreen extends StatelessWidget {
                           "Olá",
                           style: TextStyle(
                             color: Color(0xFF000000),
-                            fontSize: 45,
+                            fontSize: 40,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

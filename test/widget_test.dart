@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:servblu/main.dart';
-import 'package:servblu/screens/enter_screen.dart';
+import 'package:servblu/screens/login_signup/enter_screen.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
