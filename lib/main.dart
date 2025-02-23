@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/models/notificacao/notificacao.dart';
 import 'package:servblu/screens/login_signup/enter_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // init notifications
+  NotiService().initNotifications();
+
   // supabase setup
   await Supabase.initialize(
       url: "https://lrwbtpghgmshdtqotsyj.supabase.co",

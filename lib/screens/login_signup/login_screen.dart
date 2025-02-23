@@ -3,8 +3,9 @@ import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/models/build_button.dart';
 import 'package:servblu/models/input_field.dart';
 import 'package:servblu/screens/login_signup/email_validate_screen.dart';
-import '../test_screen.dart';
+import '../home_page/home_struture.dart';
 import 'signup_screen.dart';
+
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
@@ -29,7 +30,7 @@ class LoginScreen extends StatelessWidget {
       // Navegue para a tela principal ou outra tela após o login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => TestScreen()), // Tela principal
+        MaterialPageRoute(builder: (context) => HomeScreen()), // Tela principal
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

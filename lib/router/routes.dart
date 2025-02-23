@@ -1,0 +1,9 @@
+class Routes {
+  Routes._();
+
+  static const String homePage = '/home';
+  static const String schedulePage = '/agenda';
+  static const String servicePage = '/anunciar';
+  static const String notificationPage = '/notificacoes';
+  static const String profilePage = '/perfil';
+}
