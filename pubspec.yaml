@@ -67,6 +67,7 @@ flutter:
     - assets/login.png
     - assets/google_icon.png
     - assets/forgot_password_image.png
+    - assets/home_image.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
