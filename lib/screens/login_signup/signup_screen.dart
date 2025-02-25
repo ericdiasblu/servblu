@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_dropdown_field.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import '../../auth/auth_service.dart';
+import '../../widgets/input_dropdown_field.dart';
+import '../../widgets/input_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

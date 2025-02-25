@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/router/routes.dart';
-import 'package:servblu/screens/notification_screen.dart';
+import 'package:servblu/screens/notification_page/notification_screen.dart';
 
 import '../layout/layout_scaffold.dart';
 import '../screens/home_page/home_struture.dart';
-import '../screens/profile_screen.dart';
-import '../screens/schedule_screen.dart';
-import '../screens/service_screen.dart';
+import '../screens/profile_page/profile_screen.dart';
+import '../screens/schedule_page/schedule_screen.dart';
+import '../screens/service_page/service_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 

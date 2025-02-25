@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
+
+import '../../widgets/input_field.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});

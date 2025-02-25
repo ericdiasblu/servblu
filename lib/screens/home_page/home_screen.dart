@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/build_categories.dart';
+
+import '../../widgets/build_categories.dart';
 
 class HomePageContent extends StatelessWidget {
   const HomePageContent({super.key});
@@ -197,6 +198,7 @@ class HomePageContent extends StatelessWidget {
         scrollDirection: Axis.horizontal,
           child: Row(
             children: [
+              SizedBox(width: 20,),
               BuildCategories(textCategory: 'Escritório',icon: Icons.work,),
               SizedBox(width: 20,),
               BuildCategories(textCategory: 'Eletricista',icon: Icons.electric_bolt_rounded),

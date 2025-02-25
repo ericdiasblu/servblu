@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/auth/auth_service.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/email_validate_screen.dart';
+import '../../widgets/input_field.dart';
 import '../home_page/home_struture.dart';
 import 'signup_screen.dart';
 

@@ -1,15 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/forgot_password_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:validators/validators.dart';
 
-class EmailValidateScreen extends StatelessWidget {
+import '../../widgets/input_field.dart';
+
+class EmailValidateScreen extends StatefulWidget {
   const EmailValidateScreen({super.key});
+  @override
+  State<EmailValidateScreen> createState() => _EmailValidateScreenState();
+}
+
+class _EmailValidateScreenState extends State<EmailValidateScreen> {
+
+  final TextEditingController emailController = TextEditingController();
+  final supabase = Supabase.instance.client;
+
+  Future<void> resetPassword() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty || !isEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Por favor, insira um e-mail válido")),
+      );
+      return;
+    }
+
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("E-mail de redefinição enviado! Verifique sua caixa de entrada.")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao enviar e-mail: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
@@ -47,10 +78,8 @@ class EmailValidateScreen extends StatelessWidget {
                       BuildButton(
                         textButton: "Valide seu Email",
                         onPressed: () {
-                          // Lógica para validar o email
-                          print("Botão 'Valide seu Email' pressionado!");
+                          resetPassword();
                         },
-                        screenRoute: () => ForgotPasswordScreen(),
                       ),
                     ],
                   ),
@@ -101,4 +130,6 @@ class EmailValidateScreen extends StatelessWidget {
       ),
     );
   }
-}
+  }
+
+
