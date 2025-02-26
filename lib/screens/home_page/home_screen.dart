@@ -1,8 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../router/router.dart';
 import '../../widgets/build_categories.dart';
+import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
 
 class HomePageContent extends StatefulWidget {
@@ -55,17 +58,6 @@ class _HomePageContentState extends State<HomePageContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                  onPressed: () async {
-                    await supabase.auth.signOut();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreen(),
-                      ),
-                    );
-                  },
-                  icon: Icon(Icons.logout)),
               _buildHeader(),
               _buildListCategories(),
               _buildImage(),

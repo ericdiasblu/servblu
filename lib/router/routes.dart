@@ -1,6 +1,7 @@
 class Routes {
   Routes._();
 
+  static const String enterPage = '/enter';
   static const String homePage = '/home';
   static const String schedulePage = '/agenda';
   static const String servicePage = '/anunciar';

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/models/notificacao/notificacao.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../router/router.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _TestScreenState extends State<ProfileScreen> {
   final authService = AuthService();
+  final supabase = Supabase.instance.client;
 
   void logout() async {
     await authService.signOut();
@@ -36,16 +41,32 @@ class _TestScreenState extends State<ProfileScreen> {
               height: 100,
               padding: const EdgeInsets.only(top: 37, bottom: 40),
               margin: const EdgeInsets.only(bottom: 20),
-              child: Center(
-                child: Text(
-                  "Perfil",
-                  style: TextStyle(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    "Perfil",
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontSize: 22),
-                ),
+                      fontSize: 22,
+                    ),
+                  ),
+                  Positioned(
+                    right: 10, // Mantém o ícone no canto direito
+                    child: IconButton(
+                      onPressed: () async {
+                        await supabase.auth.signOut();
+                        setLoggedIn(false); // Desativa o GoRouter
+                        GoRouter.of(context).go('/enter'); // Volta para a tela inicial
+                      },
+                      icon: Icon(Icons.logout, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
+
             Row(
               children: [
                 Container(

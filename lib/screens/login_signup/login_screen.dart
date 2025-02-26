@@ -1,9 +1,14 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/email_validate_screen.dart';
+import '../../router/router.dart';
+import '../../router/routes.dart';
 import '../../widgets/input_field.dart';
-import '../home_page/home_struture.dart';
+import '../home_page/home_screen.dart';
 import 'signup_screen.dart';
 
 
@@ -30,7 +35,7 @@ class LoginScreen extends StatelessWidget {
       // Navegue para a tela principal ou outra tela após o login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()), // Tela principal
+        MaterialPageRoute(builder: (context) => HomePageContent()), // Tela principal
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +111,11 @@ class LoginScreen extends StatelessWidget {
             // Botão de login
             BuildButton(
               textButton: "Entrar",
-              onPressed: () => login(context),
+              onPressed: () {
+                login(context);
+                setLoggedIn(true); // Ativa o GoRouter
+                GoRouter.of(context).go(Routes.homePage);
+              }
             ),
 
             const SizedBox(height: 40),
@@ -167,23 +176,33 @@ class LoginScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Center(
-                child: Text(
-                  "Não possui uma conta? Cadastra-se",
-                  style: TextStyle(
-                    color: Color(0xFF000000),
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      "Não possui uma conta? Cadastra-se",
+                      style: TextStyle(
+                        color: Color(0xFF000000),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+                  // Imagem
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.topCenter, // Mantém o topo visível
+                      heightFactor: 0.85, // Ajusta a altura visível (0.85 = 85% da imagem)
+                      child: Image.asset(
+                        'assets/login.png',
+                        height: 330,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
 
-            // Imagem
-            const SizedBox(height: 0),
-            Image(
-              image: AssetImage('assets/login.png'),
-              height: 330,
+                ],
+              ),
             ),
           ],
         ),

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../screens/home_page/home_struture.dart';
-
+import '../screens/home_page/home_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -23,7 +22,7 @@ class AuthGate extends StatelessWidget {
         final session = snapshot.hasData ? snapshot.data!.session : null;
 
         if(session != null) {
-          return HomeScreen();
+          return HomePageContent();
         } else {
           return LoginScreen();
         }

@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import 'package:servblu/screens/login_signup/signup_screen.dart';
 
-class EnterScreen extends StatelessWidget {
+class EnterScreen extends StatefulWidget {
   const EnterScreen({super.key});
 
+  @override
+  State<EnterScreen> createState() => _EnterScreenState();
+}
+
+class _EnterScreenState extends State<EnterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,11 +41,10 @@ class EnterScreen extends StatelessWidget {
                             fit: BoxFit.fill,
                           )),
                       Container(
-                        margin: const EdgeInsets.only(
-                            bottom: 14, left: 159, right: 159),
                         width: double.infinity,
                         child: Text(
                           "Olá",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF000000),
                             fontSize: 40,
