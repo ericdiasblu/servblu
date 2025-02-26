@@ -21,22 +21,120 @@ class _TestScreenState extends State<ProfileScreen> {
     final currentEmail = authService.getCurrentUserEmail();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Test"),
-        actions: [IconButton(onPressed: logout, icon: Icon(Icons.logout))],
-      ),
       body: Center(
         child: Column(
           children: [
-            Text(currentEmail.toString()),
-            ElevatedButton(
-                onPressed: () {
-                  NotiService().showNotification(
-                    title: "Title",
-                    body: "Body",
-                  );
-                },
-                child: const Text("Enviar Notificação"))
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF017DFE),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              width: double.infinity,
+              height: 100,
+              padding: const EdgeInsets.only(top: 37, bottom: 40),
+              margin: const EdgeInsets.only(bottom: 20),
+              child: Center(
+                child: Text(
+                  "Perfil",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 22),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  width: 111,
+                  height: 111,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.black),
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 80,
+                  ),
+                ),
+                SizedBox(
+                  width: 50,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Max Augusto",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text("47 9976-9152"),
+                    Text(currentEmail.toString()),
+                    Stack(
+                      children: [
+                        Opacity(
+                          opacity: 0.05,
+                          child: Container(
+                              width: 70, height: 25, color: Colors.green),
+                        ),
+                        Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Boa Vista",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                )
+              ],
+            ),
+            SizedBox(height: 70,),
+            Text("Serviços"),
+            Container(
+              height: 110,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Row(
+                      children: [
+                        Stack(
+                          children: [
+                            Opacity(
+                              opacity: 0.05,
+                              child: Container(
+                                  width: 100, height: 100, color: Colors.green),
+                            ),
+                            Container(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Aula Básica",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green),
+                                  ),
+                                  Text("fhiwefherfreferifurefuieyrfuierfyre"),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            )
           ],
         ),
       ),
