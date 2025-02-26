@@ -1,9 +1,48 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../widgets/build_categories.dart';
+import '../login_signup/login_screen.dart';
 
-class HomePageContent extends StatelessWidget {
+class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
+
+  @override
+  State<HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<HomePageContent> {
+  final supabase = Supabase.instance.client;
+
+  @override
+  void initState() {
+    super.initState();
+    supabase.auth.onAuthStateChange.listen((event) async {
+      if (event.event == AuthChangeEvent.signedIn) {
+        await FirebaseMessaging.instance.requestPermission();
+
+        // iOS não implementado
+        await FirebaseMessaging.instance.getAPNSToken();
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await _setFcmtToken(fcmToken);
+        }
+      }
+    });
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
+      await _setFcmtToken(fcmToken);
+    });
+  }
+
+  Future<void> _setFcmtToken(String fcmToken) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      await supabase.from('usuarios').upsert({
+        'fcm_token': fcmToken,
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +55,17 @@ class HomePageContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              IconButton(
+                  onPressed: () async {
+                    await supabase.auth.signOut();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.logout)),
               _buildHeader(),
               _buildListCategories(),
               _buildImage(),
@@ -178,14 +228,18 @@ class HomePageContent extends StatelessWidget {
   Widget _buildImage() {
     return Column(
       children: [
-        SizedBox(height: 30,),
+        SizedBox(
+          height: 30,
+        ),
         Image(
           image: AssetImage('assets/home_image.jpg'),
           fit: BoxFit.cover,
           width: 415,
           height: 197,
         ),
-        SizedBox(height: 30,),
+        SizedBox(
+          height: 30,
+        ),
       ],
     );
   }
@@ -196,23 +250,43 @@ class HomePageContent extends StatelessWidget {
       height: 110,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              SizedBox(width: 20,),
-              BuildCategories(textCategory: 'Escritório',icon: Icons.work,),
-              SizedBox(width: 20,),
-              BuildCategories(textCategory: 'Eletricista',icon: Icons.electric_bolt_rounded),
-              SizedBox(width: 20,),
-              BuildCategories(textCategory: 'Tecnologia',icon: Icons.computer,),
-              SizedBox(width: 20,),
-              BuildCategories(textCategory: 'Manutenção',icon: Icons.build),
-              SizedBox(width: 20,),
-              BuildCategories(textCategory: 'Higienização',icon: Icons.cleaning_services_rounded),
-              SizedBox(width: 20,),
-            ],
-          ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+            ),
+            BuildCategories(
+              textCategory: 'Escritório',
+              icon: Icons.work,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+            BuildCategories(
+                textCategory: 'Eletricista', icon: Icons.electric_bolt_rounded),
+            SizedBox(
+              width: 20,
+            ),
+            BuildCategories(
+              textCategory: 'Tecnologia',
+              icon: Icons.computer,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+            BuildCategories(textCategory: 'Manutenção', icon: Icons.build),
+            SizedBox(
+              width: 20,
+            ),
+            BuildCategories(
+                textCategory: 'Higienização',
+                icon: Icons.cleaning_services_rounded),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
-
 }
