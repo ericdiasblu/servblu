@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
+import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -45,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Center(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               decoration: const BoxDecoration(
@@ -112,71 +114,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? const CircularProgressIndicator()
                         : Text(telefoneUsuario!),
                     Text(currentEmail ?? "Email não disponível"),
+                    SizedBox(
+                      height: 10,
+                    ),
                     Stack(
                       children: [
                         Opacity(
                           opacity: 0.05,
                           child: Container(
-                            width: 70,
-                            height: 25,
-                            color: Colors.green,
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5), // Espaçamento interno
                           ),
                         ),
                         Container(
                           alignment: Alignment.center,
-                          width: 70,
-                          height: 25,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5), // Ajusta ao texto
                           child: enderecoUsuario == null
                               ? const CircularProgressIndicator()
                               : Text(
-                            '$enderecoUsuario',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        )
+                                  '$enderecoUsuario',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                        ),
                       ],
-                    ),
+                    )
                   ],
                 )
               ],
             ),
             const SizedBox(height: 70),
-            const Text("Serviços"),
+            Padding(
+                padding: EdgeInsets.only(left: 30),
+                child: Text(
+                  "Serviços",
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+                )),
             SizedBox(
               height: 110,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    Stack(
-                      children: [
-                        Opacity(
-                          opacity: 0.05,
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            color: Colors.green,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8.0),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Aula Básica",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              Text("Descrição da aula básica."),
-                            ],
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      width: 20,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Aula Gramática",
+                      descServico:
+                          "Some short description of this type of report.",
+                      corContainer: Colors.purple,
+                      corTexto: Color(0xFF403572),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Aula Gramática",
+                      descServico:
+                          "Some short description of this type of report.",
+                      corContainer: Colors.yellow,
+                      corTexto: Color(0xFFF77f00),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Aula Gramática",
+                      descServico:
+                          "Some short description of this type of report.",
+                      corContainer: Colors.red,
+                      corTexto: Colors.red,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 40,
+            ),
+            Padding(
+                padding: EdgeInsets.only(left: 30),
+                child: Text(
+                  "Avaliações",
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+                )),
+            Padding(
+              padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
+              child: Row(
+                children: List.generate(
+                  5,
+                  (index) => Icon(
+                    Icons.star,
+                    color: Color(0xFFFFB703),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 110,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 30,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.green,
+                      corTexto: Color(0xFF479696),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.orange,
+                      corTexto: Colors.orange,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.pink,
+                      corTexto: Colors.pink,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.red,
+                      corTexto: Colors.red,
                     ),
                   ],
                 ),
