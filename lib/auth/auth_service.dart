@@ -39,10 +39,6 @@ class AuthService {
     }
   }
 
-
-
-
-
   // Entrar com email e senha
   Future<AuthResponse> signInWithEmailPassword(String email, String password) async {
     return await _supabase.auth.signInWithPassword(email: email, password: password);

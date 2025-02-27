@@ -1,24 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
-import 'package:servblu/models/notificacao/notificacao.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../router/router.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _TestScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _TestScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
   final authService = AuthService();
   final supabase = Supabase.instance.client;
+  String? nomeUsuario, telefoneUsuario, enderecoUsuario;
 
-  void logout() async {
-    await authService.signOut();
+  @override
+  void initState() {
+    super.initState();
+    carregarDadosUsuario();
+  }
+
+  Future<void> carregarDadosUsuario() async {
+    final user = supabase.auth.currentUser;
+    if (user != null) {
+      final response = await supabase
+          .from('usuarios')
+          .select('nome, telefone, endereco')
+          .eq('id_usuario', user.id)
+          .maybeSingle();
+
+      setState(() {
+        nomeUsuario = response?['nome'] ?? 'Usuário';
+        telefoneUsuario = response?['telefone'] ?? 'Telefone não disponível';
+        enderecoUsuario = response?['endereco'] ?? 'Endereco inválido';
+      });
+    }
   }
 
   @override
@@ -30,9 +47,9 @@ class _TestScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF017DFE),
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                color: Color(0xFF017DFE),
+                borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
                 ),
@@ -44,7 +61,7 @@ class _TestScreenState extends State<ProfileScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Text(
+                  const Text(
                     "Perfil",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -53,20 +70,18 @@ class _TestScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   Positioned(
-                    right: 10, // Mantém o ícone no canto direito
+                    right: 10,
                     child: IconButton(
                       onPressed: () async {
                         await supabase.auth.signOut();
-                        setLoggedIn(false); // Desativa o GoRouter
-                        GoRouter.of(context).go('/enter'); // Volta para a tela inicial
+                        GoRouter.of(context).go('/enter');
                       },
-                      icon: Icon(Icons.logout, color: Colors.white),
+                      icon: const Icon(Icons.logout, color: Colors.white),
                     ),
                   ),
                 ],
               ),
             ),
-
             Row(
               children: [
                 Container(
@@ -78,84 +93,95 @@ class _TestScreenState extends State<ProfileScreen> {
                     color: Colors.white,
                     border: Border.all(color: Colors.black),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.person,
                     size: 80,
                   ),
                 ),
-                SizedBox(
-                  width: 50,
-                ),
+                const SizedBox(width: 50),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Max Augusto",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text("47 9976-9152"),
-                    Text(currentEmail.toString()),
+                    nomeUsuario == null
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            nomeUsuario!,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                    telefoneUsuario == null
+                        ? const CircularProgressIndicator()
+                        : Text(telefoneUsuario!),
+                    Text(currentEmail ?? "Email não disponível"),
                     Stack(
                       children: [
                         Opacity(
                           opacity: 0.05,
                           child: Container(
-                              width: 70, height: 25, color: Colors.green),
+                            width: 70,
+                            height: 25,
+                            color: Colors.green,
+                          ),
                         ),
                         Container(
                           alignment: Alignment.center,
-                          child: Text(
-                            "Boa Vista",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green),
+                          width: 70,
+                          height: 25,
+                          child: enderecoUsuario == null
+                              ? const CircularProgressIndicator()
+                              : Text(
+                            '$enderecoUsuario',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
                           ),
                         )
                       ],
-                    )
+                    ),
                   ],
                 )
               ],
             ),
-            SizedBox(height: 70,),
-            Text("Serviços"),
-            Container(
+            const SizedBox(height: 70),
+            const Text("Serviços"),
+            SizedBox(
               height: 110,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    Row(
+                    Stack(
                       children: [
-                        Stack(
-                          children: [
-                            Opacity(
-                              opacity: 0.05,
-                              child: Container(
-                                  width: 100, height: 100, color: Colors.green),
-                            ),
-                            Container(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Aula Básica",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green),
-                                  ),
-                                  Text("fhiwefherfreferifurefuieyrfuierfyre"),
-                                ],
+                        Opacity(
+                          opacity: 0.05,
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.green,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(8.0),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Aula Básica",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
                               ),
-                            )
-                          ],
+                              Text("Descrição da aula básica."),
+                            ],
+                          ),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
