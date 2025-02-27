@@ -112,8 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                     telefoneUsuario == null
                         ? const CircularProgressIndicator()
-                        : Text(telefoneUsuario!),
-                    Text(currentEmail ?? "Email não disponível"),
+                        : Text(telefoneUsuario!,style: TextStyle(fontWeight: FontWeight.w300),),
+                    Text(currentEmail ?? "Email não disponível",style: TextStyle(fontWeight: FontWeight.w300),),
                     SizedBox(
                       height: 10,
                     ),

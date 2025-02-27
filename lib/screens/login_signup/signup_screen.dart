@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import '../../auth/auth_service.dart';
@@ -18,7 +19,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(); // Controlador para o telefone
+  final MaskedTextController _phoneController = MaskedTextController(mask: '(00) 00000-0000');
   final TextEditingController _addressController = TextEditingController();
 
   @override
@@ -122,7 +123,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               InputField(icon: Icons.email, hintText: "Email", controller: _emailController, obscureText: false),
               InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true),
               InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true),
-              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false),
+              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false,maskedController: _phoneController,),
               BuildDropdownField(icon: Icons.home,hintText: "Bairro",controller: _addressController,),
               const SizedBox(height: 20),
 

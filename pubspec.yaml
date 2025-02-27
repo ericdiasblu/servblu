@@ -40,6 +40,7 @@ dependencies:
   validators: ^3.0.0
   firebase_core: ^3.12.0
   firebase_messaging: ^15.2.3
+  flutter_masked_text2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
