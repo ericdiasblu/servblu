@@ -1,0 +1,23 @@
+name: Deploy Supabase Functions
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Supabase CLI
+        run: |
+          curl -sSL https://sh.supabase.com | sh
+
+      - name: Deploy Function
+        run: supabase functions deploy send-notification
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
