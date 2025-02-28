@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "957132089666",
-    "project_id": "servblu-test",
-    "storage_bucket": "servblu-test.firebasestorage.app"
+    "project_number": "365706756084",
+    "project_id": "servblu-d9b69",
+    "storage_bucket": "servblu-d9b69.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:957132089666:android:49c2202ad4aeb6834340db",
+        "mobilesdk_app_id": "1:365706756084:android:7397d16540906becb843a1",
         "android_client_info": {
           "package_name": "com.example.servblu"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAcxyymzn6j05-QiW6BQ2xHezxeyfUjEIk"
+          "current_key": "AIzaSyB_6NtFOMew9IWc7qFhHspO4tjZHkPHkuE"
         }
       ],
       "services": {

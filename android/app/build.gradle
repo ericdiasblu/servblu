@@ -21,6 +21,10 @@ android {
 
     dependencies {
         coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+        // Adicione estas dependências para o Firebase
+        implementation platform('com.google.firebase:firebase-bom:32.7.2')
+        implementation 'com.google.firebase:firebase-messaging'
+        implementation 'com.google.firebase:firebase-analytics'
     }
 
     kotlinOptions {
@@ -36,6 +40,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Configuração necessária para FCM
+        multiDexEnabled true
     }
 
     buildTypes {
