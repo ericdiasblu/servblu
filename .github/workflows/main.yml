@@ -3,7 +3,7 @@ name: Deploy Supabase Function
 on:
   push:
     branches:
-      - main
+      - eric-feature
 
 jobs:
   deploy:
