@@ -10,67 +10,51 @@ marcarComoLida(int idNotificacao)
 Descrição: Atualiza o status da notificação para indicar que ela já foi visualizada.
 */
 
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class NotiService {
-  final FlutterLocalNotificationsPlugin notificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+Future sendNotification({
+  required String toUserId,
+  required String title,
+  required String body,
+  Map? data,
+}) async {
+  final supabase = Supabase.instance.client;
 
-  bool _isInitialized = false;
-
-  bool get isInitialized => _isInitialized;
-
-  // INITIALIZE
-  Future<void> initNotifications() async {
-    if (_isInitialized) return;
-
-    // Android
-    const initSettingsAndroid =
-    AndroidInitializationSettings("@mipmap/ic_launcher");
-
-    // iOS
-    const initSettingsIOS = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-
-    // Init settings
-    const initSettings = InitializationSettings(
-      android: initSettingsAndroid,
-      iOS: initSettingsIOS,
-    );
-
-    // Initialize the plugin
-    await notificationsPlugin.initialize(initSettings);
-    _isInitialized = true; // Marcar como inicializado
+  // Verificar se o usuário está autenticado
+  final currentUser = supabase.auth.currentUser;
+  if (currentUser == null) {
+    throw Exception('Usuário não está autenticado');
   }
 
-  // NOTIFICATION DETAIL SETUP
-  NotificationDetails notificationDetails() {
-    return const NotificationDetails(
-      android: AndroidNotificationDetails(
-        "daily_channel_id",
-        'Daily Notifications',
-        channelDescription: 'Daily Notification Channel',
-        importance: Importance.max,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
+  // Obter o token de acesso da sessão atual
+  final token = supabase.auth.currentSession?.accessToken;
+  if (token == null) {
+    throw Exception('Token de acesso não disponível');
   }
 
-  // SHOW NOTIFICATION
-  Future<void> showNotification({
-    int id = 0,
-    String? title,
-    String? body,
-  }) async {
-    await notificationsPlugin.show(
-      id,
-      title,
-      body,
-      notificationDetails(), // Use a função para obter os detalhes
+  try {
+    final response = await supabase.functions.invoke(
+      'send-notification',
+      body: {
+        'to_user_id': toUserId,
+        'title': title,
+        'body': body,
+        'data': data ?? {},
+      },
+      // Adicionar cabeçalho de autorização explicitamente
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
     );
+
+    if (response.status != 200) {
+      throw Exception('Erro ao enviar notificação: ${response.data}');
+    }
+
+    print('Notificação enviada com sucesso: ${response.data}');
+    return response.data;
+  } catch (e) {
+    print('Erro ao enviar notificação: $e');
+    rethrow;
   }
 }

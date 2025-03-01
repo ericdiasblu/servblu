@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/notification_method.dart';
+import '../../models/notificacao/notificacao.dart';
 import '../../services/notification_service.dart';
 
 class NotificationScreen extends StatelessWidget {
@@ -13,20 +13,17 @@ class NotificationScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                NotificationService.subscribeToTopic('novidades');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Inscrito em novidades')),
-                );
-              },
-              child: Text('Inscrever em Novidades'),
-            ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 final supabase = Supabase.instance.client;
+
+                // Tenta renovar a sessão antes de enviar a notificação
+                await supabase.auth.refreshSession();
                 final userId = supabase.auth.currentUser?.id;
+                // Adicione este código antes de chamar sua função
+                print("Status de autenticação: ${supabase.auth.currentUser != null}");
+                print("Token: ${supabase.auth.currentSession?.accessToken?.substring(0, 15)}...");
 
                 if (userId != null) {
                   try {
@@ -45,6 +42,10 @@ class NotificationScreen extends StatelessWidget {
                       SnackBar(content: Text('Erro: $e')),
                     );
                   }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Usuário não autenticado!')),
+                  );
                 }
               },
               child: Text('Enviar Notificação de Teste'),

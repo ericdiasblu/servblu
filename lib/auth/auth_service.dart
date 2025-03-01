@@ -6,9 +6,15 @@ class AuthService {
   // Cadastro com email e senha (apenas cria o usuário no auth)
   Future<AuthResponse> signUpWithEmailPassword(
       String email, String password, String name, String phone, String address) async {
-    return await _supabase.auth.signUp(email: email, password: password);
+    // Adicione a manipulação de exceções para capturar erros
+    try {
+      return await _supabase.auth.signUp(email: email, password: password);
+    } catch (e) {
+      throw Exception('Erro ao cadastrar usuário: $e');
+    }
   }
 
+  // Atualiza os detalhes do usuário
   Future<void> updateUserDetails(String userId, String email, String name, String phone, String address, String? newPassword) async {
     // Atualiza a senha somente se for desejado (em cadastro, passamos null)
     if (newPassword != null && newPassword.isNotEmpty) {
@@ -41,12 +47,20 @@ class AuthService {
 
   // Entrar com email e senha
   Future<AuthResponse> signInWithEmailPassword(String email, String password) async {
-    return await _supabase.auth.signInWithPassword(email: email, password: password);
+    try {
+      return await _supabase.auth.signInWithPassword(email: email, password: password);
+    } catch (e) {
+      throw Exception('Erro ao entrar: $e');
+    }
   }
 
   // Sair da conta
   Future<void> signOut() async {
-    await _supabase.auth.signOut();
+    try {
+      await _supabase.auth.signOut();
+    } catch (e) {
+      throw Exception('Erro ao sair: $e');
+    }
   }
 
   // Obter o email do usuário atual
