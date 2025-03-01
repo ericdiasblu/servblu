@@ -1,7 +1,9 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/widgets/build_services_profile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -75,11 +77,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     right: 10,
                     child: IconButton(
                       onPressed: () async {
+                        await _removeUserToken(); // Remove o token antes de deslogar
                         await supabase.auth.signOut();
                         GoRouter.of(context).go('/enter');
                       },
                       icon: const Icon(Icons.logout, color: Colors.white),
                     ),
+
                   ),
                 ],
               ),
@@ -269,5 +273,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+  Future<void> _removeUserToken() async {
+    final userId = supabase.auth.currentUser?.id;
+
+    if (userId != null) {
+      try {
+        String? token = await FirebaseMessaging.instance.getToken();
+
+        if (token != null) {
+          await supabase
+              .from('device_tokens') // Nome da tabela onde os tokens estão armazenados
+              .delete()
+              .match({'user_id': userId}); // Remove a linha que corresponde ao user_id atual
+          print("Token removido com sucesso!");
+        }
+      } catch (e) {
+        print("Erro ao remover token: $e");
+      }
+    }
   }
 }

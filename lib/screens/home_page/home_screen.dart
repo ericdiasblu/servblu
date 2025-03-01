@@ -1,12 +1,14 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../widgets/build_categories.dart';
 
 import '../../router/router.dart';
-import '../../widgets/build_categories.dart';
 import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
+
+// Supondo que NotificationService esteja implementado corretamente
+import '../../services/notification_service.dart';
 
 class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
@@ -21,30 +23,29 @@ class _HomePageContentState extends State<HomePageContent> {
   @override
   void initState() {
     super.initState();
-    supabase.auth.onAuthStateChange.listen((event) async {
-      if (event.event == AuthChangeEvent.signedIn) {
-        await FirebaseMessaging.instance.requestPermission();
 
-        // iOS não implementado
-        await FirebaseMessaging.instance.getAPNSToken();
-        final fcmToken = await FirebaseMessaging.instance.getToken();
-        if (fcmToken != null) {
-          await _setFcmtToken(fcmToken);
-        }
-      }
-    });
-    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
-      await _setFcmtToken(fcmToken);
-    });
+    // Inicializa notificações
+    _initializeNotifications();
+
+    // Inicializa Firebase Messaging
+    _initializeFirebaseMessaging();
   }
 
-  Future<void> _setFcmtToken(String fcmToken) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId != null) {
-      await supabase.from('usuarios').upsert({
-        'fcm_token': fcmToken,
-      });
+  Future<void> _initializeNotifications() async {
+    try {
+      await NotificationService.initialize();
+      print("Serviço de notificações inicializado");
+    } catch (e) {
+      print("Erro ao inicializar serviço de notificações: $e");
     }
+  }
+
+  Future<void> _initializeFirebaseMessaging() async {
+    await FirebaseMessaging.instance.requestPermission();
+
+    String? token = await FirebaseMessaging.instance.getToken();
+    print("FCM Token: $token");
+
   }
 
   @override
@@ -104,21 +105,19 @@ class _HomePageContentState extends State<HomePageContent> {
           ),
           Container(
             margin: EdgeInsets.only(left: 20, right: 10),
-            width: 370, // Defina a largura desejada aqui
+            width: 370,
             child: TextField(
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFFFFFFF),
                 prefixIcon: const Icon(Icons.search),
                 hintText: "Procure por serviço",
-                hintStyle:
-                    const TextStyle(color: Color(0xFF000000), fontSize: 15),
+                hintStyle: const TextStyle(color: Color(0xFF000000), fontSize: 15),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none, // Remove a borda padrão
+                  borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 7),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 7),
               ),
               style: const TextStyle(color: Color(0xFF000000), fontSize: 15),
             ),
@@ -143,17 +142,16 @@ class _HomePageContentState extends State<HomePageContent> {
   }
 
   Widget _buildBestOffers() {
-    // Lista de URLs de imagens das ofertas e seus detalhes
     final List<Map<String, String>> offers = [
       {
         "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
+        "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
         "name": "Oferta 1",
         "description": "Descrição da oferta 1"
       },
       {
         "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
+        "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
         "name": "Oferta 2",
         "description": "Descrição da oferta 2"
       },
@@ -162,14 +160,13 @@ class _HomePageContentState extends State<HomePageContent> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2, left: 19),
       child: SizedBox(
-        height: 200, // Altura fixa para o ListView
+        height: 200,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: offers.length,
           itemBuilder: (context, index) {
             return Padding(
               padding: const EdgeInsets.only(right: 10),
-              // Espaçamento entre imagens
               child: _buildOfferCard(offers[index]),
             );
           },
@@ -220,18 +217,14 @@ class _HomePageContentState extends State<HomePageContent> {
   Widget _buildImage() {
     return Column(
       children: [
-        SizedBox(
-          height: 30,
-        ),
-        Image(
-          image: AssetImage('assets/home_image.jpg'),
+        SizedBox(height: 30),
+        Image.asset(
+          'assets/home_image.jpg',
           fit: BoxFit.cover,
           width: 415,
           height: 197,
         ),
-        SizedBox(
-          height: 30,
-        ),
+        SizedBox(height: 30),
       ],
     );
   }
@@ -244,38 +237,17 @@ class _HomePageContentState extends State<HomePageContent> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            SizedBox(
-              width: 20,
-            ),
-            BuildCategories(
-              textCategory: 'Escritório',
-              icon: Icons.work,
-            ),
-            SizedBox(
-              width: 20,
-            ),
-            BuildCategories(
-                textCategory: 'Eletricista', icon: Icons.electric_bolt_rounded),
-            SizedBox(
-              width: 20,
-            ),
-            BuildCategories(
-              textCategory: 'Tecnologia',
-              icon: Icons.computer,
-            ),
-            SizedBox(
-              width: 20,
-            ),
+            SizedBox(width: 20),
+            BuildCategories(textCategory: 'Escritório', icon: Icons.work),
+            SizedBox(width: 20),
+            BuildCategories(textCategory: 'Eletricista', icon: Icons.electric_bolt_rounded),
+            SizedBox(width: 20),
+            BuildCategories(textCategory: 'Tecnologia', icon: Icons.computer),
+            SizedBox(width: 20),
             BuildCategories(textCategory: 'Manutenção', icon: Icons.build),
-            SizedBox(
-              width: 20,
-            ),
-            BuildCategories(
-                textCategory: 'Higienização',
-                icon: Icons.cleaning_services_rounded),
-            SizedBox(
-              width: 20,
-            ),
+            SizedBox(width: 20),
+            BuildCategories(textCategory: 'Higienização', icon: Icons.cleaning_services_rounded),
+            SizedBox(width: 20),
           ],
         ),
       ),

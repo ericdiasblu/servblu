@@ -26,12 +26,6 @@ void main() async {
   );
 
   // Inicializar NotificationService
-  try {
-    await NotificationService.initialize();
-    print("Serviço de notificações inicializado");
-  } catch (e) {
-    print("Erro ao inicializar serviço de notificações: $e");
-  }
 
   runApp(MyApp());
 }

@@ -2,12 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Para armazenar o token localmente
 
 // Esta função será chamada em segundo plano quando uma notificação chegar
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Não inicialize o Firebase aqui novamente
   print("Mensagem recebida em segundo plano: ${message.messageId}");
 }
 
@@ -48,7 +46,6 @@ class NotificationService {
           iOS: DarwinInitializationSettings(),
         ),
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          // Aqui você pode lidar com as ações quando o usuário toca na notificação
           print('Notificação tocada: ${details.payload}');
         },
       );
@@ -79,32 +76,29 @@ class NotificationService {
       // Lidar com notificações quando o app é aberto através de uma notificação
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         print('Notificação aberta: ${message.data}');
-        // Aqui você pode navegar para uma tela específica com base nos dados da notificação
       });
 
-      // Verificar se já existe um token armazenado localmente
-      final prefs = await SharedPreferences.getInstance();
-      final storedToken = prefs.getString('fcm_token');
+      // Obter token FCM
+      final fcmToken = await _firebaseMessaging.getToken();
+      print('FCM Token: $fcmToken');
 
-      if (storedToken == null) {
-        // Obter token FCM
-        final fcmToken = await _firebaseMessaging.getToken();
-        print('FCM Token: $fcmToken');
-
-        // Salvar token no Supabase e localmente
-        if (fcmToken != null) {
-          await _saveTokenToSupabase(fcmToken);
-          await prefs.setString('fcm_token', fcmToken);
-        }
+      // Salvar token no Supabase se o usuário estiver autenticado
+      final user = _supabase.auth.currentUser;
+      if (user != null && fcmToken != null) {
+        await _saveTokenToSupabase(fcmToken);
       } else {
-        print("Token FCM já existe: $storedToken");
+        print("Usuário não autenticado. Token não salvo.");
       }
 
       // Atualizar token quando for atualizado
       _firebaseMessaging.onTokenRefresh.listen((newToken) async {
-        await _saveTokenToSupabase(newToken);
-        await prefs.setString('fcm_token', newToken);
-        print("Token FCM atualizado: $newToken");
+        final user = _supabase.auth.currentUser;
+        if (user != null) {
+          await _saveTokenToSupabase(newToken);
+          print("Token FCM atualizado: $newToken");
+        } else {
+          print("Usuário não autenticado. Token não atualizado.");
+        }
       });
     } catch (e) {
       print("Erro ao inicializar NotificationService: $e");

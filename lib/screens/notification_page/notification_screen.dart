@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/notificacao/notificacao.dart';
-import '../../services/notification_service.dart';
 
 class NotificationScreen extends StatelessWidget {
   @override
