@@ -48,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final currentEmail = authService.getCurrentUserEmail();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Center(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

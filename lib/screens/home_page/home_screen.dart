@@ -20,81 +20,42 @@ class _HomePageContentState extends State<HomePageContent> {
   @override
   void initState() {
     super.initState();
-
-    // Inicializa notificações
-    _initializeNotifications();
-
-    // Inicializa Firebase Messaging
-    _initializeFirebaseMessaging();
-
-    // Registra o token do FCM após o login
-    _registerUserToken();
-
-    // Salva o token local no Supabase após o login
-    _saveLocalTokenAfterLogin();
+    _setupNotifications();
   }
 
-  Future<void> _initializeNotifications() async {
+  Future<void> _setupNotifications() async {
     try {
+      // Initialize notification service
       await NotificationService.initialize();
-      print("Serviço de notificações inicializado");
     } catch (e) {
-      print("Erro ao inicializar serviço de notificações: $e");
+      print("Error setting up notifications: $e");
     }
   }
 
-  Future<void> _initializeFirebaseMessaging() async {
-    // Solicita permissão para notificações
-    await FirebaseMessaging.instance.requestPermission();
-
-    // Escuta mudanças no token do FCM
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      print("Novo token FCM: $newToken");
-      await _registerUserToken(token: newToken);
-    });
-  }
-
-  Future<void> _registerUserToken({String? token}) async {
-    final userId = supabase.auth.currentUser?.id;
-
-    if (userId != null) {
-      try {
-        // Obtém o token do FCM se não for fornecido
-        final fcmToken = token ?? await FirebaseMessaging.instance.getToken();
-
-        if (fcmToken != null) {
-          // Verifica se o token já está registrado
-          final existingToken = await supabase
-              .from('device_tokens')
-              .select('fcm_token')
-              .eq('user_id', userId)
-              .eq('fcm_token', fcmToken)
-              .maybeSingle();
-
-          if (existingToken == null) {
-            // Registra o token no Supabase
-            await supabase.from('device_tokens').upsert({
-              'user_id': userId,
-              'fcm_token': fcmToken,
-            });
-
-            print("Token registrado com sucesso: $fcmToken");
-          } else {
-            print("Token já registrado: $fcmToken");
-          }
-        }
-      } catch (e) {
-        print("Erro ao registrar token: $e");
-      }
-    }
-  }
-
-  Future<void> _saveLocalTokenAfterLogin() async {
+  Future<void> _removePreviousUserTokens(String userId) async {
     try {
-      await NotificationService.saveLocalTokenAfterLogin();
-      print("Token local salvo no Supabase após login.");
+      await supabase
+          .from('device_tokens')
+          .delete()
+          .eq('user_id', userId);
+      print("Previous tokens for user $userId removed");
     } catch (e) {
-      print("Erro ao salvar token local no Supabase: $e");
+      print("Error removing previous tokens: $e");
+    }
+  }
+
+  Future<void> _registerUserToken(String userId, String fcmToken) async {
+    try {
+      // Insert new token for the user
+      await supabase.from('device_tokens').insert({
+        'user_id': userId,
+        'token': fcmToken,
+        'device_type': 'android', // or detect dynamically
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      print("New token registered for user $userId");
+    } catch (e) {
+      print("Error registering token: $e");
     }
   }
 
@@ -121,6 +82,8 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
+  // Rest of the existing methods remain the same...
+  // (Keep all other methods like _buildHeader(), _buildListCategories(), etc.)
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
@@ -177,6 +140,7 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
+  // Other existing methods like _buildBestOffersTitle(), _buildBestOffers(), etc. remain unchanged
   Widget _buildBestOffersTitle() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 11, left: 31),

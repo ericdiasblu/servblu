@@ -2,11 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Para armazenar o token temporariamente
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Esta função será chamada em segundo plano quando uma notificação chegar
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Inicialização do Firebase para manipulação em segundo plano
+  await Firebase.initializeApp();
   print("Mensagem recebida em segundo plano: ${message.messageId}");
 }
 
@@ -79,31 +80,12 @@ class NotificationService {
         print('Notificação aberta: ${message.data}');
       });
 
-      // Obter token FCM
-      final fcmToken = await _firebaseMessaging.getToken();
-
-      // Salvar token no Supabase se o usuário estiver autenticado
-      final user = _supabase.auth.currentUser;
-      if (user != null && fcmToken != null) {
-        await _saveTokenToSupabase(fcmToken);
-        print('FCM Token: $fcmToken');
-      } else {
-        // Armazenar o token temporariamente se o usuário não estiver autenticado
-        await _saveTokenLocally(fcmToken);
-        print("Usuário não autenticado. Token armazenado localmente.");
-      }
+      // Configurar token inicial
+      await setupUserToken();
 
       // Atualizar token quando for atualizado
       _firebaseMessaging.onTokenRefresh.listen((newToken) async {
-        final user = _supabase.auth.currentUser;
-        if (user != null) {
-          await _saveTokenToSupabase(newToken);
-          print("Token FCM atualizado: $newToken");
-        } else {
-          // Armazenar o novo token temporariamente
-          await _saveTokenLocally(newToken);
-          print("Usuário não autenticado. Token atualizado armazenado localmente.");
-        }
+        await setupUserToken(newToken);
       });
     } catch (e) {
       print("Erro ao inicializar NotificationService: $e");
@@ -111,21 +93,65 @@ class NotificationService {
     }
   }
 
+  // Método centralizado para configurar o token do usuário
+  static Future<void> setupUserToken([String? newToken]) async {
+    try {
+      // Obter o token FCM (novo ou atual)
+      final fcmToken = newToken ?? await _firebaseMessaging.getToken();
+
+      // Verificar se o usuário está autenticado
+      final user = _supabase.auth.currentUser;
+      if (user != null && fcmToken != null) {
+        // Remover tokens anteriores
+        await _removeExistingUserTokens(user.id);
+
+        // Salvar novo token
+        await _saveTokenToSupabase(fcmToken);
+        print('FCM Token configurado para usuário autenticado: $fcmToken');
+      } else if (fcmToken != null) {
+        // Armazenar o token temporariamente se o usuário não estiver autenticado
+        await _saveTokenLocally(fcmToken);
+        print("Usuário não autenticado. Token armazenado localmente: $fcmToken");
+      }
+    } catch (e) {
+      print("Erro ao configurar token: $e");
+    }
+  }
+
+  // Método para remover tokens existentes do usuário
+  static Future<void> _removeExistingUserTokens(String userId) async {
+    try {
+      await _supabase
+          .from('device_tokens')
+          .delete()
+          .eq('user_id', userId);
+      print("Tokens anteriores do usuário removidos");
+    } catch (e) {
+      print("Erro ao remover tokens anteriores: $e");
+    }
+  }
+
   // Método para salvar o token no Supabase
   static Future<void> _saveTokenToSupabase(String token) async {
     final user = _supabase.auth.currentUser;
     if (user != null) {
-      // Presumindo que você tem uma tabela 'device_tokens' no Supabase
-      await _supabase.from('device_tokens').upsert({
+      await _supabase.from('device_tokens').insert({
         'user_id': user.id,
         'token': token,
-        'device_type': 'android', // ou 'ios', você pode detectar isso programaticamente
+        'device_type': _getDeviceType(), // Detectar tipo de dispositivo
         'created_at': DateTime.now().toIso8601String(),
       });
       print("Token salvo no Supabase: $token");
     } else {
       print("Usuário não autenticado. Token não salvo no Supabase.");
     }
+  }
+
+  // Método para determinar o tipo de dispositivo
+  static String _getDeviceType() {
+    // TODO: Implementar detecção dinâmica de plataforma
+    // Você pode usar pacotes como 'device_info_plus' para detecção precisa
+    return 'android'; // ou 'ios'
   }
 
   // Método para salvar o token localmente (usando SharedPreferences)
@@ -140,12 +166,29 @@ class NotificationService {
   // Método para salvar o token local no Supabase após o login
   static Future<void> saveLocalTokenAfterLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('fcm_token');
+    final token = prefs.getString('token');
 
     if (token != null) {
-      await _saveTokenToSupabase(token);
-      await prefs.remove('fcm_token'); // Remove o token local após salvar no Supabase
-      print("Token local salvo no Supabase após login.");
+      // Verificar se o usuário está autenticado
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        try {
+          // Remover tokens anteriores do usuário
+          await _removeExistingUserTokens(user.id);
+
+          // Salvar novo token
+          await _saveTokenToSupabase(token);
+
+          // Remove o token local após salvar no Supabase
+          await prefs.remove('token');
+
+          print("Token local salvo no Supabase após login.");
+        } catch (e) {
+          print("Erro ao salvar token local após login: $e");
+        }
+      } else {
+        print("Usuário não autenticado. Não foi possível salvar o token.");
+      }
     }
   }
 
@@ -153,14 +196,9 @@ class NotificationService {
   static Future<void> removeTokenOnLogout() async {
     final user = _supabase.auth.currentUser;
     if (user != null) {
-      final token = await _firebaseMessaging.getToken();
-      if (token != null) {
-        await _supabase
-            .from('device_tokens')
-            .delete()
-            .match({'user_id': user.id, 'token': token});
-        print("Token removido do Supabase após logout.");
-      }
+      // Remove todos os tokens do usuário
+      await _removeExistingUserTokens(user.id);
+      print("Todos os tokens do usuário removidos após logout.");
     }
   }
 }
