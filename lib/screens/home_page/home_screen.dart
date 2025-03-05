@@ -2,12 +2,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/build_categories.dart';
-
 import '../../router/router.dart';
 import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
-
-// Supondo que NotificationService esteja implementado corretamente
 import '../../services/notification_service.dart';
 
 class HomePageContent extends StatefulWidget {
@@ -29,6 +26,12 @@ class _HomePageContentState extends State<HomePageContent> {
 
     // Inicializa Firebase Messaging
     _initializeFirebaseMessaging();
+
+    // Registra o token do FCM após o login
+    _registerUserToken();
+
+    // Salva o token local no Supabase após o login
+    _saveLocalTokenAfterLogin();
   }
 
   Future<void> _initializeNotifications() async {
@@ -41,11 +44,58 @@ class _HomePageContentState extends State<HomePageContent> {
   }
 
   Future<void> _initializeFirebaseMessaging() async {
+    // Solicita permissão para notificações
     await FirebaseMessaging.instance.requestPermission();
 
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("FCM Token: $token");
+    // Escuta mudanças no token do FCM
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      print("Novo token FCM: $newToken");
+      await _registerUserToken(token: newToken);
+    });
+  }
 
+  Future<void> _registerUserToken({String? token}) async {
+    final userId = supabase.auth.currentUser?.id;
+
+    if (userId != null) {
+      try {
+        // Obtém o token do FCM se não for fornecido
+        final fcmToken = token ?? await FirebaseMessaging.instance.getToken();
+
+        if (fcmToken != null) {
+          // Verifica se o token já está registrado
+          final existingToken = await supabase
+              .from('device_tokens')
+              .select('fcm_token')
+              .eq('user_id', userId)
+              .eq('fcm_token', fcmToken)
+              .maybeSingle();
+
+          if (existingToken == null) {
+            // Registra o token no Supabase
+            await supabase.from('device_tokens').upsert({
+              'user_id': userId,
+              'fcm_token': fcmToken,
+            });
+
+            print("Token registrado com sucesso: $fcmToken");
+          } else {
+            print("Token já registrado: $fcmToken");
+          }
+        }
+      } catch (e) {
+        print("Erro ao registrar token: $e");
+      }
+    }
+  }
+
+  Future<void> _saveLocalTokenAfterLogin() async {
+    try {
+      await NotificationService.saveLocalTokenAfterLogin();
+      print("Token local salvo no Supabase após login.");
+    } catch (e) {
+      print("Erro ao salvar token local no Supabase: $e");
+    }
   }
 
   @override

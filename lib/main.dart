@@ -11,10 +11,12 @@ void main() async {
 
   // Inicializa o Firebase
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print("Firebase inicializado com sucesso");
+    if (Firebase.apps.isEmpty) { // Verifica se o Firebase já foi inicializado
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print("Firebase inicializado com sucesso");
+    }
   } catch (e) {
     print("Erro ao inicializar Firebase: $e");
   }

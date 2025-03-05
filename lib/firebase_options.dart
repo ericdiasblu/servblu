@@ -41,46 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBzW7R-W8kFWjjfAUJrcvGnOQ0e3R-kT5I',
-    appId: '1:957132089666:web:13ab823f36f6141d4340db',
-    messagingSenderId: '957132089666',
-    projectId: 'servblu-test',
-    authDomain: 'servblu-test.firebaseapp.com',
-    storageBucket: 'servblu-test.firebasestorage.app',
+    apiKey: 'AIzaSyBN4BvcFCpOf6XR1AHaFyr_LAtMtBXhkgg',
+    appId: '1:365706756084:web:48a6f5142e2402e8b843a1',
+    messagingSenderId: '365706756084',
+    projectId: 'servblu-d9b69',
+    authDomain: 'servblu-d9b69.firebaseapp.com',
+    storageBucket: 'servblu-d9b69.firebasestorage.app',
+    measurementId: 'G-H35XSGSTG8',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAcxyymzn6j05-QiW6BQ2xHezxeyfUjEIk',
-    appId: '1:957132089666:android:49c2202ad4aeb6834340db',
-    messagingSenderId: '957132089666',
-    projectId: 'servblu-test',
-    storageBucket: 'servblu-test.firebasestorage.app',
+    apiKey: 'AIzaSyB_6NtFOMew9IWc7qFhHspO4tjZHkPHkuE',
+    appId: '1:365706756084:android:7397d16540906becb843a1',
+    messagingSenderId: '365706756084',
+    projectId: 'servblu-d9b69',
+    storageBucket: 'servblu-d9b69.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB1nCioDPxAofcsbYQwvANbOGgbFmT5LCM',
-    appId: '1:957132089666:ios:35810a5ccee7b0a24340db',
-    messagingSenderId: '957132089666',
-    projectId: 'servblu-test',
-    storageBucket: 'servblu-test.firebasestorage.app',
+    apiKey: 'AIzaSyCeztexykn-HiVVpreu9TfYYIvlFfj8ces',
+    appId: '1:365706756084:ios:c12ff4e3852bd9bab843a1',
+    messagingSenderId: '365706756084',
+    projectId: 'servblu-d9b69',
+    storageBucket: 'servblu-d9b69.firebasestorage.app',
     iosBundleId: 'com.example.servblu',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyB1nCioDPxAofcsbYQwvANbOGgbFmT5LCM',
-    appId: '1:957132089666:ios:35810a5ccee7b0a24340db',
-    messagingSenderId: '957132089666',
-    projectId: 'servblu-test',
-    storageBucket: 'servblu-test.firebasestorage.app',
+    apiKey: 'AIzaSyCeztexykn-HiVVpreu9TfYYIvlFfj8ces',
+    appId: '1:365706756084:ios:c12ff4e3852bd9bab843a1',
+    messagingSenderId: '365706756084',
+    projectId: 'servblu-d9b69',
+    storageBucket: 'servblu-d9b69.firebasestorage.app',
     iosBundleId: 'com.example.servblu',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBzW7R-W8kFWjjfAUJrcvGnOQ0e3R-kT5I',
-    appId: '1:957132089666:web:989729a1d7e7d5cb4340db',
-    messagingSenderId: '957132089666',
-    projectId: 'servblu-test',
-    authDomain: 'servblu-test.firebaseapp.com',
-    storageBucket: 'servblu-test.firebasestorage.app',
+    apiKey: 'AIzaSyBN4BvcFCpOf6XR1AHaFyr_LAtMtBXhkgg',
+    appId: '1:365706756084:web:ad434da2375f5fbdb843a1',
+    messagingSenderId: '365706756084',
+    projectId: 'servblu-d9b69',
+    authDomain: 'servblu-d9b69.firebaseapp.com',
+    storageBucket: 'servblu-d9b69.firebasestorage.app',
+    measurementId: 'G-C8662VM2EC',
   );
+
 }

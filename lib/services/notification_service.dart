@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Para armazenar o token temporariamente
 
 // Esta função será chamada em segundo plano quando uma notificação chegar
 @pragma('vm:entry-point')
@@ -80,14 +81,16 @@ class NotificationService {
 
       // Obter token FCM
       final fcmToken = await _firebaseMessaging.getToken();
-      print('FCM Token: $fcmToken');
 
       // Salvar token no Supabase se o usuário estiver autenticado
       final user = _supabase.auth.currentUser;
       if (user != null && fcmToken != null) {
         await _saveTokenToSupabase(fcmToken);
+        print('FCM Token: $fcmToken');
       } else {
-        print("Usuário não autenticado. Token não salvo.");
+        // Armazenar o token temporariamente se o usuário não estiver autenticado
+        await _saveTokenLocally(fcmToken);
+        print("Usuário não autenticado. Token armazenado localmente.");
       }
 
       // Atualizar token quando for atualizado
@@ -97,7 +100,9 @@ class NotificationService {
           await _saveTokenToSupabase(newToken);
           print("Token FCM atualizado: $newToken");
         } else {
-          print("Usuário não autenticado. Token não atualizado.");
+          // Armazenar o novo token temporariamente
+          await _saveTokenLocally(newToken);
+          print("Usuário não autenticado. Token atualizado armazenado localmente.");
         }
       });
     } catch (e) {
@@ -119,19 +124,43 @@ class NotificationService {
       });
       print("Token salvo no Supabase: $token");
     } else {
-      print("Usuário não autenticado. Token não salvo.");
+      print("Usuário não autenticado. Token não salvo no Supabase.");
     }
   }
 
-  // Método para se inscrever em tópicos específicos
-  static Future<void> subscribeToTopic(String topic) async {
-    await _firebaseMessaging.subscribeToTopic(topic);
-    print("Inscrito no tópico: $topic");
+  // Método para salvar o token localmente (usando SharedPreferences)
+  static Future<void> _saveTokenLocally(String? token) async {
+    if (token != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fcm_token', token);
+      print("Token armazenado localmente: $token");
+    }
   }
 
-  // Método para cancelar inscrição em tópicos
-  static Future<void> unsubscribeFromTopic(String topic) async {
-    await _firebaseMessaging.unsubscribeFromTopic(topic);
-    print("Cancelada inscrição no tópico: $topic");
+  // Método para salvar o token local no Supabase após o login
+  static Future<void> saveLocalTokenAfterLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('fcm_token');
+
+    if (token != null) {
+      await _saveTokenToSupabase(token);
+      await prefs.remove('fcm_token'); // Remove o token local após salvar no Supabase
+      print("Token local salvo no Supabase após login.");
+    }
+  }
+
+  // Método para remover o token ao fazer logout
+  static Future<void> removeTokenOnLogout() async {
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      final token = await _firebaseMessaging.getToken();
+      if (token != null) {
+        await _supabase
+            .from('device_tokens')
+            .delete()
+            .match({'user_id': user.id, 'token': token});
+        print("Token removido do Supabase após logout.");
+      }
+    }
   }
 }

@@ -9,8 +9,6 @@ class EnterScreen extends StatefulWidget {
   @override
   State<EnterScreen> createState() => _EnterScreenState();
 }
-
-
 class _EnterScreenState extends State<EnterScreen> {
 
   @override

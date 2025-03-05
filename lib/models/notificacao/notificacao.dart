@@ -27,13 +27,33 @@ Future sendNotification({
   }
 
   // Obter o token de acesso da sessão atual
-  final token = supabase.auth.currentSession?.accessToken;
-  if (token == null) {
+  final session = supabase.auth.currentSession;
+  if (session == null || session.accessToken.isEmpty) {
     throw Exception('Token de acesso não disponível');
   }
 
   try {
-    final response = await supabase.functions.invoke(
+    // Verificar se a sessão está válida antes de fazer a requisição
+    if (session.expiresAt != null) {
+      // Converter o timestamp para DateTime
+      final expiresAtDateTime = DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000);
+
+      // Verificar se o token expirou
+      if (DateTime.now().isAfter(expiresAtDateTime)) {
+        // Token expirado, tentar renovar
+        print('Token expirado, tentando renovar a sessão...');
+        await supabase.auth.refreshSession();
+
+        // Verificar se a renovação foi bem-sucedida
+        final newSession = supabase.auth.currentSession;
+        if (newSession == null || newSession.accessToken.isEmpty) {
+          throw Exception('Não foi possível renovar a sessão');
+        }
+      }
+    }
+
+
+  final response = await supabase.functions.invoke(
       'send-notification',
       body: {
         'to_user_id': toUserId,
@@ -41,9 +61,9 @@ Future sendNotification({
         'body': body,
         'data': data ?? {},
       },
-      // Adicionar cabeçalho de autorização explicitamente
+      // Usar o token atual após potencial renovação
       headers: {
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${supabase.auth.currentSession!.accessToken}',
       },
     );
 
