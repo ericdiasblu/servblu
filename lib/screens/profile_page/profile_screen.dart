@@ -84,7 +84,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                       icon: const Icon(Icons.logout, color: Colors.white),
                     ),
-
                   ),
                 ],
               ),
@@ -112,9 +111,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     nomeUsuario == null
                         ? const CircularProgressIndicator()
                         : Text(
-                            nomeUsuario!,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                      nomeUsuario!,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     telefoneUsuario == null
                         ? const CircularProgressIndicator()
                         : Text(telefoneUsuario!,style: TextStyle(fontWeight: FontWeight.w300),),
@@ -143,12 +142,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: enderecoUsuario == null
                               ? const CircularProgressIndicator()
                               : Text(
-                                  '$enderecoUsuario',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
+                            '$enderecoUsuario',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
                         ),
                       ],
                     )
@@ -175,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
                       descServico:
-                          "Some short description of this type of report.",
+                      "Some short description of this type of report.",
                       corContainer: Colors.purple,
                       corTexto: Color(0xFF403572),
                     ),
@@ -185,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
                       descServico:
-                          "Some short description of this type of report.",
+                      "Some short description of this type of report.",
                       corContainer: Colors.yellow,
                       corTexto: Color(0xFFF77f00),
                     ),
@@ -195,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
                       descServico:
-                          "Some short description of this type of report.",
+                      "Some short description of this type of report.",
                       corContainer: Colors.red,
                       corTexto: Colors.red,
                     ),
@@ -217,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: List.generate(
                   5,
-                  (index) => Icon(
+                      (index) => Icon(
                     Icons.star,
                     color: Color(0xFFFFB703),
                   ),
@@ -275,10 +274,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
   Future<void> _logout() async {
     try {
-      // Remove o token do Supabase
-      await NotificationService.removeTokenOnLogout();
+      // Remove o token do Supabase e localmente
+      await NotificationService.removeUserTokens();
 
       // Faz logout do usuário
       await supabase.auth.signOut();
@@ -287,6 +287,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       GoRouter.of(context).go('/enter');
     } catch (e) {
       print("Erro ao fazer logout: $e");
+      // Ainda tenta navegar para a tela de login mesmo se houver erro
+      GoRouter.of(context).go('/enter');
     }
   }
 }

@@ -1,14 +1,14 @@
 buildscript {
-    // Adicione o repositories aqui se não estiver definido
+    ext.kotlin_version = '2.0.21' // Change here
     repositories {
         google()
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
-        // Adicione a dependência do Google Services
+        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.3.15'
-        // Mantenha suas outras dependências aqui
     }
 }
 

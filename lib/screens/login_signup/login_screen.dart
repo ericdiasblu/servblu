@@ -12,14 +12,20 @@ import '../home_page/home_screen.dart';
 import 'signup_screen.dart';
 
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final authService = AuthService();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void login(BuildContext context) async {
+  Future<void> login(BuildContext context) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -30,18 +36,44 @@ class LoginScreen extends StatelessWidget {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       await authService.signInWithEmailPassword(email, password);
-      // Navegue para a tela principal ou outra tela após o login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePageContent()), // Tela principal
-      );
+
+      // Atualiza o token FCM após o login bem-sucedido
+      await authService.updateFcmTokenAfterLogin();
+
+      if (mounted) {
+        // Ativa o GoRouter e navega para a home
+        setLoggedIn(true);
+        GoRouter.of(context).go(Routes.homePage);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao fazer login: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erro ao fazer login: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -108,14 +140,14 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
 
-            // Botão de login
-            BuildButton(
+            // Botão de login com indicador de carregamento
+            _isLoading
+                ? const CircularProgressIndicator(
+              color: Color(0xFF017DFE),
+            )
+                : BuildButton(
               textButton: "Entrar",
-              onPressed: () {
-                login(context);
-                setLoggedIn(true); // Ativa o GoRouter
-                GoRouter.of(context).go(Routes.homePage);
-              }
+              onPressed: () => login(context),
             ),
 
             const SizedBox(height: 40),

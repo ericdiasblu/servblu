@@ -25,37 +25,22 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Future<void> _setupNotifications() async {
     try {
-      // Initialize notification service
+      // Apenas inicializa o serviço, sem tentar salvar o token
       await NotificationService.initialize();
+
+      // Verificamos se o usuário já está autenticado (caso de retorno ao app)
+      // e não durante o primeiro login, que é tratado pelo LoginScreen
+      final user = supabase.auth.currentUser;
+      if (user != null) {
+        // Verifica se precisamos atualizar o token no Supabase
+        final localToken = await NotificationService.getLocalToken();
+        if (localToken != null) {
+          // Salva o token no Supabase
+          await NotificationService.saveLocalTokenAfterLogin();
+        }
+      }
     } catch (e) {
       print("Error setting up notifications: $e");
-    }
-  }
-
-  Future<void> _removePreviousUserTokens(String userId) async {
-    try {
-      await supabase
-          .from('device_tokens')
-          .delete()
-          .eq('user_id', userId);
-      print("Previous tokens for user $userId removed");
-    } catch (e) {
-      print("Error removing previous tokens: $e");
-    }
-  }
-
-  Future<void> _registerUserToken(String userId, String fcmToken) async {
-    try {
-      // Insert new token for the user
-      await supabase.from('device_tokens').insert({
-        'user_id': userId,
-        'token': fcmToken,
-        'device_type': 'android', // or detect dynamically
-        'created_at': DateTime.now().toIso8601String(),
-      });
-      print("New token registered for user $userId");
-    } catch (e) {
-      print("Error registering token: $e");
     }
   }
 
@@ -82,8 +67,6 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
-  // Rest of the existing methods remain the same...
-  // (Keep all other methods like _buildHeader(), _buildListCategories(), etc.)
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
@@ -140,7 +123,6 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
-  // Other existing methods like _buildBestOffersTitle(), _buildBestOffers(), etc. remain unchanged
   Widget _buildBestOffersTitle() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 11, left: 31),

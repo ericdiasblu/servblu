@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/notification_service.dart';
+
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -68,5 +70,19 @@ class AuthService {
     final session = _supabase.auth.currentSession;
     final user = session?.user;
     return user?.email;
+  }
+
+  Future<void> updateFcmTokenAfterLogin() async {
+    // Aguardar um pequeno delay para garantir que a sessão esteja completamente estabelecida
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Verificar se o usuário está realmente autenticado
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      // Agora podemos com segurança salvar o token
+      await NotificationService.saveLocalTokenAfterLogin();
+    } else {
+      print("Falha ao atualizar token após login: usuário ainda não está autenticado");
+    }
   }
 }
