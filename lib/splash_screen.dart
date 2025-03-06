@@ -19,7 +19,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // Configurando animações
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -39,16 +38,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
     );
 
-    // Inicia animação
     _controller.forward();
 
-    // Timer para navegar após 3 segundos
     Timer(const Duration(milliseconds: 3000), () {
-      // Verificar se o usuário está logado
-      // Se você tiver SharedPreferences, pode verificar o token aqui
-
-      // Navigate to appropriate screen
-      context.go(Routes.enterPage); // ou Routes.homePage se logado
+      context.go(Routes.enterPage);
     });
   }
 
@@ -61,29 +54,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        color: Colors.white,
+      body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Logo animado
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: child,
-                  ),
-                );
-              },
-            ),
-
-            SizedBox(height: 30),
-
-            // Nome do app animado
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -102,9 +76,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
 
-            SizedBox(height: 20),
+            SizedBox(height: 20), // Reduzi o espaçamento entre os elementos
 
-            // Texto de descrição
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -113,32 +86,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: child,
                 );
               },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  "Conecte-se a serviços de qualidade em Blumenau",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
+              child: SizedBox(
+                width: 200,
+                child: LinearProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
                 ),
-              ),
-            ),
-
-            SizedBox(height: 80),
-
-            // Indicador de carregamento
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: child,
-                );
-              },
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
               ),
             ),
           ],

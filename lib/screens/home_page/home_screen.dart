@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../router/routes.dart';
 import '../../widgets/build_categories.dart';
 import '../../router/router.dart';
 import '../login_signup/enter_screen.dart';
@@ -21,6 +23,13 @@ class _HomePageContentState extends State<HomePageContent> {
   void initState() {
     super.initState();
     _setupNotifications();
+    supabase.auth.onAuthStateChange.listen((event) {
+      final session = supabase.auth.currentSession;
+
+      if (session == null) {
+        // Se a sessão expirar, redireciona para a tela de login
+        context.go(Routes.enterPage);
+      }});
   }
 
   Future<void> _setupNotifications() async {
