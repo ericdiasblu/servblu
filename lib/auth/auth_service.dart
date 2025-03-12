@@ -1,16 +1,43 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../router/router.dart';
 import '../services/notification_service.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  bool isLoggedIn() {
+    final session = _supabase.auth.currentSession;
+    return session != null && !session.isExpired;
+  }
+
+  // Inicializa o estado de autenticação
+  void initAuthState() {
+    // Define o estado inicial com base na sessão atual
+    setLoggedIn(isLoggedIn());
+
+    // Escuta mudanças no estado de autenticação
+    _supabase.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+
+      if (event == AuthChangeEvent.signedIn) {
+        setLoggedIn(true);
+      } else if (event == AuthChangeEvent.signedOut) {
+        setLoggedIn(false);
+      }
+    });
+  }
 
   // Cadastro com email e senha (apenas cria o usuário no auth)
   Future<AuthResponse> signUpWithEmailPassword(
       String email, String password, String name, String phone, String address) async {
     // Adicione a manipulação de exceções para capturar erros
     try {
-      return await _supabase.auth.signUp(email: email, password: password);
+      AuthResponse response = await _supabase.auth.signUp(email: email, password: password);
+      if (response.user != null) {
+        setLoggedIn(true);
+      }
+      return response;
     } catch (e) {
       throw Exception('Erro ao cadastrar usuário: $e');
     }
@@ -38,6 +65,7 @@ class AuthService {
       'telefone': phone,
       'endereco': address,
       'email': email,
+      'saldo': 0,
     })
         .select();
 
@@ -50,7 +78,11 @@ class AuthService {
   // Entrar com email e senha
   Future<AuthResponse> signInWithEmailPassword(String email, String password) async {
     try {
-      return await _supabase.auth.signInWithPassword(email: email, password: password);
+      AuthResponse response = await _supabase.auth.signInWithPassword(email: email, password: password);
+      if (response.user != null) {
+        setLoggedIn(true);
+      }
+      return response;
     } catch (e) {
       throw Exception('Erro ao entrar: $e');
     }
@@ -60,6 +92,7 @@ class AuthService {
   Future<void> signOut() async {
     try {
       await _supabase.auth.signOut();
+      setLoggedIn(false);
     } catch (e) {
       throw Exception('Erro ao sair: $e');
     }

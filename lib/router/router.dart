@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:servblu/router/routes.dart';
 import 'package:servblu/screens/notification_page/notification_screen.dart';
 import 'package:servblu/splash_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../layout/layout_scaffold.dart';
 import '../screens/home_page/home_screen.dart';
@@ -23,25 +24,39 @@ void setLoggedIn(bool status) {
   isLoggedIn.value = status;
 }
 
+// Função para verificar se o usuário está logado no Supabase
+bool checkUserSession() {
+  final session = Supabase.instance.client.auth.currentSession;
+  return session != null && !session.isExpired;
+}
+
 // Definição do GoRouter
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: Routes.splashScreen,
   refreshListenable: isLoggedIn,
   redirect: (context, state) {
-    // Não redirecionamos se estiver indo para splash ou enter
-    final isSplashOrEnter = state.uri.path == Routes.splashScreen ||
-        state.uri.path == Routes.enterPage;
+    final isSplashScreen = state.uri.path == Routes.splashScreen;
 
-    if (isSplashOrEnter) {
+    // Nunca redireciona da splash screen, pois ela vai lidar com a verificação
+    if (isSplashScreen) {
       return null;
     }
 
-    // Se não estiver logado e tentar acessar outra tela, redireciona para enter
-    if (!isLoggedIn.value) {
+    final isEnterPage = state.uri.path == Routes.enterPage;
+    final isLoggedInValue = isLoggedIn.value;
+
+    // Se estiver logado e tentando acessar a tela de login, redireciona para home
+    if (isLoggedInValue && isEnterPage) {
+      return Routes.homePage;
+    }
+
+    // Se não estiver logado e tentar acessar qualquer tela protegida, redireciona para enter
+    if (!isLoggedInValue && !isEnterPage) {
       return Routes.enterPage;
     }
 
+    // Caso contrário, permite a navegação normal
     return null;
   },
   routes: [

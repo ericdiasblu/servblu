@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/router/routes.dart';
+import 'package:servblu/router/router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -40,9 +42,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 3000), () {
-      context.go(Routes.enterPage);
-    });
+    // Verificar sessão do usuário
+    _checkUserSession();
+  }
+
+  Future<void> _checkUserSession() async {
+    // Aguarda um pouco para mostrar a splash screen
+    await Future.delayed(const Duration(milliseconds: 2000));
+
+    // Verifica se o usuário já tem uma sessão ativa
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null && !session.isExpired) {
+      // Se tem uma sessão válida, define como logado e vai para home
+      setLoggedIn(true);
+      if (mounted) {
+        context.go(Routes.homePage);
+      }
+    } else {
+      // Se não tem sessão ou está expirada, vai para tela de login
+      if (mounted) {
+        context.go(Routes.enterPage);
+      }
+    }
   }
 
   @override
@@ -76,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
 
-            SizedBox(height: 20), // Reduzi o espaçamento entre os elementos
+            SizedBox(height: 20),
 
             AnimatedBuilder(
               animation: _controller,

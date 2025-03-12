@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +22,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final authService = AuthService();
   final supabase = Supabase.instance.client;
-  String? nomeUsuario, telefoneUsuario, enderecoUsuario;
+  String? nomeUsuario, telefoneUsuario, enderecoUsuario, saldoUsuario, fotoPerfil;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -31,15 +36,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user != null) {
       final response = await supabase
           .from('usuarios')
-          .select('nome, telefone, endereco')
+          .select('nome, telefone, endereco, saldo, foto_perfil')
           .eq('id_usuario', user.id)
           .maybeSingle();
 
       setState(() {
         nomeUsuario = response?['nome'] ?? 'Usuário';
         telefoneUsuario = response?['telefone'] ?? 'Telefone não disponível';
-        enderecoUsuario = response?['endereco'] ?? 'Endereco inválido';
+        enderecoUsuario = response?['endereco'] ?? 'Endereço inválido';
+        fotoPerfil = response?['foto_perfil'];
+
+        // Formata o saldo para duas casas decimais, por exemplo
+        if (response?['saldo'] != null) {
+          final saldo = response!['saldo'];
+          saldoUsuario = NumberFormat("#,##0.00", "pt_BR").format(saldo);
+        } else {
+          saldoUsuario = "Saldo indisponível";
+        }
       });
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final String fileExtension = path.extension(image.path);
+      final String fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}$fileExtension';
+      final String filePath = 'fotos/$fileName';
+
+      // Upload da imagem para o bucket do Supabase
+      final File file = File(image.path);
+      await supabase.storage.from('bucket1').upload(
+        filePath,
+        file,
+        fileOptions: const FileOptions(
+          cacheControl: '3600',
+          upsert: true,
+        ),
+      );
+
+      // Obter o URL público da imagem
+      final String imageUrl = supabase.storage.from('bucket1').getPublicUrl(filePath);
+
+      // Atualizar o perfil do usuário no banco de dados
+      await supabase
+          .from('usuarios')
+          .update({'foto_perfil': imageUrl})
+          .eq('id_usuario', user.id);
+
+      // Atualizar a UI
+      setState(() {
+        fotoPerfil = imageUrl;
+        isLoading = false;
+      });
+
+      // Mostrar mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto de perfil atualizada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+
+      // Mostrar erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao atualizar foto: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -49,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: Center(
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -80,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     right: 10,
                     child: IconButton(
                       onPressed: () async {
-                        await _logout(); // Método de logout atualizado
+                        await _logout();
                       },
                       icon: const Icon(Icons.logout, color: Colors.white),
                     ),
@@ -90,55 +180,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             Row(
               children: [
-                Container(
-                  margin: const EdgeInsets.only(left: 20),
-                  width: 111,
-                  height: 111,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    size: 80,
-                  ),
-                ),
-                const SizedBox(width: 50),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    nomeUsuario == null
-                        ? const CircularProgressIndicator()
-                        : Text(
-                      nomeUsuario!,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    width: 111,
+                    height: 111,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                      image: fotoPerfil != null
+                          ? DecorationImage(
+                        image: NetworkImage(fotoPerfil!),
+                        fit: BoxFit.cover,
+                      )
+                          : null,
                     ),
-                    telefoneUsuario == null
-                        ? const CircularProgressIndicator()
-                        : Text(telefoneUsuario!,style: TextStyle(fontWeight: FontWeight.w300),),
-                    Text(currentEmail ?? "Email não disponível",style: TextStyle(fontWeight: FontWeight.w300),),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Stack(
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Opacity(
-                          opacity: 0.05,
+                        if (isLoading)
+                          const CircularProgressIndicator()
+                        else if (fotoPerfil == null)
+                          const Icon(
+                            Icons.person,
+                            size: 80,
+                          ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
                           child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius: BorderRadius.circular(5),
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF017DFE),
+                              shape: BoxShape.circle,
                             ),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5), // Espaçamento interno
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
-                        Container(
-                          alignment: Alignment.center,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5), // Ajusta ao texto
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 40),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      nomeUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        nomeUsuario!,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      telefoneUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        telefoneUsuario!,
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      Text(
+                        currentEmail ?? "Email não disponível",
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      saldoUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        "Saldo: ${saldoUsuario!}",
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           child: enderecoUsuario == null
                               ? const CircularProgressIndicator()
                               : Text(
@@ -149,52 +273,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  ],
-                )
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 70),
-            Padding(
-                padding: EdgeInsets.only(left: 30),
-                child: Text(
-                  "Serviços",
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-                )),
+            const Padding(
+              padding: EdgeInsets.only(left: 30),
+              child: Text(
+                "Serviços",
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+              ),
+            ),
             SizedBox(
               height: 110,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 20,
-                    ),
+                    const SizedBox(width: 20),
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
-                      descServico:
-                      "Some short description of this type of report.",
+                      descServico: "Some short description of this type of report.",
                       corContainer: Colors.purple,
-                      corTexto: Color(0xFF403572),
+                      corTexto: const Color(0xFF403572),
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
-                      descServico:
-                      "Some short description of this type of report.",
+                      descServico: "Some short description of this type of report.",
                       corContainer: Colors.yellow,
-                      corTexto: Color(0xFFF77f00),
+                      corTexto: const Color(0xFFF77f00),
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     BuildServicesProfile(
                       nomeServico: "Aula Gramática",
-                      descServico:
-                      "Some short description of this type of report.",
+                      descServico: "Some short description of this type of report.",
                       corContainer: Colors.red,
                       corTexto: Colors.red,
                     ),
@@ -202,21 +318,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            SizedBox(
-              height: 40,
+            const SizedBox(height: 40),
+            const Padding(
+              padding: EdgeInsets.only(left: 30),
+              child: Text(
+                "Avaliações",
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+              ),
             ),
-            Padding(
-                padding: EdgeInsets.only(left: 30),
-                child: Text(
-                  "Avaliações",
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-                )),
             Padding(
               padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
               child: Row(
                 children: List.generate(
                   5,
-                      (index) => Icon(
+                      (index) => const Icon(
                     Icons.star,
                     color: Color(0xFFFFB703),
                   ),
@@ -229,36 +344,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 30,
-                    ),
+                    const SizedBox(width: 30),
                     BuildServicesProfile(
                       nomeServico: "Vitor Rodrigues",
                       descServico: "Atendimento muito bom!",
                       corContainer: Colors.green,
-                      corTexto: Color(0xFF479696),
+                      corTexto: const Color(0xFF479696),
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     BuildServicesProfile(
                       nomeServico: "Vitor Rodrigues",
                       descServico: "Atendimento muito bom!",
                       corContainer: Colors.orange,
                       corTexto: Colors.orange,
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     BuildServicesProfile(
                       nomeServico: "Vitor Rodrigues",
                       descServico: "Atendimento muito bom!",
                       corContainer: Colors.pink,
                       corTexto: Colors.pink,
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     BuildServicesProfile(
                       nomeServico: "Vitor Rodrigues",
                       descServico: "Atendimento muito bom!",
@@ -269,6 +376,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            Container(
+              height: 400,
+            )
           ],
         ),
       ),
