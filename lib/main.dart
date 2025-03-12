@@ -6,6 +6,7 @@ import 'package:servblu/auth/auth_service.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -25,7 +26,12 @@ void main() async {
   await Supabase.initialize(
     url: "https://lrwbtpghgmshdtqotsyj.supabase.co",
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxyd2J0cGdoZ21zaGR0cW90c3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NTk1OTIsImV4cCI6MjA1NTUzNTU5Mn0.Z53Q-wnvj2ABiASl_FH0tddCdN7dVFqWCeYALruqsC8",
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      detectSessionInUri: true,
+    ),
   );
+
 
   // Inicializar o estado de autenticação
   final authService = AuthService();

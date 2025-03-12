@@ -118,4 +118,16 @@ class AuthService {
       print("Falha ao atualizar token após login: usuário ainda não está autenticado");
     }
   }
+
+  // Adicione este método na classe AuthService
+  Future<void> resetPassword(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.appflutter://reset-callback/', // Ajuste para o seu esquema de URL
+      );
+    } catch (e) {
+      throw Exception('Erro ao enviar email de recuperação: $e');
+    }
+  }
 }

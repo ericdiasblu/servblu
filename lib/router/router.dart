@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../layout/layout_scaffold.dart';
 import '../screens/home_page/home_screen.dart';
 import '../screens/login_signup/enter_screen.dart';
+import '../screens/login_signup/reset_password_screen.dart';
 import '../screens/profile_page/profile_screen.dart';
 import '../screens/schedule_page/schedule_screen.dart';
 import '../screens/service_page/service_screen.dart';
@@ -68,6 +69,11 @@ final router = GoRouter(
     GoRoute(
       path: Routes.enterPage,
       builder: (context, state) => EnterScreen(),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      name: Routes.resetPasswordPage,
+      builder: (context, state) => const ResetPasswordScreen(),
     ),
 
     // Rotas que usam o shell de navegação (com barra inferior)

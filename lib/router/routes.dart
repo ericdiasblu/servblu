@@ -8,4 +8,5 @@ class Routes {
   static const String servicePage = '/anunciar';
   static const String notificationPage = '/notificacoes';
   static const String profilePage = '/perfil';
+  static const String resetPasswordPage = '/reset';
 }

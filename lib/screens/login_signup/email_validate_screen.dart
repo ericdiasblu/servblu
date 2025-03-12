@@ -1,135 +1,178 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/widgets/build_button.dart';
-import 'package:servblu/screens/login_signup/forgot_password_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:validators/validators.dart';
-
-import '../../widgets/input_field.dart';
+import 'package:servblu/widgets/input_field.dart';
 
 class EmailValidateScreen extends StatefulWidget {
-  const EmailValidateScreen({super.key});
+  const EmailValidateScreen({Key? key}) : super(key: key);
+
   @override
   State<EmailValidateScreen> createState() => _EmailValidateScreenState();
 }
 
 class _EmailValidateScreenState extends State<EmailValidateScreen> {
-
-  final TextEditingController emailController = TextEditingController();
-  final supabase = Supabase.instance.client;
+  final _emailController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
+  bool _emailSent = false;
 
   Future<void> resetPassword() async {
-    final email = emailController.text.trim();
+    final email = _emailController.text.trim();
 
-    if (email.isEmpty || !isEmail(email)) {
+    if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Por favor, insira um e-mail válido")),
+        const SnackBar(content: Text("Por favor, informe seu email.")),
       );
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await supabase.auth.resetPasswordForEmail(email);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("E-mail de redefinição enviado! Verifique sua caixa de entrada.")),
-      );
+      await _authService.resetPassword(email);
+
+      if (mounted) {
+        setState(() {
+          _emailSent = true;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao enviar e-mail: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erro ao solicitar redefinição de senha: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Recuperar Senha"),
+        backgroundColor: const Color(0xFFF5F5F5),
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
       backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Container(
-          constraints: const BoxConstraints.expand(),
-          color: const Color(0xFFFFFFFF),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 124, bottom: 26, left: 38, right: 171),
-                  width: double.infinity,
-                  child: const Text(
-                    "Insira o email da sua conta",
-                    style: TextStyle(
-                      color: Color(0xFF000000),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildDivider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 36),
-                  child: Column(
-                    children: [
-                      InputField(
-                        obscureText: false,
-                        icon: Icons.email,
-                        hintText: "Email",
-                        controller: emailController,
-                      ),
-                      const SizedBox(height: 10),
-                      BuildButton(
-                        textButton: "Valide seu Email",
-                        onPressed: () {
-                          resetPassword();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
-                _buildImage(),
-              ],
-            ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 37),
+        child: _emailSent ? _buildSuccessContent() : _buildFormContent(),
+      ),
+    );
+  }
+
+  Widget _buildFormContent() {
+    return Column(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+        const Text(
+          "Esqueceu sua senha?",
+          style: TextStyle(
+            color: Color(0xFF000000),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return IntrinsicHeight(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 25, left: 40, right: 267),
-        width: double.infinity,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                color: const Color(0xFF017DFE),
-                height: 3,
-              ),
-            ),
-            const SizedBox(width: 5),
-            Container(
-              color: const Color(0xFF017DFE),
-              width: 13,
-              height: 3,
-            ),
-          ],
+        const SizedBox(height: 15),
+        const Text(
+          "Informe seu email para receber um link de redefinição de senha",
+          style: TextStyle(
+            color: Color(0xFF000000),
+            fontSize: 16,
+          ),
+          textAlign: TextAlign.center,
         ),
-      ),
+        const SizedBox(height: 30),
+
+        InputField(
+          obscureText: false,
+          icon: Icons.email,
+          hintText: "Email",
+          controller: _emailController,
+        ),
+
+        const SizedBox(height: 30),
+
+        _isLoading
+            ? const CircularProgressIndicator(
+          color: Color(0xFF017DFE),
+        )
+            : BuildButton(
+          textButton: "Enviar link de recuperação",
+          onPressed: resetPassword,
+        ),
+
+        const SizedBox(height: 40),
+
+        // Imagem ilustrativa para a página
+
+      ],
     );
   }
 
-  Widget _buildImage() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 38, left: 8, right: 8),
-      height: 376,
-      width: double.infinity,
-      child: const Image(
-        image: AssetImage("assets/forgot_password_image.png"),
-      ),
+  Widget _buildSuccessContent() {
+    return Column(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+        const Icon(
+          Icons.mark_email_read,
+          size: 80,
+          color: Color(0xFF017DFE),
+        ),
+        const SizedBox(height: 30),
+        const Text(
+          "Email enviado!",
+          style: TextStyle(
+            color: Color(0xFF000000),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 15),
+        const Text(
+          "Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.",
+          style: TextStyle(
+            color: Color(0xFF000000),
+            fontSize: 16,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 30),
+
+        BuildButton(
+          textButton: "Voltar para o login",
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+
+        const SizedBox(height: 40),
+
+        // Imagem ilustrativa para a página
+        Image.asset(
+          'assets/forgot_password_image.png',
+          height: 250,
+          fit: BoxFit.contain,
+        ),
+      ],
     );
   }
-  }
-
-
+}
