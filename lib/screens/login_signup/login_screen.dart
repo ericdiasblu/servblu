@@ -1,20 +1,31 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:servblu/auth/auth_service.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/email_validate_screen.dart';
-import '../home_page/home_struture.dart';
+import '../../router/router.dart';
+import '../../router/routes.dart';
+import '../../widgets/input_field.dart';
+import '../home_page/home_screen.dart';
 import 'signup_screen.dart';
 
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final authService = AuthService();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void login(BuildContext context) async {
+  Future<void> login(BuildContext context) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -25,18 +36,44 @@ class LoginScreen extends StatelessWidget {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       await authService.signInWithEmailPassword(email, password);
-      // Navegue para a tela principal ou outra tela após o login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()), // Tela principal
-      );
+
+      // Atualiza o token FCM após o login bem-sucedido
+      await authService.updateFcmTokenAfterLogin();
+
+      if (mounted) {
+        // Ativa o GoRouter e navega para a home
+        setLoggedIn(true);
+        GoRouter.of(context).go(Routes.homePage);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao fazer login: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erro ao fazer login: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -103,8 +140,12 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
 
-            // Botão de login
-            BuildButton(
+            // Botão de login com indicador de carregamento
+            _isLoading
+                ? const CircularProgressIndicator(
+              color: Color(0xFF017DFE),
+            )
+                : BuildButton(
               textButton: "Entrar",
               onPressed: () => login(context),
             ),
@@ -167,23 +208,32 @@ class LoginScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Center(
-                child: Text(
-                  "Não possui uma conta? Cadastra-se",
-                  style: TextStyle(
-                    color: Color(0xFF000000),
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      "Não possui uma conta? Cadastra-se",
+                      style: TextStyle(
+                        color: Color(0xFF000000),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                  // Imagem
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.topCenter, // Mantém o topo visível
+                      heightFactor: 0.85, // Ajusta a altura visível (0.85 = 85% da imagem)
+                      child: Image.asset(
+                        'assets/login.png',
+                        height: 330,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-
-            // Imagem
-            const SizedBox(height: 0),
-            Image(
-              image: AssetImage('assets/login.png'),
-              height: 330,
             ),
           ],
         ),

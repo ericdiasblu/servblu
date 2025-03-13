@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para formatação de texto
 
 class InputField extends StatelessWidget {
   final IconData icon;
   final String hintText;
-  final TextEditingController? controller; // Adicionado como required
+  final TextEditingController? controller; // Controlador de texto padrão
+  final MaskedTextController? maskedController; // Controlador de máscara
   final EdgeInsetsGeometry? margin; // Parâmetro opcional
   final bool obscureText;
 
@@ -12,7 +14,8 @@ class InputField extends StatelessWidget {
     required this.icon,
     required this.hintText,
     required this.obscureText,
-    this.controller, // Agora é obrigatório
+    this.controller, // Controlador opcional
+    this.maskedController, // Controlador de máscara opcional
     this.margin,
   }) : super(key: key);
 
@@ -35,7 +38,7 @@ class InputField extends StatelessWidget {
           Expanded(
             child: TextField(
               obscureText: obscureText,
-              controller: controller, // Adicionado
+              controller: maskedController ?? controller, // Usar o controlador de máscara se disponível
               decoration: InputDecoration(
                 hintText: hintText,
                 border: InputBorder.none,
