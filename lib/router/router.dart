@@ -102,7 +102,7 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: Routes.servicePage,
-              builder: (context, state) => ServiceScreen(),
+              builder: (context, state) => ServicoTestScreen(),
             ),
           ],
         ),

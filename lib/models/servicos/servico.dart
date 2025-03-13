@@ -1,18 +1,45 @@
-/*
-listarServicos()
-Descrição: Retorna a lista de todos os serviços disponíveis para contratantes, aplicando
-filtros e buscas conforme necessário.
+class Servico {
+  final String? idServico; // id_servico no banco agora é UUID
+  final String nome; // nome no banco
+  final String descricao; // descricao no banco
+  final String categoria; // categoria no banco
+  final String? imgServico; // img_servico no banco (opcional)
+  final double? preco; // preco no banco
+  final String idPrestador; // id_prestador no banco (uuid)
 
-cadastrarServico(Servico servico)
-Descrição: Permite que um prestador adicione um novo serviço, vinculando-o ao seu
-perfil.
+  Servico({
+    this.idServico,
+    required this.nome,
+    required this.descricao,
+    required this.categoria,
+    this.imgServico,
+    this.preco,
+    required this.idPrestador,
+  });
 
-editarServico(Servico servico)
-Descrição: Atualiza as informações de um serviço previamente cadastrado.
+  // Método fromJson
+  factory Servico.fromJson(Map<String, dynamic> json) {
+    return Servico(
+      idServico: json['id_servico'],
+      nome: json['nome'],
+      descricao: json['descricao'],
+      categoria: json['categoria'],
+      imgServico: json['img_servico'],
+      preco: json['preco']?.toDouble(),
+      idPrestador: json['id_prestador'],
+    );
+  }
 
-removerServico(int idServico)
-Descrição: Remove um serviço do portfólio do prestador.
-
-obterServicosPorPrestador(int idPrestador)
-Descrição: Recupera os serviços cadastrados por um determinado prestador.
-*/
+  // Método toJson
+  Map<String, dynamic> toJson() {
+    return {
+      if (idServico != null) 'id_servico': idServico,
+      'nome': nome,
+      'descricao': descricao,
+      'categoria': categoria,
+      if (imgServico != null) 'img_servico': imgServico,
+      if (preco != null) 'preco': preco,
+      'id_prestador': idPrestador,
+    };
+  }
+}
