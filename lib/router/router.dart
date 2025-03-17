@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:servblu/router/routes.dart';
+import 'package:servblu/screens/home_page/search_screen.dart';
 import 'package:servblu/screens/notification_page/notification_screen.dart';
 import 'package:servblu/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -69,6 +70,10 @@ final router = GoRouter(
     GoRoute(
       path: Routes.enterPage,
       builder: (context, state) => EnterScreen(),
+    ),
+    GoRoute(
+      path: Routes.searchPage,
+      builder: (context, state) => SearchScreen(),
     ),
     GoRoute(
       path: '/reset-password',
