@@ -201,7 +201,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             GoRouter.of(context).go(Routes.homePage);
                           },
                         ),
-                        const SizedBox(width: 80),
+                        const SizedBox(width: 85),
                         const Text(
                           "Busca",
                           style: TextStyle(
