@@ -242,7 +242,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ...servicosUsuario.map((servico) {
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
-                child: BuildServicesProfile.fromServico(servico),
+                child: BuildServicesProfile.fromServico(
+                  servico,
+                ),
               );
             }).toList(),
             // Botão de adicionar novo serviço
@@ -290,215 +292,215 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: SingleChildScrollView(
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-        Container(
-        decoration: const BoxDecoration(
-        color: Color(0xFF017DFE),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      width: double.infinity,
-      height: 100,
-      padding: const EdgeInsets.only(top: 37, bottom: 40),
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Text(
-            "Perfil",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              fontSize: 22,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF017DFE),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              width: double.infinity,
+              height: 100,
+              padding: const EdgeInsets.only(top: 37, bottom: 40),
+              margin: const EdgeInsets.only(bottom: 20),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
+                    "Perfil",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 22,
+                    ),
+                  ),
+                  Positioned(
+                    right: 10,
+                    child: IconButton(
+                      onPressed: () async {
+                        await _logout();
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            right: 10,
-            child: IconButton(
-              onPressed: () async {
-                await _logout();
-              },
-              icon: const Icon(Icons.logout, color: Colors.white),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    width: 111,
+                    height: 111,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black),
+                      image: fotoPerfil != null
+                          ? DecorationImage(
+                        image: NetworkImage(fotoPerfil!),
+                        fit: BoxFit.cover,
+                      )
+                          : null,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (isLoading)
+                          const CircularProgressIndicator()
+                        else if (fotoPerfil == null)
+                          const Icon(
+                            Icons.person,
+                            size: 80,
+                          ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF017DFE),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 40),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      nomeUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        nomeUsuario!,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      telefoneUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        telefoneUsuario!,
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      Text(
+                        currentEmail ?? "Email não disponível",
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      saldoUsuario == null
+                          ? const CircularProgressIndicator()
+                          : Text(
+                        "Saldo: ${saldoUsuario!}",
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: enderecoUsuario == null
+                              ? const CircularProgressIndicator()
+                              : Text(
+                            '$enderecoUsuario',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    ),
-    Row(
-    children: [
-    GestureDetector(
-    onTap: _pickAndUploadImage,
-    child: Container(
-    margin: const EdgeInsets.only(left: 20),
-    width: 111,
-    height: 111,
-    decoration: BoxDecoration(
-    shape: BoxShape.circle,
-    color: Colors.white,
-    border: Border.all(color: Colors.black),
-    image: fotoPerfil != null
-    ? DecorationImage(
-    image: NetworkImage(fotoPerfil!),
-    fit: BoxFit.cover,
-    )
-        : null,
-    ),
-    child: Stack(
-    alignment: Alignment.center,
-    children: [
-    if (isLoading)
-    const CircularProgressIndicator()
-    else if (fotoPerfil == null)
-    const Icon(
-    Icons.person,
-    size: 80,
-    ),
-    Positioned(
-    right: 0,
-    bottom: 0,
-    child: Container(
-    padding: const EdgeInsets.all(4),
-    decoration: const BoxDecoration(
-    color: Color(0xFF017DFE),
-    shape: BoxShape.circle,
-    ),
-    child: const Icon(
-    Icons.camera_alt,
-    color: Colors.white,
-    size: 20,
-    ),
-    ),
-    ),
-    ],
-    ),
-    ),
-    ),
-    const SizedBox(width: 40),
-    Expanded(
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    nomeUsuario == null
-    ? const CircularProgressIndicator()
-        : Text(
-    nomeUsuario!,
-    style: const TextStyle(fontWeight: FontWeight.bold),
-    ),
-    telefoneUsuario == null
-    ? const CircularProgressIndicator()
-        : Text(
-    telefoneUsuario!,
-    style: const TextStyle(fontWeight: FontWeight.w300),
-    ),
-    Text(
-    currentEmail ?? "Email não disponível",
-    style: const TextStyle(fontWeight: FontWeight.w300),
-    ),
-    saldoUsuario == null
-    ? const CircularProgressIndicator()
-        : Text(
-    "Saldo: ${saldoUsuario!}",
-    style: const TextStyle(fontWeight: FontWeight.w300),
-    ),
-    const SizedBox(height: 10),
-    Align(
-    alignment: Alignment.centerLeft,
-    child: Container(
-    decoration: BoxDecoration(
-    color: Colors.green.withOpacity(0.05),
-    borderRadius: BorderRadius.circular(5),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    child: enderecoUsuario == null
-    ? const CircularProgressIndicator()
-        : Text(
-    '$enderecoUsuario',
-    style: const TextStyle(
-    fontWeight: FontWeight.bold,
-    color: Colors.green,
-    ),
-    ),
-    ),
-    ),
-    ],
-    ),
-    ),
-    ],
-    ),
-    const SizedBox(height: 70),
-    const Padding(
-    padding: EdgeInsets.only(left: 30),
-    child: Text(
-    "Serviços",
-    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-    ),
-    ),
-    _buildServicosSection(),
-    const SizedBox(height: 40),
-    const Padding(
-    padding: EdgeInsets.only(left: 30),
-    child: Text(
-    "Avaliações",
-    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-    ),
-    ),
-    Padding(
-    padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
-    child: Row(
-    children: List.generate(
-    5,
-    (index) => const Icon(
-    Icons.star,
-    color: Color(0xFFFFB703),
-    ),
-    ),
-    ),
-    ),
-    SizedBox(
-    height: 110,
-    child: SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-    children: [
-    const SizedBox(width: 30),
-    BuildServicesProfile(
-    nomeServico: "Vitor Rodrigues",
-    descServico: "Atendimento muito bom!",
-    corContainer: Colors.green,
-    corTexto: const Color(0xFF479696),
-    ),
-      const SizedBox(width: 10),
-      BuildServicesProfile(
-        nomeServico: "Vitor Rodrigues",
-        descServico: "Atendimento muito bom!",
-        corContainer: Colors.orange,
-        corTexto: Colors.orange,
-      ),
-      const SizedBox(width: 10),
-      BuildServicesProfile(
-        nomeServico: "Vitor Rodrigues",
-        descServico: "Atendimento muito bom!",
-        corContainer: Colors.pink,
-        corTexto: Colors.pink,
-      ),
-      const SizedBox(width: 10),
-      BuildServicesProfile(
-        nomeServico: "Vitor Rodrigues",
-        descServico: "Atendimento muito bom!",
-        corContainer: Colors.red,
-        corTexto: Colors.red,
-      ),
-    ],
-    ),
-    ),
-    ),
-              Container(
-                height: 400,
-              )
-            ],
+            const SizedBox(height: 70),
+            const Padding(
+              padding: EdgeInsets.only(left: 30),
+              child: Text(
+                "Serviços",
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+              ),
+            ),
+            _buildServicosSection(),
+            const SizedBox(height: 40),
+            const Padding(
+              padding: EdgeInsets.only(left: 30),
+              child: Text(
+                "Avaliações",
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
+              child: Row(
+                children: List.generate(
+                  5,
+                      (index) => const Icon(
+                    Icons.star,
+                    color: Color(0xFFFFB703),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 110,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const SizedBox(width: 30),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.green,
+                      corTexto: const Color(0xFF479696),
+                    ),
+                    const SizedBox(width: 10),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.orange,
+                      corTexto: Colors.orange,
+                    ),
+                    const SizedBox(width: 10),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.pink,
+                      corTexto: Colors.pink,
+                    ),
+                    const SizedBox(width: 10),
+                    BuildServicesProfile(
+                      nomeServico: "Vitor Rodrigues",
+                      descServico: "Atendimento muito bom!",
+                      corContainer: Colors.red,
+                      corTexto: Colors.red,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              height: 400,
+            )
+          ],
         ),
       ),
     );

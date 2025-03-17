@@ -1,10 +1,74 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:io'; // Adicionar esta linha
+import 'package:path/path.dart' as path; // Adicionar esta linha
 
 class ServicoService {
   final SupabaseClient supabase = Supabase.instance.client;
   final Uuid _uuid = Uuid();
+
+  Future<String?> uploadImagem(File imagem) async {
+    try {
+      // Verificar se o usuário está autenticado
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('Usuário não está logado');
+      }
+
+      // Verificar se o arquivo existe
+      if (!imagem.existsSync()) {
+        throw Exception('Arquivo de imagem não existe: ${imagem.path}');
+      }
+
+      // Usar apenas o nome do arquivo com extensão
+      final String fileExtension = path.extension(imagem.path);
+      final String fileName = '${_uuid.v4()}$fileExtension';
+
+      print('Iniciando upload da imagem: $fileName');
+      print('Tamanho do arquivo: ${(await imagem.length()) / 1024} KB');
+
+      // Verificar se o bucket 'servicos' existe antes de fazer upload
+      try {
+        // Tenta obter informações do bucket para verificar se ele existe
+        await supabase.storage.getBucket('servicos');
+      } catch (e) {
+        // Se o bucket não existe, tenta criar
+        try {
+          await supabase.storage.createBucket('servicos',
+              const BucketOptions(public: true));
+          print('Bucket servicos criado com sucesso');
+        } catch (e) {
+          print('Erro ao criar bucket: $e');
+          // Continua mesmo se não puder criar
+        }
+      }
+
+      // Upload da imagem para o Supabase Storage
+      await supabase.storage.from('servicos').upload(
+        fileName, // Simplifique o caminho
+        imagem,
+        fileOptions: const FileOptions(
+          cacheControl: '3600',
+          upsert: true,
+        ),
+      );
+
+      print('Upload concluído com sucesso para: $fileName');
+
+      // Obter a URL pública da imagem
+      final String imageUrl = supabase.storage.from('servicos').getPublicUrl(fileName);
+      print('URL pública gerada: $imageUrl');
+
+      return imageUrl;
+    } catch (e) {
+      print('ERRO DETALHADO ao fazer upload da imagem: $e');
+      // Se possível, exibir a stack trace para mais detalhes
+      StackTrace? stackTrace = StackTrace.current;
+      print('Stack trace: $stackTrace');
+      return null;
+    }
+  }
 
   Future<List<Servico>> listarServicos({String? categoria}) async {
     var query = supabase.from('servicos').select();

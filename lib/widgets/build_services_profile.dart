@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/servicos/servico.dart';
+import 'package:servblu/utils/navigation_helper.dart';
 
 class BuildServicesProfile extends StatelessWidget {
   final String nomeServico;
@@ -8,6 +9,7 @@ class BuildServicesProfile extends StatelessWidget {
   final Color corTexto;
   final String? idServico;
   final VoidCallback? onTap;
+  final Servico? servico; // Adicionando o objeto Servico completo
 
   const BuildServicesProfile({
     Key? key,
@@ -17,6 +19,7 @@ class BuildServicesProfile extends StatelessWidget {
     required this.corTexto,
     this.idServico,
     this.onTap,
+    this.servico, // Servico pode ser opcional para manter compatibilidade
   }) : super(key: key);
 
   // Construtor factory para criar a partir de um objeto Servico
@@ -42,13 +45,26 @@ class BuildServicesProfile extends StatelessWidget {
       descServico: servico.descricao,
       corContainer: corContainer,
       corTexto: corTexto,
+      servico: servico, // Passando o objeto Servico completo
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap ?? (servico != null
+          ? () async {
+        final wasDeleted = await NavigationHelper.navigateToServiceDetails(
+            context,
+            servico!
+        );
+        // Se o serviço foi excluído e você precisa atualizar a lista,
+        // você pode implementar uma callback para isso
+        if (wasDeleted == true && onTap != null) {
+          onTap!();
+        }
+      }
+          : null),
       child: Container(
         width: 230,
         height: 110,
