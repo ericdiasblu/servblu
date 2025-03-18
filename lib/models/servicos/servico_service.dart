@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:io'; // Adicionar esta linha
-import 'package:path/path.dart' as path; // Adicionar esta linha
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
 class ServicoService {
   final SupabaseClient supabase = Supabase.instance.client;
@@ -10,61 +10,36 @@ class ServicoService {
 
   Future<String?> uploadImagem(File imagem) async {
     try {
-      // Verificar se o usuário está autenticado
       final user = supabase.auth.currentUser;
-      if (user == null) {
-        throw Exception('Usuário não está logado');
-      }
+      if (user == null) throw Exception('Usuário não está logado');
 
-      // Verificar se o arquivo existe
-      if (!imagem.existsSync()) {
-        throw Exception('Arquivo de imagem não existe: ${imagem.path}');
-      }
+      if (!imagem.existsSync()) throw Exception('Arquivo de imagem não existe: ${imagem.path}');
 
-      // Usar apenas o nome do arquivo com extensão
       final String fileExtension = path.extension(imagem.path);
       final String fileName = '${_uuid.v4()}$fileExtension';
 
-      print('Iniciando upload da imagem: $fileName');
-      print('Tamanho do arquivo: ${(await imagem.length()) / 1024} KB');
+      print('Iniciando upload: $fileName (${(await imagem.length()) / 1024} KB)');
 
-      // Verificar se o bucket 'servicos' existe antes de fazer upload
+      // Verifica a existência do bucket
       try {
-        // Tenta obter informações do bucket para verificar se ele existe
         await supabase.storage.getBucket('servicos');
       } catch (e) {
-        // Se o bucket não existe, tenta criar
-        try {
-          await supabase.storage.createBucket('servicos',
-              const BucketOptions(public: true));
-          print('Bucket servicos criado com sucesso');
-        } catch (e) {
-          print('Erro ao criar bucket: $e');
-          // Continua mesmo se não puder criar
-        }
+        print('Bucket "servicos" não encontrado. Tentando criar...');
+        await supabase.storage.createBucket('servicos', const BucketOptions(public: true));
       }
 
-      // Upload da imagem para o Supabase Storage
       await supabase.storage.from('servicos').upload(
-        fileName, // Simplifique o caminho
+        fileName,
         imagem,
-        fileOptions: const FileOptions(
-          cacheControl: '3600',
-          upsert: true,
-        ),
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
       );
 
-      print('Upload concluído com sucesso para: $fileName');
-
-      // Obter a URL pública da imagem
       final String imageUrl = supabase.storage.from('servicos').getPublicUrl(fileName);
-      print('URL pública gerada: $imageUrl');
+      print('Upload concluído: $imageUrl');
 
       return imageUrl;
-    } catch (e) {
-      print('ERRO DETALHADO ao fazer upload da imagem: $e');
-      // Se possível, exibir a stack trace para mais detalhes
-      StackTrace? stackTrace = StackTrace.current;
+    } catch (e, stackTrace) {
+      print('Erro ao fazer upload da imagem: $e');
       print('Stack trace: $stackTrace');
       return null;
     }
@@ -79,76 +54,50 @@ class ServicoService {
 
     final response = await query.order('nome', ascending: true);
 
-    if (response is! List) {
-      throw Exception('Erro ao buscar serviços');
-    }
+    if (response is! List) throw Exception('Erro ao buscar serviços');
 
     return response.map((json) => Servico.fromJson(json)).toList();
   }
 
   Future<void> cadastrarServico(Servico servico) async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('Usuário não está logado');
-    }
+    if (user == null) throw Exception('Usuário não está logado');
 
-    // Gerar UUID para o novo serviço
-    final String novoId = _uuid.v4();
-
-    final servicoComPrestador = Servico(
-      idServico: novoId,
-      nome: servico.nome,
-      descricao: servico.descricao,
-      categoria: servico.categoria,
-      imgServico: servico.imgServico,
-      preco: servico.preco,
-      idPrestador: user.id, // UUID do usuário logado
+    final servicoComPrestador = servico.copyWith(
+      idServico: _uuid.v4(),
+      idPrestador: user.id,
     );
 
     try {
       await supabase.from('servicos').upsert(servicoComPrestador.toJson());
-      // Se não lançar exceção, consideramos que foi bem-sucedido
-      return;
     } catch (e) {
-      print('Erro real do Supabase: $e');
+      print('Erro ao cadastrar serviço: $e');
       throw Exception('Erro ao cadastrar serviço');
     }
   }
 
   Future<void> editarServico(Servico servico) async {
-    if (servico.idServico == null) {
-      throw Exception('ID do serviço não pode ser nulo para edição');
-    }
+    if (servico.idServico == null) throw Exception('ID do serviço não pode ser nulo');
 
-    final response = await supabase.from('servicos').upsert(servico.toJson());
-
-    if (response == null) {
+    try {
+      await supabase.from('servicos').upsert(servico.toJson());
+    } catch (e) {
+      print('Erro ao editar serviço: $e');
       throw Exception('Erro ao editar serviço');
     }
   }
 
   Future<void> removerServico(String idServico) async {
-    final response = await supabase
-        .from('servicos')
-        .delete()
-        .eq('id_servico', idServico);
+    final response = await supabase.from('servicos').delete().eq('id_servico', idServico);
 
-    if (response == null) {
-      return; // Retorna sem valor
-    } else {
-      throw Exception('Erro ao remover serviço');
-    }
+    if (response.isEmpty) return;
+    throw Exception('Erro ao remover serviço');
   }
 
   Future<List<Servico>> obterServicosPorPrestador(String idPrestador) async {
-    final data = await supabase
-        .from('servicos')
-        .select()
-        .eq('id_prestador', idPrestador);
+    final data = await supabase.from('servicos').select().eq('id_prestador', idPrestador);
 
-    if (data is! List) {
-      throw Exception('Erro ao buscar serviços do prestador');
-    }
+    if (data is! List) throw Exception('Erro ao buscar serviços do prestador');
 
     return data.map((json) => Servico.fromJson(json)).toList();
   }

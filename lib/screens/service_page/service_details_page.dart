@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:servblu/screens/service_page/edit_servico_screen.dart';
 
 class ServiceDetailsPage extends StatefulWidget {
   final Servico servico;
@@ -69,16 +70,18 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   }
 
   void _navigateToEditPage() async {
-    // Implementar a navegação para a tela de edição aqui
-    // Exemplo:
-    // final result = await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => EditServicoScreen(servico: widget.servico)),
-    // );
-    // if (result == true) {
-    //   // Recarregar os dados do serviço, se necessário
-    // }
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditServicoScreen(servico: widget.servico)),
+    );
+
+    if (result == true) {
+      setState(() {
+        // Atualizar a tela com os novos dados do serviço
+      });
+    }
   }
+
 
   void _showDeleteConfirmationDialog() {
     showDialog(
