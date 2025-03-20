@@ -29,7 +29,8 @@ class _HomePageContentState extends State<HomePageContent> {
       if (session == null) {
         // Se a sessão expirar, redireciona para a tela de login
         context.go(Routes.enterPage);
-      }});
+      }
+    });
   }
 
   Future<void> _setupNotifications() async {
@@ -112,17 +113,22 @@ class _HomePageContentState extends State<HomePageContent> {
             margin: EdgeInsets.only(left: 20, right: 10),
             width: 370,
             child: TextField(
+              onTap: () {
+                GoRouter.of(context).go(Routes.searchPage);
+              },
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFFFFFFF),
                 prefixIcon: const Icon(Icons.search),
                 hintText: "Procure por serviço",
-                hintStyle: const TextStyle(color: Color(0xFF000000), fontSize: 15),
+                hintStyle:
+                    const TextStyle(color: Color(0xFF000000), fontSize: 15),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 7),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 7),
               ),
               style: const TextStyle(color: Color(0xFF000000), fontSize: 15),
             ),
@@ -150,13 +156,13 @@ class _HomePageContentState extends State<HomePageContent> {
     final List<Map<String, String>> offers = [
       {
         "image":
-        "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
+            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
         "name": "Oferta 1",
         "description": "Descrição da oferta 1"
       },
       {
         "image":
-        "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
+            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
         "name": "Oferta 2",
         "description": "Descrição da oferta 2"
       },
@@ -245,13 +251,16 @@ class _HomePageContentState extends State<HomePageContent> {
             SizedBox(width: 20),
             BuildCategories(textCategory: 'Escritório', icon: Icons.work),
             SizedBox(width: 20),
-            BuildCategories(textCategory: 'Eletricista', icon: Icons.electric_bolt_rounded),
+            BuildCategories(
+                textCategory: 'Eletricista', icon: Icons.electric_bolt_rounded),
             SizedBox(width: 20),
             BuildCategories(textCategory: 'Tecnologia', icon: Icons.computer),
             SizedBox(width: 20),
             BuildCategories(textCategory: 'Manutenção', icon: Icons.build),
             SizedBox(width: 20),
-            BuildCategories(textCategory: 'Higienização', icon: Icons.cleaning_services_rounded),
+            BuildCategories(
+                textCategory: 'Higienização',
+                icon: Icons.cleaning_services_rounded),
             SizedBox(width: 20),
           ],
         ),
