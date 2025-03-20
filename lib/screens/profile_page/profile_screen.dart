@@ -6,9 +6,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:servblu/auth/auth_service.dart';
+import 'package:servblu/models/servicos/servico.dart';
+import 'package:servblu/models/servicos/servico_service.dart';
 import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:servblu/screens/service_page/service_screen.dart';
 
 import '../../services/notification_service.dart';
 
@@ -22,13 +25,18 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final authService = AuthService();
   final supabase = Supabase.instance.client;
+  final ServicoService _servicoService = ServicoService();
+
   String? nomeUsuario, telefoneUsuario, enderecoUsuario, saldoUsuario, fotoPerfil;
   bool isLoading = false;
+  bool isLoadingServicos = true;
+  List<Servico> servicosUsuario = [];
 
   @override
   void initState() {
     super.initState();
     carregarDadosUsuario();
+    carregarServicosUsuario();
   }
 
   Future<void> carregarDadosUsuario() async {
@@ -54,6 +62,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
           saldoUsuario = "Saldo indisponível";
         }
       });
+    }
+  }
+
+  Future<void> carregarServicosUsuario() async {
+    setState(() {
+      isLoadingServicos = true;
+    });
+
+    try {
+      final user = supabase.auth.currentUser;
+      if (user != null) {
+        final servicos = await _servicoService.obterServicosPorPrestador(user.id);
+
+        setState(() {
+          servicosUsuario = servicos;
+          isLoadingServicos = false;
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar serviços: $e');
+      setState(() {
+        isLoadingServicos = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao carregar serviços: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -131,6 +169,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     }
+  }
+
+  void _navegarParaDetalheServico(String idServico) {
+    // Implementar depois - Por enquanto apenas exibe uma mensagem
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ver detalhes do serviço $idServico'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+    // No futuro: context.push('/servico/$idServico');
+  }
+
+  Widget _buildServicosSection() {
+    if (isLoadingServicos) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (servicosUsuario.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+        child: Center(
+          child: Column(
+            children: [
+              const Text(
+                "Você ainda não tem serviços cadastrados",
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              ElevatedButton(
+                onPressed: () {
+                  // Navegar para tela de cadastro de serviço
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ServicoTestScreen(),
+                    ),
+                  ).then((_) {
+                    // Recarregar serviços quando voltar
+                    carregarServicosUsuario();
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF017DFE),
+                ),
+                child: const Text(
+                  "Cadastrar Serviço",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 110,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            const SizedBox(width: 20),
+            // Exibir serviços do banco de dados
+            ...servicosUsuario.map((servico) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: BuildServicesProfile.fromServico(
+                  servico,
+                ),
+              );
+            }).toList(),
+            // Botão de adicionar novo serviço
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ServicoTestScreen(),
+                  ),
+                ).then((_) {
+                  // Recarregar serviços quando voltar
+                  carregarServicosUsuario();
+                });
+              },
+              child: Container(
+                width: 100,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.add,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -287,37 +438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
               ),
             ),
-            SizedBox(
-              height: 110,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 20),
-                    BuildServicesProfile(
-                      nomeServico: "Aula Gramática",
-                      descServico: "Some short description of this type of report.",
-                      corContainer: Colors.purple,
-                      corTexto: const Color(0xFF403572),
-                    ),
-                    const SizedBox(width: 10),
-                    BuildServicesProfile(
-                      nomeServico: "Aula Gramática",
-                      descServico: "Some short description of this type of report.",
-                      corContainer: Colors.yellow,
-                      corTexto: const Color(0xFFF77f00),
-                    ),
-                    const SizedBox(width: 10),
-                    BuildServicesProfile(
-                      nomeServico: "Aula Gramática",
-                      descServico: "Some short description of this type of report.",
-                      corContainer: Colors.red,
-                      corTexto: Colors.red,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildServicosSection(),
             const SizedBox(height: 40),
             const Padding(
               padding: EdgeInsets.only(left: 30),
