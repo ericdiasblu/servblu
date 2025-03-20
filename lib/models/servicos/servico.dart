@@ -58,7 +58,7 @@ class Servico {
       'nome': nome,
       'descricao': descricao,
       'categoria': categoria,
-      if (imgServico != null) 'img_servico': imgServico,
+      'img_servico': imgServico, // Sempre inclui, mesmo se for nulo
       if (preco != null) 'preco': preco,
       'id_prestador': idPrestador,
     };

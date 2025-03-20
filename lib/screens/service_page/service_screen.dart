@@ -115,21 +115,27 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
 
       String? imageUrl;
       if (_imagemSelecionada != null) {
-        // Verificar se o arquivo existe
-        if (!_imagemSelecionada!.existsSync()) {
-          throw Exception('Arquivo de imagem não existe: ${_imagemSelecionada!.path}');
-        }
+        try {
+          // Verificar se o arquivo existe
+          if (!_imagemSelecionada!.existsSync()) {
+            throw Exception('Arquivo de imagem não existe: ${_imagemSelecionada!.path}');
+          }
 
-        print('Iniciando upload da imagem...');
-
-        // Fazer upload da imagem e obter a URL
-        imageUrl = await _servicoService.uploadImagem(_imagemSelecionada!);
-
-        if (imageUrl == null) {
-          _mostrarMensagemErro('Falha ao fazer upload da imagem. Cadastrando serviço sem imagem.');
-          // Continuar sem imagem
-        } else {
+          print('Iniciando upload da imagem...');
+          imageUrl = await _servicoService.uploadImagem(_imagemSelecionada!);
           print('Upload concluído com sucesso: $imageUrl');
+
+          // Add this verification
+          if (imageUrl == null) {
+            throw Exception('Upload da imagem falhou: URL retornou nula');
+          }
+        } catch (e) {
+          print('Erro no upload da imagem: $e');
+          _mostrarMensagemErro('Erro no upload da imagem: $e');
+          setState(() {
+            _isLoading = false;
+          });
+          return; // Make sure to return here to stop the process
         }
       }
 

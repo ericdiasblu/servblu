@@ -83,25 +83,62 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
   Future<void> _updateService() async {
     if (!_formKey.currentState!.validate()) return;
 
+    print('--- INICIANDO ATUALIZAÇÃO DO SERVIÇO ---');
+    print('Estado inicial:');
+    print('- ID do serviço: ${widget.servico.idServico}');
+    print('- URL da imagem atual do serviço: ${widget.servico.imgServico}');
+    print('- _imagemUrl (estado atual): $_imagemUrl');
+    print('- Nova imagem selecionada: ${_novaImagem != null ? 'SIM' : 'NÃO'}');
+    if (_novaImagem != null) {
+      print('- Caminho da nova imagem: ${_novaImagem!.path}');
+      print('- Tamanho da nova imagem: ${await _novaImagem!.length()} bytes');
+    }
+
     setState(() {}); // Atualizar a UI para indicar o processo
 
     try {
       String? newImageUrl = _imagemUrl;
 
-      // Se o usuário escolheu uma nova imagem, fazer o upload para o Supabase
+      // Se o usuário escolheu uma nova imagem
       if (_novaImagem != null) {
+        print('Fazendo upload da nova imagem...');
         newImageUrl = await _servicoService.uploadImagem(_novaImagem!);
+        print('Resultado do upload: ${newImageUrl != null ? 'SUCESSO' : 'FALHA'}');
+        print('Nova URL da imagem: $newImageUrl');
+
+        if (newImageUrl == null) {
+          throw Exception('Falha ao fazer upload da imagem');
+        }
       }
+      // Se o usuário removeu a imagem existente (sem escolher uma nova)
+      else if (_imagemUrl == null && widget.servico.imgServico != null) {
+        print('Imagem removida pelo usuário (sem nova imagem)');
+        newImageUrl = null;
+      }
+
+      print('Criando objeto de serviço atualizado:');
+      print('- Nome: ${_nomeController.text}');
+      print('- Descrição: ${_descricaoController.text}');
+      print('- Preço: ${_precoController.text}');
+      print('- Categoria: $_categoriaSelecionada');
+      print('- URL da imagem final: $newImageUrl');
 
       final updatedServico = widget.servico.copyWith(
         nome: _nomeController.text,
         descricao: _descricaoController.text,
         preco: double.tryParse(_precoController.text) ?? 0.0,
         categoria: _categoriaSelecionada!,
-        imgServico: newImageUrl, // Atualizar com a nova imagem ou manter a antiga
+        imgServico: newImageUrl, // Pode ser null para remover a imagem
       );
 
+      print('Objeto de serviço criado:');
+      print('- ID: ${updatedServico.idServico}');
+      print('- URL da imagem no objeto: ${updatedServico.imgServico}');
+      print('- JSON completo: ${updatedServico.toJson()}');
+
+      print('Chamando método editarServico()...');
       await _servicoService.editarServico(updatedServico);
+      print('Método editarServico() concluído com sucesso');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -110,6 +147,8 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
+      print('ERRO AO ATUALIZAR SERVIÇO: $e');
+      print('--- ATUALIZAÇÃO FALHOU ---');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao atualizar serviço: $e'), backgroundColor: Colors.red),
