@@ -17,6 +17,27 @@ class Servico {
     required this.idPrestador,
   });
 
+  // Método copyWith
+  Servico copyWith({
+    String? idServico,
+    String? nome,
+    String? descricao,
+    String? categoria,
+    String? imgServico,
+    double? preco,
+    String? idPrestador,
+  }) {
+    return Servico(
+      idServico: idServico ?? this.idServico,
+      nome: nome ?? this.nome,
+      descricao: descricao ?? this.descricao,
+      categoria: categoria ?? this.categoria,
+      imgServico: imgServico ?? this.imgServico,
+      preco: preco ?? this.preco,
+      idPrestador: idPrestador ?? this.idPrestador,
+    );
+  }
+
   // Método fromJson
   factory Servico.fromJson(Map<String, dynamic> json) {
     return Servico(
@@ -37,7 +58,7 @@ class Servico {
       'nome': nome,
       'descricao': descricao,
       'categoria': categoria,
-      if (imgServico != null) 'img_servico': imgServico,
+      'img_servico': imgServico, // Sempre inclui, mesmo se for nulo
       if (preco != null) 'preco': preco,
       'id_prestador': idPrestador,
     };
