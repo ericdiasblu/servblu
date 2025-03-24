@@ -10,6 +10,8 @@ class BuildServicesProfile extends StatelessWidget {
   final String? idServico;
   final VoidCallback? onTap;
   final Servico? servico; // Adicionando o objeto Servico completo
+  final VoidCallback? onServiceDeleted;  // Add this callback
+
 
   const BuildServicesProfile({
     Key? key,
@@ -20,10 +22,15 @@ class BuildServicesProfile extends StatelessWidget {
     this.idServico,
     this.onTap,
     this.servico, // Servico pode ser opcional para manter compatibilidade
+    this.onServiceDeleted,
   }) : super(key: key);
 
   // Construtor factory para criar a partir de um objeto Servico
-  factory BuildServicesProfile.fromServico(Servico servico) {
+  factory BuildServicesProfile.fromServico(
+      Servico servico,
+      {VoidCallback? onServiceDeleted}
+      ) {
+
     // Lista de cores para variar os cards
     final List<Color> cores = [
       Colors.purple.withOpacity(0.2),
@@ -46,6 +53,7 @@ class BuildServicesProfile extends StatelessWidget {
       corContainer: corContainer,
       corTexto: corTexto,
       servico: servico, // Passando o objeto Servico completo
+      onServiceDeleted: onServiceDeleted,
     );
   }
 
@@ -58,10 +66,9 @@ class BuildServicesProfile extends StatelessWidget {
             context,
             servico!
         );
-        // Se o serviço foi excluído e você precisa atualizar a lista,
-        // você pode implementar uma callback para isso
-        if (wasDeleted == true && onTap != null) {
-          onTap!();
+        // Update this to call the deletion callback
+        if (wasDeleted == true && onServiceDeleted != null) {
+          onServiceDeleted!();
         }
       }
           : null),

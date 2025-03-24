@@ -12,7 +12,7 @@ import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/service_screen.dart';
-
+import 'package:servblu/utils/navigation_helper.dart';
 import '../../services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -172,14 +172,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navegarParaDetalheServico(String idServico) {
-    // Implementar depois - Por enquanto apenas exibe uma mensagem
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ver detalhes do serviço $idServico'),
-        backgroundColor: Colors.blue,
-      ),
+    // Find the service
+    final servico = servicosUsuario.firstWhere(
+          (s) => s.idServico == idServico,
     );
-    // No futuro: context.push('/servico/$idServico');
+
+    if (servico != null) {
+      NavigationHelper.navigateToServiceDetails(context, servico)
+          .then((wasDeleted) {
+        if (wasDeleted == true) {
+          carregarServicosUsuario();
+        }
+      });
+    }
   }
 
   Widget _buildServicosSection() {
@@ -244,6 +249,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.only(right: 10),
                 child: BuildServicesProfile.fromServico(
                   servico,
+                  onServiceDeleted: () {
+                    // This is the callback for when a service is deleted
+                    carregarServicosUsuario();
+                  },
                 ),
               );
             }).toList(),
@@ -290,7 +299,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: SingleChildScrollView(
+      body: RefreshIndicator(  // Add this RefreshIndicator
+      onRefresh: () async {
+      await carregarServicosUsuario();
+      await carregarDadosUsuario();
+      },
+      child:SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -503,6 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    )
     );
   }
 

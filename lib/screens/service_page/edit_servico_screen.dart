@@ -145,6 +145,7 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
           SnackBar(content: Text('Serviço atualizado com sucesso!'), backgroundColor: Colors.green),
         );
         Navigator.pop(context, true);
+        Navigator.pop(context, 'updated');
       }
     } catch (e) {
       print('ERRO AO ATUALIZAR SERVIÇO: $e');

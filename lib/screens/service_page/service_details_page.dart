@@ -53,6 +53,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           SnackBar(content: Text('Serviço removido com sucesso')),
         );
         Navigator.pop(context, true); // Retorna true para indicar que foi deletado
+        Navigator.pop(context, 'deleted');
       }
     } catch (e) {
       if (mounted) {
