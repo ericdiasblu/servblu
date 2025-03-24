@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _navegarParaDetalheServico(String idServico) {
+  void navegarParaDetalheServico(String idServico) {
     // Find the service
     final servico = servicosUsuario.firstWhere(
           (s) => s.idServico == idServico,
