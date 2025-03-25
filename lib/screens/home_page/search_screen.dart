@@ -157,8 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             // Cabeçalho azul fixo
             Container(
@@ -478,7 +477,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

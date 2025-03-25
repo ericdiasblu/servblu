@@ -8,6 +8,8 @@ import 'dart:io';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
 
+import '../../widgets/build_header.dart';
+
 class ServicoTestScreen extends StatefulWidget {
   @override
   _ServiceScreenState createState() => _ServiceScreenState();
@@ -205,35 +207,9 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
+        body: Column(
             children: [
-              Container(
-                height: MediaQuery.of(context).padding.top + 70,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xFF017DFE),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Center(
-                    child: Text(
-                      'Anunciar Serviço',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-
+              BuildHeader(title: 'Anunciar Serviço'),
               // Wrap the scrollable content in an Expanded widget
               Expanded(
                 child: SingleChildScrollView(
@@ -388,7 +364,6 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
