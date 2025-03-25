@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:servblu/widgets/image_slider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../router/routes.dart';
 import '../../widgets/build_categories.dart';
@@ -58,7 +59,7 @@ class _HomePageContentState extends State<HomePageContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color(0xFFF5F5F5),
+        color: const Color(0xFFF3F3F3),
         width: double.infinity,
         height: double.infinity,
         child: SingleChildScrollView(
@@ -67,7 +68,14 @@ class _HomePageContentState extends State<HomePageContent> {
             children: [
               _buildHeader(),
               _buildListCategories(),
-              _buildImage(),
+              SizedBox(height: 30,),
+              ImageSlider(
+                  imagePaths: [
+                    'assets/home_image.jpg',
+                    'assets/second_image.png',
+                    'assets/offer_image.png'
+              ]),
+              SizedBox(height: 30,),
               _buildBestOffersTitle(),
               _buildBestOffers(),
             ],
@@ -242,7 +250,7 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Widget _buildListCategories() {
     return Container(
-      color: Colors.white,
+      color: const Color(0xFFF3F3F3),
       height: 110,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,

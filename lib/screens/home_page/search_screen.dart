@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../models/servicos/servico.dart';
 import '../../router/routes.dart';
+
+import 'package:servblu/utils/navigation_helper.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -11,91 +16,24 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // Controlador para o campo de texto da busca
   final TextEditingController _searchController = TextEditingController();
+  final SupabaseClient supabase = Supabase.instance.client;
+  final Uuid _uuid = Uuid();
 
-  // Lista de dados fictícios para os serviços (original)
-  final List<Map<String, dynamic>> _allServices = [
-    {
-      "image": "", // Substitua por 'assets/seu_arquivo.png' ou URL da imagem
-      "name": "Serviço 1",
-      "category": "Categoria A",
-      "price": "R\$ 50,00",
-      "rating": 4.3,
-    },
-    {
-      "image": "",
-      "name": "Serviço 2",
-      "category": "Categoria B",
-      "price": "R\$ 70,00",
-      "rating": 4.5,
-    },
-    {
-      "image": "",
-      "name": "Serviço 3",
-      "category": "Categoria C",
-      "price": "R\$ 90,00",
-      "rating": 4.0,
-    },
-    {
-      "image": "",
-      "name": "Serviço 4",
-      "category": "Categoria A",
-      "price": "R\$ 120,00",
-      "rating": 4.8,
-    },
-    {
-      "image": "",
-      "name": "Serviço 5",
-      "category": "Categoria B",
-      "price": "R\$ 60,00",
-      "rating": 4.1,
-    },
-    {
-      "image": "",
-      "name": "Serviço 6",
-      "category": "Categoria C",
-      "price": "R\$ 85,00",
-      "rating": 4.4,
-    },
-    {
-      "image": "",
-      "name": "Serviço 7",
-      "category": "Categoria A",
-      "price": "R\$ 95,00",
-      "rating": 4.2,
-    },
-    {
-      "image": "",
-      "name": "Serviço 8",
-      "category": "Categoria B",
-      "price": "R\$ 110,00",
-      "rating": 4.7,
-    },
-  ];
+  // List to store all services from Supabase
+  List<Servico> _allServices = [];
+  List<Servico> _filteredServices = [];
 
-  // Lista filtrada que será exibida - inicializada diretamente sem 'late'
-  List<Map<String, dynamic>> _filteredServices = [];
-
-  // Categoria selecionada para filtro (null significa todas)
+  // Categorias disponíveis
+  List<String> _categories = [];
   String? _selectedCategory;
 
-  // Lista de todas as categorias disponíveis
-  List<String> _categories = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Inicializa a lista filtrada com todos os serviços
-    _filteredServices = List.from(_allServices);
-
-    // Extrair categorias únicas
-    _categories = _allServices
-        .map((service) => service["category"] as String)
-        .toSet()
-        .toList();
-
-    // Adicionar listener para o campo de busca
+    _fetchServices();
     _searchController.addListener(_filterServices);
   }
 
@@ -105,20 +43,59 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  // Método para filtrar os serviços com base APENAS no nome do serviço e categoria selecionada
+  // Método para buscar todos os serviços do Supabase
+  Future<void> _fetchServices() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Buscar todos os serviços
+      final response = await supabase
+          .from('servicos')
+          .select()
+          .order('nome', ascending: true);
+
+      // Converter a resposta para uma lista de Servico
+      final List<Servico> services = response
+          .map<Servico>((json) => Servico.fromJson(json))
+          .toList();
+
+      // Extrair categorias únicas
+      final categories = services
+          .map((service) => service.categoria)
+          .toSet()
+          .toList();
+
+      setState(() {
+        _allServices = services;
+        _filteredServices = List.from(_allServices);
+        _categories = categories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar serviços: $e')),
+      );
+    }
+  }
+
+  // Método para filtrar os serviços
   void _filterServices() {
     final String query = _searchController.text.toLowerCase();
 
     setState(() {
       _filteredServices = _allServices.where((service) {
-        // Agora verificamos APENAS se o nome do serviço corresponde à consulta de busca
-        final bool matchesQuery = service["name"].toString().toLowerCase().contains(query);
+        // Verificar se o nome do serviço corresponde à consulta
+        final bool matchesQuery = service.nome.toLowerCase().contains(query);
 
-        // Verificar se o serviço corresponde à categoria selecionada (se houver)
+        // Verificar se o serviço corresponde à categoria selecionada
         final bool matchesCategory = _selectedCategory == null ||
-            service["category"] == _selectedCategory;
+            service.categoria == _selectedCategory;
 
-        // O serviço precisa corresponder tanto ao nome quanto à categoria
         return matchesQuery && matchesCategory;
       }).toList();
     });
@@ -229,7 +206,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               filled: true,
                               fillColor: Colors.white,
                               prefixIcon: const Icon(Icons.search),
-                              hintText: "Procure por serviço",  // Alterado o hint para indicar que a busca é só por nome
+                              hintText: "Procure por serviço",
                               hintStyle: const TextStyle(
                                   color: Colors.black, fontSize: 15),
                               border: OutlineInputBorder(
@@ -350,8 +327,14 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                       ),
 
-                    // Mensagem quando não há resultados
-                    if (_filteredServices.isEmpty)
+                    // Loading indicator or No results message
+                    if (_isLoading)
+                      const Expanded(
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_filteredServices.isEmpty)
                       Expanded(
                         child: Center(
                           child: Column(
@@ -393,10 +376,12 @@ class _SearchScreenState extends State<SearchScreen> {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: InkWell(
+
                                 onTap: () {
+                                  Servico servico;
+                                  NavigationHelper.navigateToServiceDetails(context, service);
                                   // Navegação para a página de detalhes do serviço
-                                  // Implemente isso baseado na sua estrutura de rotas
-                                  // Por exemplo: GoRouter.of(context).go('${Routes.serviceDetails}/${index}');
+
                                 },
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,14 +393,14 @@ class _SearchScreenState extends State<SearchScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: Colors.grey[300],
-                                        image: service["image"] != ""
+                                        image: service.imgServico != null && service.imgServico!.isNotEmpty
                                             ? DecorationImage(
-                                          image: AssetImage(service["image"]),
+                                          image: NetworkImage(service.imgServico!),
                                           fit: BoxFit.cover,
                                         )
                                             : null,
                                       ),
-                                      child: service["image"] == ""
+                                      child: service.imgServico == null || service.imgServico!.isEmpty
                                           ? const Icon(
                                         Icons.image,
                                         size: 40,
@@ -431,7 +416,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                         CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            service["name"],
+                                            service.nome,
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -439,7 +424,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            service["category"],
+                                            service.categoria,
                                             style: const TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey,
@@ -447,7 +432,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "Preço: ${service["price"]}",
+                                            "Preço: R\$ ${service.preco?.toStringAsFixed(2)}",
                                             style: const TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -457,7 +442,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                           Row(
                                             children: [
                                               Text(
-                                                "${service["rating"]}",
+                                                "4.1",
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.black,

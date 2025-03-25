@@ -100,7 +100,7 @@ class BuildServicesProfile extends StatelessWidget {
                 color: Colors.black.withOpacity(0.7),
                 fontSize: 14,
               ),
-              maxLines: 3,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
