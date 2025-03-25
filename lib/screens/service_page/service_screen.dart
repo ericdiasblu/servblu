@@ -371,7 +371,7 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
                           ),
                         ),
                         child: Text(
-                          'Continuar',
+                          'Anunciar',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
