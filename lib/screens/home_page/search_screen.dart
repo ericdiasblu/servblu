@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 import '../../models/servicos/servico.dart';
 import '../../router/routes.dart';
 
+import 'package:servblu/utils/navigation_helper.dart';
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -374,7 +376,10 @@ class _SearchScreenState extends State<SearchScreen> {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: InkWell(
+
                                 onTap: () {
+                                  Servico servico;
+                                  NavigationHelper.navigateToServiceDetails(context, service);
                                   // Navegação para a página de detalhes do serviço
 
                                 },

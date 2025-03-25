@@ -59,7 +59,7 @@ class _HomePageContentState extends State<HomePageContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color(0xFFF5F5F5),
+        color: const Color(0xFFF3F3F3),
         width: double.infinity,
         height: double.infinity,
         child: SingleChildScrollView(
@@ -250,7 +250,7 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Widget _buildListCategories() {
     return Container(
-      color: Colors.white,
+      color: const Color(0xFFF3F3F3),
       height: 110,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
