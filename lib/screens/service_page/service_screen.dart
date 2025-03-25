@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
+
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
-import 'dart:io';
 
 class ServicoTestScreen extends StatefulWidget {
   @override
-  _ServicoTestScreenState createState() => _ServicoTestScreenState();
+  _ServiceScreenState createState() => _ServiceScreenState();
 }
 
-class _ServicoTestScreenState extends State<ServicoTestScreen> {
+class _ServiceScreenState extends State<ServicoTestScreen> {
   final ServicoService _servicoService = ServicoService();
   final List<String> categorias = [
     'Escritório',
@@ -19,8 +20,9 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
     'Manutenção',
     'Higienização',
   ];
-  String? _categoriaSelecionada;
+
   File? _imagemSelecionada;
+  String? _categoriaSelecionada;
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _descricaoController = TextEditingController();
   final TextEditingController _precoController = TextEditingController();
@@ -31,36 +33,21 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800, // Redimensiona a imagem para reduzir o tamanho
-        imageQuality: 85, // Comprime a imagem para reduzir o tamanho
+        maxWidth: 800,
+        imageQuality: 85,
       );
 
       if (pickedFile != null) {
         setState(() {
           _imagemSelecionada = File(pickedFile.path);
         });
-
-        // Exibir tamanho da imagem para debug
-        final fileSize = await _imagemSelecionada!.length();
-        print('Tamanho da imagem selecionada: ${(fileSize / 1024).toStringAsFixed(2)} KB');
       }
     } catch (e) {
       _mostrarMensagemErro('Erro ao selecionar imagem: $e');
     }
   }
 
-  // Método para limpar todos os campos
-  void _limparCampos() {
-    setState(() {
-      _nomeController.clear();
-      _descricaoController.clear();
-      _precoController.clear();
-      _categoriaSelecionada = null;
-      _imagemSelecionada = null;
-    });
-  }
-
-  // Validação dos campos antes de cadastrar
+  // Método para validar os campos
   bool _validarCampos() {
     if (_nomeController.text.isEmpty) {
       _mostrarMensagemErro('O nome do serviço é obrigatório');
@@ -96,6 +83,7 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
     return true;
   }
 
+  // Método para cadastrar o serviço
   Future<void> _cadastrarServico() async {
     // Validar os campos primeiro
     if (!_validarCampos()) {
@@ -135,7 +123,7 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
           setState(() {
             _isLoading = false;
           });
-          return; // Make sure to return here to stop the process
+          return;
         }
       }
 
@@ -168,6 +156,18 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
     }
   }
 
+  // Método para limpar todos os campos
+  void _limparCampos() {
+    setState(() {
+      _nomeController.clear();
+      _descricaoController.clear();
+      _precoController.clear();
+      _categoriaSelecionada = null;
+      _imagemSelecionada = null;
+    });
+  }
+
+  // Métodos para mostrar mensagens de sucesso e erro
   void _mostrarMensagemSucesso(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(mensagem), backgroundColor: Colors.green),
@@ -182,135 +182,193 @@ class _ServicoTestScreenState extends State<ServicoTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Anunciar Serviço'),
-      ),
-      body: _isLoading
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processando, por favor aguarde...'),
-          ],
+    // Se estiver carregando, mostrar indicador de progresso
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Processando, por favor aguarde...'),
+            ],
+          ),
         ),
-      )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _nomeController,
-              decoration: InputDecoration(
-                labelText: 'Nome do serviço',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _descricaoController,
-              decoration: InputDecoration(
-                labelText: 'Descrição',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _categoriaSelecionada,
-              decoration: InputDecoration(
-                labelText: 'Categoria',
-                border: OutlineInputBorder(),
-              ),
-              hint: Text('Selecione uma categoria'),
-              onChanged: (String? novaCategoria) {
-                setState(() {
-                  _categoriaSelecionada = novaCategoria;
-                });
-              },
-              items: categorias.map<DropdownMenuItem<String>>((String categoria) {
-                return DropdownMenuItem<String>(
-                  value: categoria,
-                  child: Text(categoria),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 24),
+      );
+    }
 
-            Text('Imagem do Serviço:', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-
-            // Área para exibir e selecionar imagem
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: _imagemSelecionada != null
-                    ? Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    Image.file(
-                      _imagemSelecionada!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: 150,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    'Anunciar Serviço',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _imagemSelecionada = null;
-                        });
-                      },
-                    ),
-                  ],
-                )
-                    : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.image, size: 50, color: Colors.grey),
-                    SizedBox(height: 8),
-                    Text('Nenhuma imagem selecionada'),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-            ),
-            SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: _escolherImagem,
-              icon: Icon(Icons.photo_library),
-              label: Text('Selecionar Imagem'),
-            ),
-            SizedBox(height: 16),
 
-            TextFormField(
-              controller: _precoController,
-              decoration: InputDecoration(
-                labelText: 'Preço (em reais)',
-                border: OutlineInputBorder(),
-                prefix: Text('R\$ '),
-              ),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-            ),
-            SizedBox(height: 24),
+                // Image selection
+                GestureDetector(
+                  onTap: _escolherImagem,
+                  child: Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: _imagemSelecionada == null
+                        ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Adicionar foto',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    )
+                        : ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        _imagemSelecionada!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
+                  ),
+                ),
 
-            ElevatedButton(
-              onPressed: _cadastrarServico,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: Text(
-                'CADASTRAR SERVIÇO',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+                SizedBox(height: 16),
+
+                // Input Fields
+                _buildInputField(
+                  controller: _nomeController,
+                  labelText: 'Nome do Serviço',
+                  icon: Icons.work_outline,
+                ),
+
+                SizedBox(height: 16),
+
+                _buildInputField(
+                  controller: _descricaoController,
+                  labelText: 'Descrição',
+                  icon: Icons.description_outlined,
+                  maxLines: 3,
+                ),
+
+                SizedBox(height: 16),
+
+                _buildInputField(
+                  controller: _precoController,
+                  labelText: 'Preço (R\$)',
+                  icon: Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                ),
+
+                SizedBox(height: 16),
+
+                // Category Dropdown
+                Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: DropdownButtonFormField<String>(
+                    value: _categoriaSelecionada,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.category_outlined, color: Colors.grey),
+                      hintText: 'Categoria',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    ),
+                    dropdownColor: Colors.white,
+                    items: categorias.map((String categoria) {
+                      return DropdownMenuItem<String>(
+                        value: categoria,
+                        child: Text(categoria),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _categoriaSelecionada = newValue;
+                      });
+                    },
+                  ),
+                ),
+
+                SizedBox(height: 24),
+
+                // Continue Button
+                ElevatedButton(
+                  onPressed: _cadastrarServico,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF2196F3),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'Continuar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build consistent input fields
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Colors.grey),
+          hintText: labelText,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         ),
       ),
     );
