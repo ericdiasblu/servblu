@@ -13,6 +13,7 @@ import '../screens/login_signup/reset_password_screen.dart';
 import '../screens/profile_page/profile_screen.dart';
 import '../screens/schedule_page/schedule_screen.dart';
 import '../screens/service_page/service_screen.dart';
+import 'package:servblu/screens/service_page/service_list_screen.dart';
 
 // Chave global do navegador
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');

@@ -9,6 +9,7 @@ import '../../router/router.dart';
 import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
 import '../../services/notification_service.dart';
+import 'package:servblu/models/servicos/servico.dart';
 
 class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
@@ -20,10 +21,14 @@ class HomePageContent extends StatefulWidget {
 class _HomePageContentState extends State<HomePageContent> {
   final supabase = Supabase.instance.client;
 
+  List<Servico> _bestOffers = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _setupNotifications();
+    _fetchBestOffers();
     supabase.auth.onAuthStateChange.listen((event) {
       final session = supabase.auth.currentSession;
 
@@ -33,6 +38,7 @@ class _HomePageContentState extends State<HomePageContent> {
       }
     });
   }
+
 
   Future<void> _setupNotifications() async {
     try {
@@ -52,6 +58,36 @@ class _HomePageContentState extends State<HomePageContent> {
       }
     } catch (e) {
       print("Error setting up notifications: $e");
+    }
+  }
+
+  Future<void> _fetchBestOffers() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Fetch services, you can modify the query as needed
+      final response = await supabase
+          .from('servicos')
+          .select()
+          .order('preco', ascending: true) // Example: order by lowest price
+          .limit(4); // Limit to 4 services
+
+      // Convert response to Servico objects
+      final List<Servico> offers = response
+          .map<Servico>((json) => Servico.fromJson(json))
+          .toList();
+
+      setState(() {
+        _bestOffers = offers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching best offers: $e");
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -161,20 +197,9 @@ class _HomePageContentState extends State<HomePageContent> {
   }
 
   Widget _buildBestOffers() {
-    final List<Map<String, String>> offers = [
-      {
-        "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
-        "name": "Oferta 1",
-        "description": "Descrição da oferta 1"
-      },
-      {
-        "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
-        "name": "Oferta 2",
-        "description": "Descrição da oferta 2"
-      },
-    ];
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 2, left: 19),
@@ -182,19 +207,63 @@ class _HomePageContentState extends State<HomePageContent> {
         height: 200,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: offers.length,
+          itemCount: (_bestOffers.length > 3 ? 3 : _bestOffers.length) + 1, // +1 para o botão
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: _buildOfferCard(offers[index]),
-            );
+            if (index < 3 && index < _bestOffers.length) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _buildOfferCard(_bestOffers[index]),
+              );
+            } else {
+              // Último item: Botão "Ver Mais"
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: SizedBox(
+                  width: 120, // Espaço do botão (mesmo tamanho dos cards)
+                  height: 200, // Mantém a altura do espaço igual à da lista
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // Centraliza na vertical
+                    children: [
+                      SizedBox(
+                        width: 110, // Largura um pouco maior para caber o texto
+                        height: 36, // Ajuste fino na altura
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.go(Routes.serviceListPage, extra: "Serviços");
+                          },
+                          style: ElevatedButton.styleFrom(
+
+                            backgroundColor: const Color(0xFF017DFE),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8), // Margin interna
+                          ),
+                          child: const Text(
+                            "Ver Mais",
+                            style: TextStyle(color: Colors.white, fontSize: 13), // Fonte menor
+                            overflow: TextOverflow.ellipsis, // Garante que não quebre
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6), // Pequena margem inferior para alinhamento
+                    ],
+                  ),
+                ),
+              );
+            }
           },
         ),
       ),
     );
   }
 
-  Widget _buildOfferCard(Map<String, String> offer) {
+
+
+
+
+
+  Widget _buildOfferCard(Servico offer) {
     return Column(
       children: [
         ClipRRect(
@@ -202,16 +271,24 @@ class _HomePageContentState extends State<HomePageContent> {
           child: SizedBox(
             width: 209,
             height: 130,
-            child: Image.network(
-              offer["image"]!,
+            child: offer.imgServico != null && offer.imgServico!.isNotEmpty
+                ? Image.network(
+              offer.imgServico!,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(Icons.image_not_supported, size: 50);
+              },
+            )
+                : Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.image, size: 50, color: Colors.grey),
             ),
           ),
         ),
         const SizedBox(height: 5),
         Center(
           child: Text(
-            offer["name"]!,
+            offer.nome,
             style: const TextStyle(
               color: Color(0xFF000000),
               fontSize: 14,
@@ -221,12 +298,14 @@ class _HomePageContentState extends State<HomePageContent> {
         ),
         Center(
           child: Text(
-            offer["description"]!,
+            offer.descricao ?? "Sem descrição",
             style: const TextStyle(
               color: Color(0xFF000000),
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
