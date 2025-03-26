@@ -20,12 +20,14 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   final ServicoService _servicoService = ServicoService();
   bool isOwner = false;
   bool isLoading = false;
+  Map<String, dynamic>? userDetails;
 
   @override
   void initState() {
     super.initState();
     _checkOwnership();
     _logImageUrl(); // Adiciona log da URL da imagem para depuração
+    _fetchUserDetails();
   }
 
   void _logImageUrl() {
@@ -38,6 +40,22 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
       setState(() {
         isOwner = currentUser.id == widget.servico.idPrestador;
       });
+    }
+  }
+
+  Future<void> _fetchUserDetails() async {
+    try {
+      final details = await _servicoService.getUserDetails(widget.servico.idPrestador!);
+      setState(() {
+        userDetails = details;
+      });
+    } catch (e) {
+      print('Erro ao carregar detalhes do usuário: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível carregar informações do prestador')),
+        );
+      }
     }
   }
 
@@ -103,6 +121,81 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
               Navigator.pop(context);
               _deleteService();
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserInfoSection() {
+    if (userDetails == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Informações do Prestador",
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              // Profile Picture
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: userDetails?['foto_perfil'] != null
+                    ? NetworkImage(userDetails!['foto_perfil'])
+                    : null,
+                child: userDetails?['foto_perfil'] == null
+                    ? Icon(Icons.person, size: 40)
+                    : null,
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Nome
+                    Text(
+                      userDetails?['nome'] ?? 'Nome não disponível',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    SizedBox(height: 8),
+                    // Telefone
+                    Row(
+                      children: [
+                        Icon(Icons.phone, size: 16, color: Colors.grey),
+                        SizedBox(width: 8),
+                        Text(
+                          userDetails?['telefone'] ?? 'Telefone não disponível',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    // Endereço
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, size: 16, color: Colors.grey),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            userDetails?['endereco'] ?? 'Endereço não disponível',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -281,6 +374,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                 ],
               ),
             ),
+            _buildUserInfoSection(),
           ],
         ),
       ),
