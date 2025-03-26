@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class BuildCategories extends StatelessWidget {
-  final String? textCategory;
-  final IconData? icon;
+  final String textCategory;
+  final IconData icon;
+  final VoidCallback? onTap;
 
-  const BuildCategories(
-      {Key? key, required this.textCategory, required this.icon})
-      : super(key: key);
+  const BuildCategories({
+    Key? key,
+    required this.textCategory,
+    required this.icon,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(
-          height: 9,
-        ),
+        const SizedBox(height: 9),
         ElevatedButton(
-          onPressed: () {
+          onPressed: onTap ?? () {
+            // Navegação padrão se nenhum onTap for fornecido
+            context.go('/service-list?category=$textCategory', extra: textCategory);
           },
           style: ElevatedButton.styleFrom(
-            shape: CircleBorder(),
-            padding: EdgeInsets.all(0),
+            shape: const CircleBorder(),
+            padding: EdgeInsets.zero,
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
           ),
@@ -42,8 +47,11 @@ class BuildCategories extends StatelessWidget {
           ),
         ),
         Text(
-          textCategory!,
-          style: TextStyle(color: Colors.blue,fontWeight: FontWeight.bold),
+          textCategory,
+          style: const TextStyle(
+              color: Colors.blue,
+              fontWeight: FontWeight.bold
+          ),
         )
       ],
     );

@@ -10,6 +10,10 @@ import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
 import '../../services/notification_service.dart';
 import 'package:servblu/models/servicos/servico.dart';
+import '../../router/routes.dart';
+import '../../utils/navigation_helper.dart';
+
+import '../../models/servicos/servico.dart';
 
 class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
@@ -260,57 +264,62 @@ class _HomePageContentState extends State<HomePageContent> {
 
 
 
-
-
-
   Widget _buildOfferCard(Servico offer) {
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            width: 209,
-            height: 130,
-            child: offer.imgServico != null && offer.imgServico!.isNotEmpty
-                ? Image.network(
-              offer.imgServico!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.image_not_supported, size: 50);
-              },
-            )
-                : Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.image, size: 50, color: Colors.grey),
+    return GestureDetector(
+      onTap: () {
+        NavigationHelper.navigateToServiceDetails(context, offer);
+      },
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 209,
+              height: 130,
+              child: offer.imgServico != null && offer.imgServico!.isNotEmpty
+                  ? Image.network(
+                offer.imgServico!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.image_not_supported, size: 50);
+                },
+              )
+                  : Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 5),
-        Center(
-          child: Text(
-            offer.nome,
-            style: const TextStyle(
-              color: Color(0xFF000000),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 5),
+          Center(
+            child: Text(
+              offer.nome,
+              style: const TextStyle(
+                color: Color(0xFF000000),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        Center(
-          child: Text(
-            offer.descricao ?? "Sem descrição",
-            style: const TextStyle(
-              color: Color(0xFF000000),
-              fontSize: 12,
+          Center(
+            child: Text(
+              offer.descricao ?? "Sem descrição",
+              style: const TextStyle(
+                color: Color(0xFF000000),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+
+
 
   Widget _buildImage() {
     return Column(

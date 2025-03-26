@@ -81,6 +81,19 @@ final router = GoRouter(
       name: Routes.resetPasswordPage,
       builder: (context, state) => const ResetPasswordScreen(),
     ),
+    GoRoute(
+      path: Routes.serviceListPage,
+      builder: (context, state) {
+        // Use state.uri.queryParameters instead of state.queryParams
+        final title = state.extra as String;
+        final category = state.uri.queryParameters['category'];
+
+        return ServiceListScreen(
+          title: title,
+          category: category,
+        );
+      },
+    ),
 
     // Rotas que usam o shell de navegação (com barra inferior)
     StatefulShellRoute.indexedStack(

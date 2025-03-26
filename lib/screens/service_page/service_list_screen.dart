@@ -38,21 +38,21 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
         _isLoading = true;
       });
 
-      // Base query
-      var query = supabase
-          .from('servicos')
-          .select()
-          .order('nome', ascending: true);
+      // Start with a base select query
+      var query = supabase.from('servicos').select();
 
-      // If a category is specified, filter by category
+      // If a category is specified, add filter
       if (widget.category != null) {
-        query = query.eq('categoria', widget.category);
+        query = query.eq('categoria', widget.category!);
       }
 
+      // Add ordering
+
+      // Execute the query and await the response
       final response = await query;
 
       // Convert response to Servico objects
-      final List<Servico> services = response
+      final List<Servico> services = (response as List)
           .map<Servico>((json) => Servico.fromJson(json))
           .toList();
 
@@ -61,6 +61,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      print('Error fetching services: $e');
       setState(() {
         _isLoading = false;
       });
@@ -73,12 +74,11 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final headerHeight = screenHeight * 0.33; // 1/3 da tela
+    final headerHeight = screenHeight * 0.15; // 1/3 da tela
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             // Cabeçalho azul fixo
             Container(
@@ -88,18 +88,24 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                 children: [
                   // Título e botão de voltar
                   Padding(
-                    padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
-                    child: Row(
+                    padding: const EdgeInsets.only(top: 45, left: 20, right: 20),
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios),
-                          color: Colors.white,
-                          onPressed: () {
-                            GoRouter.of(context).go(Routes.homePage);
-                          },
+                        // Back button positioned on the left
+                        Positioned(
+                          left: 0,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios),
+                            color: Colors.white,
+                            onPressed: () {
+                              GoRouter.of(context).go(Routes.homePage);
+                            },
+                          ),
                         ),
-                        const SizedBox(width: 85),
-                        Expanded(
+
+                        // Centered title
+                        Center(
                           child: Text(
                             widget.title,
                             style: const TextStyle(
@@ -228,7 +234,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "Preço: R\$ ${service.preco?.toStringAsFixed(2)}",
+                                            "Preço: R\$ ${service.preco?.toStringAsFixed(2) ?? 'N/A'}",
                                             style: const TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -237,9 +243,9 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              Text(
+                                              const Text(
                                                 "4.1",
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.black,
                                                 ),
@@ -274,7 +280,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
             ),
           ],
         ),
-      ),
+
     );
   }
 }
