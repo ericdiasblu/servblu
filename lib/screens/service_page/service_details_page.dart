@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
 import 'package:servblu/screens/home_page/search_screen.dart';
@@ -198,24 +199,42 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: isOwner
+          ? null
+          : Container(
+              color: Colors.white,
+              height: 100,
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16),
+                child: Center(
+                  child: Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      child: Text(
+                        "Agendar Serviço",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2196F3),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Implementar a lógica para entrar em contato
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
       backgroundColor: Colors.white,
-      /*appBar: AppBar(
-        title: Text(widget.servico.nome),
-        actions: isOwner
-            ? [
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: _navigateToEditPage,
-          ),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              _showDeleteConfirmationDialog();
-            },
-          ),
-        ]
-            : null,
-      ),*/
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -391,7 +410,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                           children: [
                             Icon(
                               Icons.star,
-                              color: Color(0xFFCFC107),
+                              color: Color(0xFFFCD40E),
                               size: 15,
                             ),
                             Text(
@@ -404,7 +423,6 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                       ],
                     ),
                   ),
-
                   Container(
                     color: Colors.white,
                     child: Column(
@@ -442,140 +460,90 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                         SizedBox(
                           height: 16,
                         ),
-
-                        /*Text(
-                            "Descrição:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            widget.servico.descricao,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          SizedBox(height: 24),
-
-                          if (widget.servico.preco != null)
-                            Row(
-                              children: [
-                                Text(
-                                  "Preço:",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "R\$ ${widget.servico.preco!.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),*/
-
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16, bottom: 16),
-                          child: DefaultTabController(
-                            length: 2,
-                            child: SizedBox(
-                              height: 400,
-                              child: Column(
-                                children: <Widget>[
-                                  TabBar(
-                                    labelColor: Colors.blueAccent,
-                                    indicatorColor: Colors.blueAccent,
-                                    tabs: <Widget>[
-                                      Tab(
-                                        text: "          Sobre          ",
+                        Stack(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 16, bottom: 16),
+                              child: DefaultTabController(
+                                length: 2,
+                                child: Column(
+                                  children: <Widget>[
+                                    TabBar(
+                                      isScrollable: true,
+                                      labelColor: Colors.blueAccent,
+                                      indicatorColor: Colors.blueAccent,
+                                      indicator: UnderlineTabIndicator(
+                                        borderSide: BorderSide(
+                                            width: 3, color: Colors.blue),
+                                        insets: EdgeInsets.symmetric(
+                                            horizontal: 120),
                                       ),
-                                      Tab(
-                                        text: "          Avalições          ",
-                                      )
-                                    ],
-                                  ),
-                                  Expanded(
-                                    child: TabBarView(
-                                      children: <Widget>[
-                                        Container(
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                SizedBox(
-                                                  height: 16,
-                                                ),
-                                                Text(
-                                                  'Sobre o Serviço',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w700),
-                                                ),
-                                                SizedBox(height: 16),
-                                                Text(
-                                                  widget.servico.descricao,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyMedium,
-                                                ),
-                                                SizedBox(height: 16),
-                                                _buildUserInfoSection(),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          color: Colors.yellow,
-                                        ),
+                                      tabs: <Widget>[
+                                        Tab(text: "         Sobre         "),
+                                        Tab(
+                                            text:
+                                                "         Avalições         "),
                                       ],
                                     ),
-                                  ),
-                                ],
+                                    // Substituir Expanded por um Container com altura fixa
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height -
+                                              (isOwner ? 500 : 550),
+                                      // Adjust this value as needed
+                                      child: TabBarView(
+                                        children: <Widget>[
+                                          // Se o conteúdo interno também pode crescer, envolver com SingleChildScrollView
+                                          SingleChildScrollView(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  SizedBox(height: 16),
+                                                  Text(
+                                                    'Sobre o Serviço',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700),
+                                                  ),
+                                                  SizedBox(height: 16),
+                                                  Text(
+                                                    widget.servico.descricao,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
+                                                  ),
+                                                  SizedBox(height: 16),
+                                                  _buildUserInfoSection(),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          SingleChildScrollView(
+                                            child: Container(
+                                              color: Colors.white,
+                                              child: Center(
+                                                child: Text(
+                                                    'Avaliações ainda não implementadas'),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: isOwner ? 0 : 80),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        // Botão para contratar/entrar em contato (para não-proprietários)
+                          ],
+                        )
                       ],
                     ),
-                  ),
-                  if (!isOwner)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 16),
-                      child: Center(
-                        child: Container(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            child: Text("Agendar Serviço",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                )),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2196F3),
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: () {
-                              // Implementar a lógica para entrar em contato
-                              // Exemplo: abrir tela de chat ou mostrar informações de contato
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  SizedBox(
-                    height: 30,
                   ),
                 ],
               ),
