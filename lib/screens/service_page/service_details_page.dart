@@ -286,14 +286,16 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(top: 40,left: 20),
+                                padding:
+                                    const EdgeInsets.only(top: 40, left: 20),
                                 child: BuildCircleButton(
                                     icon: Icons.arrow_back,
                                     funcaoBotao: navigateToSearch),
                               ),
                               if (isOwner)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 8.0,right: 20),
+                                  padding: const EdgeInsets.only(
+                                      top: 8.0, right: 20),
                                   child: Column(
                                     children: [
                                       SizedBox(
@@ -321,6 +323,21 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                   ),
                                 )
                             ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 330,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 30,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(45),
+                                topRight: Radius.circular(45),
+                              ),
+                            ),
                           ),
                         ),
                       ],
