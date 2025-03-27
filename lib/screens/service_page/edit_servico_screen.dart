@@ -269,6 +269,8 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
                         hintText: 'Descrição',
                         obscureText: false,
                         controller: _descricaoController,
+                        isDescription: true,
+
                       ),
                       SizedBox(height: 16),
                       InputField(
@@ -319,7 +321,7 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 70),
+                      SizedBox(height: 20),
                       Container(
                         width: 400,
                         child: ElevatedButton(

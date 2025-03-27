@@ -277,10 +277,10 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
                       SizedBox(height: 5),
 
                       InputField(
-                        icon: Icons.description_outlined,
                         hintText: 'Descrição',
                         obscureText: false,
                         controller: _descricaoController,
+                        isDescription: true,
                       ),
 
                       SizedBox(height: 5),
