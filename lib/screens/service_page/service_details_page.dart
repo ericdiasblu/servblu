@@ -484,7 +484,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                           child: DefaultTabController(
                             length: 2,
                             child: SizedBox(
-                              height: 284.0,
+                              height: 400,
                               child: Column(
                                 children: <Widget>[
                                   TabBar(
