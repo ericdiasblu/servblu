@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/widgets/build_button.dart';
+import 'package:servblu/widgets/build_header.dart';
+import 'package:servblu/widgets/input_field.dart';
 
 class EditServicoScreen extends StatefulWidget {
   final Servico servico;
@@ -37,8 +40,10 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
   void initState() {
     super.initState();
     _nomeController = TextEditingController(text: widget.servico.nome);
-    _descricaoController = TextEditingController(text: widget.servico.descricao);
-    _precoController = TextEditingController(text: widget.servico.preco?.toString() ?? '');
+    _descricaoController =
+        TextEditingController(text: widget.servico.descricao);
+    _precoController =
+        TextEditingController(text: widget.servico.preco?.toString() ?? '');
     _categoriaSelecionada = widget.servico.categoria;
     _imagemUrl = widget.servico.imgServico; // Carregar a imagem existente
   }
@@ -68,7 +73,9 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao selecionar imagem: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('Erro ao selecionar imagem: $e'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -103,7 +110,8 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
       if (_novaImagem != null) {
         print('Fazendo upload da nova imagem...');
         newImageUrl = await _servicoService.uploadImagem(_novaImagem!);
-        print('Resultado do upload: ${newImageUrl != null ? 'SUCESSO' : 'FALHA'}');
+        print(
+            'Resultado do upload: ${newImageUrl != null ? 'SUCESSO' : 'FALHA'}');
         print('Nova URL da imagem: $newImageUrl');
 
         if (newImageUrl == null) {
@@ -142,7 +150,9 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Serviço atualizado com sucesso!'), backgroundColor: Colors.green),
+          SnackBar(
+              content: Text('Serviço atualizado com sucesso!'),
+              backgroundColor: Colors.green),
         );
         Navigator.pop(context, true);
         Navigator.pop(context, 'updated');
@@ -152,7 +162,9 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
       print('--- ATUALIZAÇÃO FALHOU ---');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao atualizar serviço: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Erro ao atualizar serviço: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -161,105 +173,180 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Editar Serviço')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _nomeController,
-                  decoration: InputDecoration(labelText: 'Nome'),
-                  validator: (value) => value!.isEmpty ? 'Informe um nome' : null,
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _descricaoController,
-                  decoration: InputDecoration(labelText: 'Descrição'),
-                  maxLines: 3,
-                  validator: (value) => value!.isEmpty ? 'Informe uma descrição' : null,
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _precoController,
-                  decoration: InputDecoration(labelText: 'Preço'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Informe um preço' : null,
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _categoriaSelecionada,
-                  decoration: InputDecoration(
-                    labelText: 'Categoria',
-                    border: OutlineInputBorder(),
-                  ),
-                  hint: Text('Selecione uma categoria'),
-                  onChanged: (String? novaCategoria) {
-                    setState(() {
-                      _categoriaSelecionada = novaCategoria;
-                    });
-                  },
-                  items: categorias.map<DropdownMenuItem<String>>((String categoria) {
-                    return DropdownMenuItem<String>(
-                      value: categoria,
-                      child: Text(categoria),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 24),
-                Text('Imagem do Serviço:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Container(
-                  height: 150,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Center(
-                    child: _novaImagem != null
-                        ? Image.file(_novaImagem!, fit: BoxFit.cover, width: double.infinity, height: 150)
-                        : _imagemUrl != null
-                        ? Image.network(_imagemUrl!, fit: BoxFit.cover, width: double.infinity, height: 150)
-                        : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image, size: 50, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text('Nenhuma imagem selecionada'),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _escolherImagem,
-                      icon: Icon(Icons.photo_library),
-                      label: Text('Selecionar Imagem'),
-                    ),
-                    SizedBox(width: 16),
-                    if (_novaImagem != null || _imagemUrl != null)
-                      ElevatedButton.icon(
-                        onPressed: _removerImagem,
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        label: Text('Remover'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _updateService,
-                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)),
-                  child: Text('SALVAR ALTERAÇÕES', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            BuildHeader(
+              title: 'Editar Serviço',
+              backPage: true,
+              onTap: () {
+                Navigator.pop(context);
+              },
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Widget de foto adaptado com remoção sobreposta
+                      Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: _escolherImagem,
+                            child: Container(
+                              height: 180,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF0F0F0),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: _novaImagem == null
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.camera_alt,
+                                          size: 40,
+                                          color: Color(0xFF017DFE),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Adicionar foto',
+                                          style: TextStyle(
+                                            color: Color(0xFF017DFE),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _novaImagem!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          // Botão de remoção estilizado e posicionado no canto superior direito
+                          if (_novaImagem != null || _imagemUrl != null)
+                            Positioned(
+                              top: 10,
+                              right: 10,
+                              child: InkWell(
+                                onTap: _removerImagem,
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white70,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      InputField(
+                        icon: Icons.work_outline,
+                        hintText: 'Nome do Serviço',
+                        obscureText: false,
+                        controller: _nomeController,
+                      ),
+                      SizedBox(height: 16),
+                      InputField(
+                        icon: Icons.description_outlined,
+                        hintText: 'Descrição',
+                        obscureText: false,
+                        controller: _descricaoController,
+                      ),
+                      SizedBox(height: 16),
+                      InputField(
+                        icon: Icons.attach_money,
+                        hintText: 'Preço (R\$)',
+                        obscureText: false,
+                        controller: _precoController,
+                      ),
+                      SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFF017DFE),
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.category_outlined,
+                                color: Color(0xFF017DFE)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButtonFormField<String>(
+                                  value: _categoriaSelecionada,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Categoria',
+                                    border: InputBorder.none,
+                                  ),
+                                  dropdownColor: Colors.white,
+                                  items: categorias.map((String categoria) {
+                                    return DropdownMenuItem<String>(
+                                      value: categoria,
+                                      child: Text(categoria),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _categoriaSelecionada = newValue;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 70),
+                      Container(
+                        width: 400,
+                        child: ElevatedButton(
+                          onPressed: _updateService,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF2196F3),
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'Atualizar Serviço',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
