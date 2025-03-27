@@ -45,7 +45,8 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
 
   Future<void> _fetchUserDetails() async {
     try {
-      final details = await _servicoService.getUserDetails(widget.servico.idPrestador!);
+      final details =
+          await _servicoService.getUserDetails(widget.servico.idPrestador!);
       setState(() {
         userDetails = details;
       });
@@ -53,7 +54,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
       print('Erro ao carregar detalhes do usuário: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível carregar informações do prestador')),
+          SnackBar(
+              content:
+                  Text('Não foi possível carregar informações do prestador')),
         );
       }
     }
@@ -90,7 +93,8 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   void _navigateToEditPage() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditServicoScreen(servico: widget.servico)),
+      MaterialPageRoute(
+          builder: (context) => EditServicoScreen(servico: widget.servico)),
     );
 
     if (result == true) {
@@ -100,13 +104,13 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     }
   }
 
-
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Excluir Serviço"),
-        content: Text("Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."),
+        content: Text(
+            "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."),
         actions: [
           TextButton(
             child: Text("Cancelar"),
@@ -132,80 +136,63 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
       return Center(child: CircularProgressIndicator());
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Informações do Prestador",
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              // Profile Picture
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: userDetails?['foto_perfil'] != null
-                    ? NetworkImage(userDetails!['foto_perfil'])
-                    : null,
-                child: userDetails?['foto_perfil'] == null
-                    ? Icon(Icons.person, size: 40)
-                    : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Informações do Prestador",
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            // Profile Picture
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: userDetails?['foto_perfil'] != null
+                  ? NetworkImage(userDetails!['foto_perfil'])
+                  : null,
+              child: userDetails?['foto_perfil'] == null
+                  ? Icon(Icons.person, size: 40)
+                  : null,
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Nome
+                  Text(
+                    userDetails?['nome'] ?? 'Nome não disponível',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  SizedBox(height: 8),
+                  // Telefone
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 16, color: Colors.grey),
+                      SizedBox(width: 8),
+                      Text(
+                        userDetails?['telefone'] ?? 'Telefone não disponível',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                  // Endereço
+                ],
               ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nome
-                    Text(
-                      userDetails?['nome'] ?? 'Nome não disponível',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    SizedBox(height: 8),
-                    // Telefone
-                    Row(
-                      children: [
-                        Icon(Icons.phone, size: 16, color: Colors.grey),
-                        SizedBox(width: 8),
-                        Text(
-                          userDetails?['telefone'] ?? 'Telefone não disponível',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    // Endereço
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, size: 16, color: Colors.grey),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            userDetails?['endereco'] ?? 'Endereço não disponível',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      backgroundColor: Colors.white,
+      /*appBar: AppBar(
         title: Text(widget.servico.nome),
         actions: isOwner
             ? [
@@ -221,163 +208,297 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           ),
         ]
             : null,
-      ),
+      ),*/
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagem do serviço - Bloco melhorado
-            if (widget.servico.imgServico != null &&
-                widget.servico.imgServico!.isNotEmpty)
-              Container(
-                height: 200,
-                width: double.infinity,
-                child: Image.network(
-                  widget.servico.imgServico!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Erro ao carregar imagem: $error');
-                    return Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Imagem do serviço - Bloco melhorado
+                  if (widget.servico.imgServico != null &&
+                      widget.servico.imgServico!.isNotEmpty)
+                    Container(
+                      height: 350,
+                      width: double.infinity,
+                      child: Image.network(
+                        widget.servico.imgServico!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Erro ao carregar imagem: $error');
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error_outline,
+                                      size: 40, color: Colors.red),
+                                  SizedBox(height: 8),
+                                  Text('Não foi possível carregar a imagem',
+                                      style: TextStyle(color: Colors.red[700])),
+                                  SizedBox(height: 4),
+                                  Text(
+                                      widget.servico.imgServico ??
+                                          'URL inválida',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey[700])),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Container(
                       height: 200,
                       color: Colors.grey[300],
+                      width: double.infinity,
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.error_outline, size: 40, color: Colors.red),
+                            Icon(
+                              Icons.image_not_supported,
+                              size: 50,
+                              color: Colors.grey[600],
+                            ),
                             SizedBox(height: 8),
-                            Text('Não foi possível carregar a imagem',
-                                style: TextStyle(color: Colors.red[700])),
-                            SizedBox(height: 4),
-                            Text(widget.servico.imgServico ?? 'URL inválida',
-                                style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                            Text('Sem imagem disponível',
+                                style: TextStyle(color: Colors.grey[600])),
                           ],
                         ),
                       ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              )
-            else
-              Container(
-                height: 200,
-                color: Colors.grey[300],
-                width: double.infinity,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey[600],
-                      ),
-                      SizedBox(height: 8),
-                      Text('Sem imagem disponível',
-                          style: TextStyle(color: Colors.grey[600])),
-                    ],
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.servico.nome,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                      ),
-                      Chip(
-                        label: Text(widget.servico.categoria),
-                        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-
-                  Text(
-                    "Descrição:",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    widget.servico.descricao,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: 24),
-
-                  if (widget.servico.preco != null)
-                    Row(
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 16, left: 16, right: 16, bottom: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Preço:",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color(0xFF479696).withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            child: Text(
+                              '${widget.servico.categoria}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF479696),
+                              ),
+                            ),
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Text(
-                          "R\$ ${widget.servico.preco!.toStringAsFixed(2)}",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              color: Color(0xFFCFC107),
+                              size: 15,
+                            ),
+                            Text(
+                              '4.5 (365 avaliações)',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w300, fontSize: 10),
+                            ),
+                          ],
+                        )
                       ],
                     ),
+                  ),
 
-                  SizedBox(height: 32),
+                  Container(
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          left: 16, bottom: 16, right: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.servico.nome,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            userDetails?['endereco'] ??
+                                'Endereço não disponível',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w200, fontSize: 11),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
 
-                  // Botão para contratar/entrar em contato (para não-proprietários)
-                  if (!isOwner)
-                    Center(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.contact_phone),
-                        label: Text("Entrar em Contato"),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                        onPressed: () {
-                          // Implementar a lógica para entrar em contato
-                          // Exemplo: abrir tela de chat ou mostrar informações de contato
-                        },
+                          /*Text(
+                            "Descrição:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            widget.servico.descricao,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          SizedBox(height: 24),
+
+                          if (widget.servico.preco != null)
+                            Row(
+                              children: [
+                                Text(
+                                  "Preço:",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "R\$ ${widget.servico.preco!.toStringAsFixed(2)}",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),*/
+
+                          DefaultTabController(
+                            length: 2,
+                            child: SizedBox(
+                              height: 284.0,
+                              child: Column(
+                                children: <Widget>[
+                                  TabBar(
+                                    labelColor: Colors.blueAccent,
+                                    indicatorColor: Colors.blueAccent,
+                                    tabs: <Widget>[
+                                      Tab(
+                                        text: "          Sobre          ",
+                                      ),
+                                      Tab(
+                                        text: "          Avalições          ",
+                                      )
+                                    ],
+                                  ),
+                                  Expanded(
+                                    child: TabBarView(
+                                      children: <Widget>[
+                                        Container(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  height: 16,
+                                                ),
+                                                Text(
+                                                  'Sobre o Serviço',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w700),
+                                                ),
+                                                SizedBox(height: 16),
+                                                Text(
+                                                  widget.servico.descricao,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                SizedBox(height: 16),
+                                                _buildUserInfoSection(),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          color: Colors.yellow,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Botão para contratar/entrar em contato (para não-proprietários)
+                        ],
                       ),
                     ),
+                  ),
+                  if (!isOwner)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16,right: 16),
+                      child: Center(
+                        child: Container(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            child: Text("Agendar Serviço",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                )),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF2196F3),
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () {
+                              // Implementar a lógica para entrar em contato
+                              // Exemplo: abrir tela de chat ou mostrar informações de contato
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  SizedBox(height: 30,),
                 ],
               ),
             ),
-            _buildUserInfoSection(),
-          ],
-        ),
-      ),
     );
   }
 }
