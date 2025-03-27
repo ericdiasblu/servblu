@@ -188,14 +188,33 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Widget _buildBestOffersTitle() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 11, left: 31),
-      child: const Text(
-        "Melhores ofertas",
-        style: TextStyle(
-          color: Color(0xFF000000),
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+      padding: const EdgeInsets.only(bottom: 11, left: 31, right: 31),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "Melhores ofertas",
+            style: TextStyle(
+              color: Color(0xFF000000),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(
+            height: 36,
+            child: ElevatedButton(
+              onPressed: () {
+                context.go(Routes.serviceListPage, extra: "Serviços");
+              },
+
+              child: const Text(
+                "Ver Mais",
+                style: TextStyle(color: Color(0xFF017DFE), fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -206,56 +225,17 @@ class _HomePageContentState extends State<HomePageContent> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2, left: 19),
+      padding: const EdgeInsets.only(bottom: 2),
       child: SizedBox(
         height: 200,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: (_bestOffers.length > 3 ? 3 : _bestOffers.length) + 1, // +1 para o botão
+          itemCount: _bestOffers.length > 3 ? 3 : _bestOffers.length,
           itemBuilder: (context, index) {
-            if (index < 3 && index < _bestOffers.length) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: _buildOfferCard(_bestOffers[index]),
-              );
-            } else {
-              // Último item: Botão "Ver Mais"
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: SizedBox(
-                  width: 120, // Espaço do botão (mesmo tamanho dos cards)
-                  height: 200, // Mantém a altura do espaço igual à da lista
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Centraliza na vertical
-                    children: [
-                      SizedBox(
-                        width: 110, // Largura um pouco maior para caber o texto
-                        height: 36, // Ajuste fino na altura
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.go(Routes.serviceListPage, extra: "Serviços");
-                          },
-                          style: ElevatedButton.styleFrom(
-
-                            backgroundColor: const Color(0xFF017DFE),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 8), // Margin interna
-                          ),
-                          child: const Text(
-                            "Ver Mais",
-                            style: TextStyle(color: Colors.white, fontSize: 13), // Fonte menor
-                            overflow: TextOverflow.ellipsis, // Garante que não quebre
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6), // Pequena margem inferior para alinhamento
-                    ],
-                  ),
-                ),
-              );
-            }
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: _buildOfferCard(_bestOffers[index]),
+            );
           },
         ),
       ),
