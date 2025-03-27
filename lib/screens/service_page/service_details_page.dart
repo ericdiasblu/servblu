@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/screens/home_page/search_screen.dart';
+import 'package:servblu/widgets/build_circle_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/edit_servico_screen.dart';
 
@@ -131,6 +133,11 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     );
   }
 
+  void navigateToSearch() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => SearchScreen()));
+  }
+
   Widget _buildUserInfoSection() {
     if (userDetails == null) {
       return Center(child: CircularProgressIndicator());
@@ -218,55 +225,105 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                   // Imagem do serviço - Bloco melhorado
                   if (widget.servico.imgServico != null &&
                       widget.servico.imgServico!.isNotEmpty)
-                    Container(
-                      height: 350,
-                      width: double.infinity,
-                      child: Image.network(
-                        widget.servico.imgServico!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          print('Erro ao carregar imagem: $error');
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[300],
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.error_outline,
-                                      size: 40, color: Colors.red),
-                                  SizedBox(height: 8),
-                                  Text('Não foi possível carregar a imagem',
-                                      style: TextStyle(color: Colors.red[700])),
-                                  SizedBox(height: 4),
-                                  Text(
-                                      widget.servico.imgServico ??
-                                          'URL inválida',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey[700])),
-                                ],
+                    Stack(
+                      children: [
+                        Container(
+                          height: 350,
+                          width: double.infinity,
+                          child: Image.network(
+                            widget.servico.imgServico!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('Erro ao carregar imagem: $error');
+                              return Container(
+                                height: 200,
+                                color: Colors.grey[300],
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.error_outline,
+                                          size: 40, color: Colors.red),
+                                      SizedBox(height: 8),
+                                      Text('Não foi possível carregar a imagem',
+                                          style: TextStyle(
+                                              color: Colors.red[700])),
+                                      SizedBox(height: 4),
+                                      Text(
+                                          widget.servico.imgServico ??
+                                              'URL inválida',
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[700])),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 200,
+                                color: Colors.grey[300],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 40,left: 20),
+                                child: BuildCircleButton(
+                                    icon: Icons.arrow_back,
+                                    funcaoBotao: navigateToSearch),
                               ),
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[300],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                              if (isOwner)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0,right: 20),
+                                  child: Column(
+                                    children: [
+                                      SizedBox(
+                                        height: 30,
+                                      ),
+                                      BuildCircleButton(
+                                        icon: Icons.share,
+                                        funcaoBotao: () {},
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      BuildCircleButton(
+                                        icon: Icons.delete,
+                                        funcaoBotao:
+                                            _showDeleteConfirmationDialog,
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      BuildCircleButton(
+                                          icon: Icons.edit,
+                                          funcaoBotao: _navigateToEditPage),
+                                    ],
+                                  ),
+                                )
+                            ],
+                          ),
+                        ),
+                      ],
                     )
                   else
                     Container(
@@ -291,7 +348,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                     ),
                   Padding(
                     padding: const EdgeInsets.only(
-                        top: 16, left: 16, right: 16, bottom: 20),
+                        top: 16, left: 25, right: 25, bottom: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -333,16 +390,15 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
 
                   Container(
                     color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 16, bottom: 16, right: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 30),
                                 child: Text(
                                   widget.servico.nome,
                                   style: TextStyle(
@@ -351,10 +407,13 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 30),
+                          child: Text(
                             userDetails?['endereco'] ??
                                 'Endereço não disponível',
                             style: TextStyle(
@@ -362,11 +421,12 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(
-                            height: 16,
-                          ),
+                        ),
+                        SizedBox(
+                          height: 16,
+                        ),
 
-                          /*Text(
+                        /*Text(
                             "Descrição:",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -402,7 +462,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                               ],
                             ),*/
 
-                          DefaultTabController(
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16, bottom: 16),
+                          child: DefaultTabController(
                             length: 2,
                             child: SizedBox(
                               height: 284.0,
@@ -462,14 +524,14 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                               ),
                             ),
                           ),
-                          // Botão para contratar/entrar em contato (para não-proprietários)
-                        ],
-                      ),
+                        ),
+                        // Botão para contratar/entrar em contato (para não-proprietários)
+                      ],
                     ),
                   ),
                   if (!isOwner)
                     Padding(
-                      padding: const EdgeInsets.only(left: 16,right: 16),
+                      padding: const EdgeInsets.only(left: 16, right: 16),
                       child: Center(
                         child: Container(
                           width: double.infinity,
@@ -495,7 +557,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                         ),
                       ),
                     ),
-                  SizedBox(height: 30,),
+                  SizedBox(
+                    height: 30,
+                  ),
                 ],
               ),
             ),
