@@ -9,6 +9,11 @@ import '../../router/router.dart';
 import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
 import '../../services/notification_service.dart';
+import 'package:servblu/models/servicos/servico.dart';
+import '../../router/routes.dart';
+import '../../utils/navigation_helper.dart';
+
+import '../../models/servicos/servico.dart';
 
 class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
@@ -20,10 +25,14 @@ class HomePageContent extends StatefulWidget {
 class _HomePageContentState extends State<HomePageContent> {
   final supabase = Supabase.instance.client;
 
+  List<Servico> _bestOffers = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _setupNotifications();
+    _fetchBestOffers();
     supabase.auth.onAuthStateChange.listen((event) {
       final session = supabase.auth.currentSession;
 
@@ -33,6 +42,7 @@ class _HomePageContentState extends State<HomePageContent> {
       }
     });
   }
+
 
   Future<void> _setupNotifications() async {
     try {
@@ -52,6 +62,36 @@ class _HomePageContentState extends State<HomePageContent> {
       }
     } catch (e) {
       print("Error setting up notifications: $e");
+    }
+  }
+
+  Future<void> _fetchBestOffers() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Fetch services, you can modify the query as needed
+      final response = await supabase
+          .from('servicos')
+          .select()
+          .order('preco', ascending: true) // Example: order by lowest price
+          .limit(4); // Limit to 4 services
+
+      // Convert response to Servico objects
+      final List<Servico> offers = response
+          .map<Servico>((json) => Servico.fromJson(json))
+          .toList();
+
+      setState(() {
+        _bestOffers = offers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching best offers: $e");
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -148,45 +188,51 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Widget _buildBestOffersTitle() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 11, left: 31),
-      child: const Text(
-        "Melhores ofertas",
-        style: TextStyle(
-          color: Color(0xFF000000),
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+      padding: const EdgeInsets.only(bottom: 11, left: 31, right: 31),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "Melhores ofertas",
+            style: TextStyle(
+              color: Color(0xFF000000),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              context.go(Routes.serviceListPage, extra: "Serviços");
+            },
+            child: const Text(
+              "Ver Mais",
+              style: TextStyle(
+                color: Color(0xFF017DFE),
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildBestOffers() {
-    final List<Map<String, String>> offers = [
-      {
-        "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/39a08fa2-c5d2-4dce-b74d-4d63cc19293a",
-        "name": "Oferta 1",
-        "description": "Descrição da oferta 1"
-      },
-      {
-        "image":
-            "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/922884b4-ce18-4414-8962-0b8784a19f99",
-        "name": "Oferta 2",
-        "description": "Descrição da oferta 2"
-      },
-    ];
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2, left: 19),
+      padding: const EdgeInsets.only(bottom: 2, right: 19, left: 19),
       child: SizedBox(
         height: 200,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: offers.length,
+          itemCount: _bestOffers.length > 3 ? 3 : _bestOffers.length,
           itemBuilder: (context, index) {
             return Padding(
               padding: const EdgeInsets.only(right: 10),
-              child: _buildOfferCard(offers[index]),
+              child: _buildOfferCard(_bestOffers[index]),
             );
           },
         ),
@@ -194,44 +240,64 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
-  Widget _buildOfferCard(Map<String, String> offer) {
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            width: 209,
-            height: 130,
-            child: Image.network(
-              offer["image"]!,
-              fit: BoxFit.cover,
+
+
+  Widget _buildOfferCard(Servico offer) {
+    return GestureDetector(
+      onTap: () {
+        NavigationHelper.navigateToServiceDetails(context, offer);
+      },
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 209,
+              height: 130,
+              child: offer.imgServico != null && offer.imgServico!.isNotEmpty
+                  ? Image.network(
+                offer.imgServico!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.image_not_supported, size: 50);
+                },
+              )
+                  : Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 5),
-        Center(
-          child: Text(
-            offer["name"]!,
-            style: const TextStyle(
-              color: Color(0xFF000000),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 5),
+          Center(
+            child: Text(
+              offer.nome,
+              style: const TextStyle(
+                color: Color(0xFF000000),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        Center(
-          child: Text(
-            offer["description"]!,
-            style: const TextStyle(
-              color: Color(0xFF000000),
-              fontSize: 12,
+          Center(
+            child: Text(
+              offer.descricao ?? "Sem descrição",
+              style: const TextStyle(
+                color: Color(0xFF000000),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+
+
 
   Widget _buildImage() {
     return Column(

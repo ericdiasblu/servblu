@@ -13,6 +13,7 @@ import '../screens/login_signup/reset_password_screen.dart';
 import '../screens/profile_page/profile_screen.dart';
 import '../screens/schedule_page/schedule_screen.dart';
 import '../screens/service_page/service_screen.dart';
+import 'package:servblu/screens/service_page/service_list_screen.dart';
 
 // Chave global do navegador
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -79,6 +80,19 @@ final router = GoRouter(
       path: '/reset-password',
       name: Routes.resetPasswordPage,
       builder: (context, state) => const ResetPasswordScreen(),
+    ),
+    GoRoute(
+      path: Routes.serviceListPage,
+      builder: (context, state) {
+        // Use state.uri.queryParameters instead of state.queryParams
+        final title = state.extra as String;
+        final category = state.uri.queryParameters['category'];
+
+        return ServiceListScreen(
+          title: title,
+          category: category,
+        );
+      },
     ),
 
     // Rotas que usam o shell de navegação (com barra inferior)
