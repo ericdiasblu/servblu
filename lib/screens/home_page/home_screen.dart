@@ -200,17 +200,15 @@ class _HomePageContentState extends State<HomePageContent> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(
-            height: 36,
-            child: ElevatedButton(
-              onPressed: () {
-                context.go(Routes.serviceListPage, extra: "Serviços");
-              },
-
-              child: const Text(
-                "Ver Mais",
-                style: TextStyle(color: Color(0xFF017DFE), fontSize: 13),
-                overflow: TextOverflow.ellipsis,
+          GestureDetector(
+            onTap: () {
+              context.go(Routes.serviceListPage, extra: "Serviços");
+            },
+            child: const Text(
+              "Ver Mais",
+              style: TextStyle(
+                color: Color(0xFF017DFE),
+                fontSize: 13,
               ),
             ),
           ),
@@ -225,7 +223,7 @@ class _HomePageContentState extends State<HomePageContent> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.only(bottom: 2, right: 19, left: 19),
       child: SizedBox(
         height: 200,
         child: ListView.builder(
