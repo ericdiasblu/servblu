@@ -36,6 +36,7 @@ class InputField extends StatelessWidget {
       child: Row(
         crossAxisAlignment: isDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
+          if(!isDescription)
           Icon(icon, color: const Color(0xFF017DFE)),
           const SizedBox(width: 10),
           Expanded(
