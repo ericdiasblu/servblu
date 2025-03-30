@@ -165,5 +165,21 @@ class ServicoService {
       // Apenas registre o erro, mas não interrompa o fluxo
     }
   }
+
+  // Add this new method to the existing ServicoService class
+  Future<Map<String, dynamic>> getUserDetails(String userId) async {
+    try {
+      final response = await supabase
+          .from('usuarios')  // Assuming you have a 'perfis' table for user profiles
+          .select()
+          .eq('id_usuario', userId)
+          .single();
+
+      return response;
+    } catch (e) {
+      print('Erro ao buscar detalhes do usuário: $e');
+      throw Exception('Não foi possível carregar os detalhes do usuário');
+    }
+  }
 }
 
