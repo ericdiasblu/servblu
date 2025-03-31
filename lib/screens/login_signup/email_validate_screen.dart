@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:servblu/auth/auth_service.dart';
+import 'package:servblu/screens/login_signup/reset_password_screen.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/widgets/input_field.dart';
 
@@ -25,12 +27,21 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
       );
       return;
     }
+    // Validação do email usando email_validator
+    if (!EmailValidator.validate(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Formato de email inválido.")),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // Chama o método que solicita o envio do token de recuperação.
+      // Lembre-se de que no Supabase você deve configurar o template para mostrar o token ({{ .Token }})
       await _authService.resetPassword(email);
 
       if (mounted) {
@@ -92,7 +103,8 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
         ),
         const SizedBox(height: 15),
         const Text(
-          "Informe seu email para receber um link de redefinição de senha",
+          // Alterado para informar que será enviado um token
+          "Informe seu email para receber seu token de recuperação.",
           style: TextStyle(
             color: Color(0xFF000000),
             fontSize: 16,
@@ -100,29 +112,23 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 30),
-
         InputField(
           obscureText: false,
           icon: Icons.email,
           hintText: "Email",
           controller: _emailController,
         ),
-
         const SizedBox(height: 30),
-
         _isLoading
             ? const CircularProgressIndicator(
           color: Color(0xFF017DFE),
         )
             : BuildButton(
-          textButton: "Enviar link de recuperação",
+          textButton: "Enviar token de recuperação",
           onPressed: resetPassword,
         ),
-
         const SizedBox(height: 40),
-
-        // Imagem ilustrativa para a página
-
+        // Aqui você pode adicionar uma imagem ilustrativa ou outros widgets
       ],
     );
   }
@@ -148,7 +154,7 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
         ),
         const SizedBox(height: 15),
         const Text(
-          "Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.",
+          "Verifique sua caixa de entrada (e a pasta de spam) para obter seu token de recuperação.",
           style: TextStyle(
             color: Color(0xFF000000),
             fontSize: 16,
@@ -156,17 +162,13 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 30),
-
         BuildButton(
           textButton: "Voltar para o login",
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ResetPasswordScreen()));
           },
         ),
-
         const SizedBox(height: 40),
-
-        // Imagem ilustrativa para a página
         Image.asset(
           'assets/forgot_password_image.png',
           height: 250,
