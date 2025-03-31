@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/screens/login_signup/enter_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/widgets/input_field.dart';
@@ -68,7 +69,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
         // Redireciona para a tela de login
         setLoggedIn(false);
-        GoRouter.of(context).go(Routes.enterPage);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => EnterScreen()));
       }
     } catch (e) {
       if (mounted) {
