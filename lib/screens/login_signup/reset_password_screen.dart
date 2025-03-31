@@ -101,7 +101,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Redefinir Senha"),
         backgroundColor: const Color(0xFFF5F5F5),
         foregroundColor: Colors.black,
         elevation: 0,
@@ -173,14 +172,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 : BuildButton(
               textButton: "Redefinir senha",
               onPressed: resetPassword,
-            ),
-            const SizedBox(height: 40),
-
-            // Imagem ilustrativa para a página
-            Image.asset(
-              'assets/reset_password.png',
-              height: 250,
-              fit: BoxFit.contain,
             ),
           ],
         ),

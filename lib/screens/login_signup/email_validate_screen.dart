@@ -163,7 +163,7 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
         ),
         const SizedBox(height: 30),
         BuildButton(
-          textButton: "Voltar para o login",
+          textButton: "Redefinir Senha",
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => ResetPasswordScreen()));
           },
