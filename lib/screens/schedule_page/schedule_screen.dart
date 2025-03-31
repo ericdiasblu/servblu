@@ -32,7 +32,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return Scaffold(
       body: Column(
         children: [
-          BuildHeader(title: 'Agendamentos'),
+          BuildHeader(title: 'Agendamentos', backPage: false,),
 
           // Custom Tab Bar
           Padding(

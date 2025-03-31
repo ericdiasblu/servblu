@@ -209,7 +209,7 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
         backgroundColor: Colors.white,
         body: Column(
             children: [
-              BuildHeader(title: 'Anunciar Serviço'),
+              BuildHeader(title: 'Anunciar Serviço', backPage: false,),
               // Wrap the scrollable content in an Expanded widget
               Expanded(
                 child: SingleChildScrollView(
@@ -277,10 +277,10 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
                       SizedBox(height: 5),
 
                       InputField(
-                        icon: Icons.description_outlined,
                         hintText: 'Descrição',
                         obscureText: false,
                         controller: _descricaoController,
+                        isDescription: true,
                       ),
 
                       SizedBox(height: 5),

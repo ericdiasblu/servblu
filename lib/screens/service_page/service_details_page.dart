@@ -135,8 +135,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   }
 
   void navigateToSearch() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => SearchScreen()));
+    Navigator.pop(context);
   }
 
   Widget _buildUserInfoSection() {

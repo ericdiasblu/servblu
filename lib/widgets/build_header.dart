@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
 class BuildHeader extends StatelessWidget {
-
   final String title;
+  final bool backPage;
+  final GestureTapCallback? onTap;
 
-  const BuildHeader({super.key, required this.title});
+  const BuildHeader({
+    super.key,
+    required this.title,
+    required this.backPage,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +26,30 @@ class BuildHeader extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Center(
-          child: Text(
-            '$title',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (backPage)
+              Positioned(
+                left: 16,
+                child: GestureDetector(
+                  onTap: onTap,
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
+          ],
         ),
       ),
     );
