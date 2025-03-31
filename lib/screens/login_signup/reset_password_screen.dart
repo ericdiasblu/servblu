@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/screens/login_signup/enter_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/widgets/input_field.dart';
@@ -14,15 +15,19 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final _resetTokenController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> resetPassword() async {
+    final resetToken = _resetTokenController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (password.isEmpty || confirmPassword.isEmpty) {
+    if (resetToken.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Por favor, preencha todos os campos.")),
       );
@@ -41,7 +46,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     try {
-      // Atualiza a senha usando o Supabase
+      // Verifica o token de recuperação (OTP) para autenticar o usuário temporariamente
+      final recovery = await Supabase.instance.client.auth.verifyOTP(
+        email: email,
+        token: resetToken,
+        type: OtpType.recovery,
+      );
+      print(recovery);
+
+      // Atualiza a senha do usuário
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: password),
       );
@@ -56,7 +69,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
         // Redireciona para a tela de login
         setLoggedIn(false);
-        GoRouter.of(context).go(Routes.enterPage);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => EnterScreen()));
       }
     } catch (e) {
       if (mounted) {
@@ -78,6 +91,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   void dispose() {
+    _resetTokenController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -87,7 +102,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Redefinir Senha"),
         backgroundColor: const Color(0xFFF5F5F5),
         foregroundColor: Colors.black,
         elevation: 0,
@@ -99,7 +113,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           children: [
             SizedBox(height: MediaQuery.of(context).size.height * 0.1),
             const Text(
-              "Nova senha",
+              "Redefinir Senha",
               style: TextStyle(
                 color: Color(0xFF000000),
                 fontSize: 22,
@@ -109,7 +123,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             const SizedBox(height: 15),
             const Text(
-              "Crie uma nova senha para sua conta",
+              "Informe o token recebido, seu email e crie uma nova senha",
               style: TextStyle(
                 color: Color(0xFF000000),
                 fontSize: 16,
@@ -118,37 +132,47 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             const SizedBox(height: 30),
 
+            // Campo para informar o token de recuperação
+            InputField(
+              obscureText: false,
+              icon: Icons.token,
+              hintText: "Token de recuperação",
+              controller: _resetTokenController,
+            ),
+            const SizedBox(height: 20),
+
+            // Campo para informar o email
+            InputField(
+              obscureText: false,
+              icon: Icons.email,
+              hintText: "Email",
+              controller: _emailController,
+            ),
+            const SizedBox(height: 20),
+
+            // Campo para nova senha
             InputField(
               obscureText: true,
               icon: Icons.lock,
               hintText: "Nova senha",
               controller: _passwordController,
             ),
+            const SizedBox(height: 20),
+
+            // Campo para confirmar nova senha
             InputField(
               obscureText: true,
               icon: Icons.lock_outline,
               hintText: "Confirmar nova senha",
               controller: _confirmPasswordController,
             ),
-
             const SizedBox(height: 30),
 
             _isLoading
-                ? const CircularProgressIndicator(
-              color: Color(0xFF017DFE),
-            )
+                ? const CircularProgressIndicator(color: Color(0xFF017DFE))
                 : BuildButton(
               textButton: "Redefinir senha",
               onPressed: resetPassword,
-            ),
-
-            const SizedBox(height: 40),
-
-            // Imagem ilustrativa para a página
-            Image.asset(
-              'assets/reset_password.png',
-              height: 250,
-              fit: BoxFit.contain,
             ),
           ],
         ),
