@@ -11,4 +11,5 @@ class Routes {
   static const String resetPasswordPage = '/reset';
   static const String searchPage = '/search';
   static const String serviceListPage = '/service-list';
+  static const String disponibilidadePage = '/disponibilidade';
 }

@@ -14,6 +14,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/service_screen.dart';
 import 'package:servblu/utils/navigation_helper.dart';
 import '../../services/notification_service.dart';
+import 'package:servblu/router/router.dart';
+import 'package:servblu/router/routes.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -418,6 +421,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           : Text(
                         "Saldo: ${saldoUsuario!}",
                         style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          context.go(Routes.disponibilidadePage);
+                        },
+                        child: const
+                        Text(
+                          "Editar Disponibilidade",
+                          style: TextStyle(
+                            color: Color(0xFF017DFE),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Align(
