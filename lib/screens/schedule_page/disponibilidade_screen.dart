@@ -216,10 +216,12 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
           : Column(
         children: [
           // BuildHeader já inclui a seta de voltar
-          const BuildHeader(
+          BuildHeader(
             title: 'Disponibilidade',
             backPage: true,
-
+            onTap: () {
+              GoRouter.of(context).go(Routes.profilePage);
+            },
           ),
           // Seletor de Dias da Semana
           Padding(
