@@ -7,6 +7,8 @@ import 'package:servblu/widgets/build_circle_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/edit_servico_screen.dart';
 
+import '../schedule_page/agendamento_screen.dart';
+
 class ServiceDetailsPage extends StatefulWidget {
   final Servico servico;
 
@@ -225,8 +227,23 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () {
-                        // Implementar a lógica para entrar em contato
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AgendamentoScreen(
+                              idServico: widget.servico.idServico!,
+                              idPrestador: widget.servico.idPrestador!,
+                            ),
+                          ),
+                        );
+
+                        if (result == true) {
+                          // O agendamento foi concluído com sucesso
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Agendamento realizado com sucesso!')),
+                          );
+                        }
                       },
                     ),
                   ),
