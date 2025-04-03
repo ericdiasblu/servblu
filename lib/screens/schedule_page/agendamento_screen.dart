@@ -148,7 +148,6 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
 
       // Criar o agendamento
       String idCliente = Supabase.instance.client.auth.currentUser!.id;
-      String idDisponibilidade = horarioObj.idDisponibilidade;
 
       // CORREÇÃO: Usar o valor numérico do horário em vez do UUID
       Agendamento novoAgendamento = Agendamento(
@@ -156,8 +155,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         idCliente: idCliente,
         idPrestador: widget.idPrestador,
         idServico: widget.idServico,
-        idHorario: idHorarioParaAgendamento.toString(),
-        idDisponibilidade: idDisponibilidade, // Add this line!
+        idHorario: idHorarioParaAgendamento.toString(), // Convertemos para string
         dataServico: dataFormatada,
         status: 'solicitado',
         isPix: _isPix,
@@ -354,6 +352,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white, // Adicionando cor branca ao texto
                   ),
                 ),
               ),

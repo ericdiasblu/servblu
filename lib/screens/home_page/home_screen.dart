@@ -193,7 +193,7 @@ class _HomePageContentState extends State<HomePageContent> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            "Melhores ofertas",
+            "Em alta",
             style: TextStyle(
               color: Color(0xFF000000),
               fontSize: 16,
