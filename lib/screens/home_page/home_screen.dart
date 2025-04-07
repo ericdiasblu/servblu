@@ -193,7 +193,7 @@ class _HomePageContentState extends State<HomePageContent> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            "Melhores ofertas",
+            "Em alta",
             style: TextStyle(
               color: Color(0xFF000000),
               fontSize: 16,
@@ -269,26 +269,36 @@ class _HomePageContentState extends State<HomePageContent> {
             ),
           ),
           const SizedBox(height: 5),
-          Center(
-            child: Text(
-              offer.nome,
-              style: const TextStyle(
-                color: Color(0xFF000000),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+          Container(
+            width: 210,
+            child: Center(
+              child: Text(
+                offer.nome,
+                style: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ),
-          Center(
-            child: Text(
-              offer.descricao ?? "Sem descrição",
-              style: const TextStyle(
-                color: Color(0xFF000000),
-                fontSize: 12,
+          Container(
+            width: 200,
+            child: Center(
+              child: Text(
+                offer.descricao ?? "Sem descrição",
+                style: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 12,
+
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

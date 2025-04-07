@@ -5,23 +5,20 @@ import 'package:servblu/utils/navigation_helper.dart';
 class BuildServicesProfile extends StatelessWidget {
   final String nomeServico;
   final String descServico;
-  final Color corContainer;
-  final Color corTexto;
   final String? idServico;
+  final String? imgServico;
   final VoidCallback? onTap;
-  final Servico? servico; // Adicionando o objeto Servico completo
-  final VoidCallback? onServiceDeleted;  // Add this callback
-
+  final Servico? servico;
+  final VoidCallback? onServiceDeleted;
 
   const BuildServicesProfile({
     Key? key,
     required this.nomeServico,
     required this.descServico,
-    required this.corContainer,
-    required this.corTexto,
+    this.imgServico,
     this.idServico,
     this.onTap,
-    this.servico, // Servico pode ser opcional para manter compatibilidade
+    this.servico,
     this.onServiceDeleted,
   }) : super(key: key);
 
@@ -30,29 +27,12 @@ class BuildServicesProfile extends StatelessWidget {
       Servico servico,
       {VoidCallback? onServiceDeleted}
       ) {
-
-    // Lista de cores para variar os cards
-    final List<Color> cores = [
-      Colors.purple.withOpacity(0.2),
-      Colors.yellow.withOpacity(0.2),
-      Colors.red.withOpacity(0.2),
-      Colors.green.withOpacity(0.2),
-      Colors.blue.withOpacity(0.2),
-      Colors.orange.withOpacity(0.2),
-    ];
-
-    // Selecionar uma cor baseada no nome do serviço (para ter variedade mas ser consistente)
-    final int indice = servico.nome.length % cores.length;
-    final Color corContainer = cores[indice];
-    final Color corTexto = cores[indice].withOpacity(1.0);
-
     return BuildServicesProfile(
       idServico: servico.idServico,
       nomeServico: servico.nome,
-      descServico: servico.descricao,
-      corContainer: corContainer,
-      corTexto: corTexto,
-      servico: servico, // Passando o objeto Servico completo
+      descServico: servico.descricao ?? "Sem descrição",
+      imgServico: servico.imgServico,
+      servico: servico,
       onServiceDeleted: onServiceDeleted,
     );
   }
@@ -66,45 +46,65 @@ class BuildServicesProfile extends StatelessWidget {
             context,
             servico!
         );
-        // Update this to call the deletion callback
         if (wasDeleted == true && onServiceDeleted != null) {
           onServiceDeleted!();
         }
       }
           : null),
-      child: Container(
-        width: 230,
-        height: 110,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: corContainer.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              nomeServico,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: corTexto,
-                fontSize: 16,
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 209,
+              height: 130,
+              child: imgServico != null && imgServico!.isNotEmpty
+                  ? Image.network(
+                imgServico!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.image_not_supported, size: 50);
+                },
+              )
+                  : Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.image, size: 50, color: Colors.grey),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
-            Text(
-              descServico,
-              style: TextStyle(
-                color: Colors.black.withOpacity(0.7),
-                fontSize: 14,
+          ),
+          const SizedBox(height: 5),
+          SizedBox(
+            width: 210,
+            child: Center(
+              child: Text(
+                nomeServico,
+                style: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+          SizedBox(
+            width: 200,
+            child: Center(
+              child: Text(
+                descServico,
+                style: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

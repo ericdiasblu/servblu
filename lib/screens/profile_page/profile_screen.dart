@@ -240,7 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return SizedBox(
-      height: 110,
+      height: 180,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -260,35 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }).toList(),
             // Botão de adicionar novo serviço
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ServicoTestScreen(),
-                  ),
-                ).then((_) {
-                  // Recarregar serviços quando voltar
-                  carregarServicosUsuario();
-                });
-              },
-              child: Container(
-                width: 100,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.add,
-                    size: 40,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-            ),
+
             const SizedBox(width: 20),
           ],
         ),
@@ -461,7 +433,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 70),
             const Padding(
-              padding: EdgeInsets.only(left: 30),
+              padding: EdgeInsets.only(left: 30, bottom: 10),
               child: Text(
                 "Serviços",
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
@@ -488,44 +460,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            SizedBox(
-              height: 110,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 30),
-                    BuildServicesProfile(
-                      nomeServico: "Vitor Rodrigues",
-                      descServico: "Atendimento muito bom!",
-                      corContainer: Colors.green,
-                      corTexto: const Color(0xFF479696),
-                    ),
-                    const SizedBox(width: 10),
-                    BuildServicesProfile(
-                      nomeServico: "Vitor Rodrigues",
-                      descServico: "Atendimento muito bom!",
-                      corContainer: Colors.orange,
-                      corTexto: Colors.orange,
-                    ),
-                    const SizedBox(width: 10),
-                    BuildServicesProfile(
-                      nomeServico: "Vitor Rodrigues",
-                      descServico: "Atendimento muito bom!",
-                      corContainer: Colors.pink,
-                      corTexto: Colors.pink,
-                    ),
-                    const SizedBox(width: 10),
-                    BuildServicesProfile(
-                      nomeServico: "Vitor Rodrigues",
-                      descServico: "Atendimento muito bom!",
-                      corContainer: Colors.red,
-                      corTexto: Colors.red,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
             Container(
               height: 400,
             )
