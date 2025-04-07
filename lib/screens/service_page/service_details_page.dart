@@ -422,7 +422,25 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             ),
                           ),
                         ),
-                        Row(
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: Text(
+                              "R\$ ${widget.servico.preco?.toStringAsFixed(2)}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Colors.white, // Added white text color for better contrast
+                              ),
+                            ),
+                          ),
+                        )
+                        /*Row(
                           children: [
                             Icon(
                               Icons.star,
@@ -435,7 +453,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                   fontWeight: FontWeight.w300, fontSize: 10),
                             ),
                           ],
-                        )
+                        ) */
                       ],
                     ),
                   ),
@@ -457,10 +475,41 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                     fontSize: 20,
                                   ),
                                 ),
+
                               ),
+
                             ),
+
                           ],
                         ),
+                         Padding(
+                           padding: const EdgeInsets.only(left: 25, top: 10),
+                           child: Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: Color(0xFFFCD40E),
+                                size: 15,
+                              ),
+                              Text(
+                                '4.5 (365 avaliações)',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w400, fontSize: 12),
+                              ),
+                            ],
+                                                   ),
+                         ),
+                        /*Padding(
+                          padding: const EdgeInsets.only(left: 30),
+                          child: Text(
+                            "R\$ ${widget.servico.preco?.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ), */
+
                         SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.only(left: 30),
@@ -468,7 +517,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             userDetails?['endereco'] ??
                                 'Endereço não disponível',
                             style: TextStyle(
-                                fontWeight: FontWeight.w200, fontSize: 11),
+                                fontWeight: FontWeight.w400, fontSize: 12),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
