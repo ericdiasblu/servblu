@@ -7,6 +7,8 @@ import 'package:servblu/widgets/build_circle_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/edit_servico_screen.dart';
 
+import '../schedule_page/agendamento_screen.dart';
+
 class ServiceDetailsPage extends StatefulWidget {
   final Servico servico;
 
@@ -225,8 +227,23 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () {
-                        // Implementar a lógica para entrar em contato
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AgendamentoScreen(
+                              idServico: widget.servico.idServico!,
+                              idPrestador: widget.servico.idPrestador!,
+                            ),
+                          ),
+                        );
+
+                        if (result == true) {
+                          // O agendamento foi concluído com sucesso
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Agendamento realizado com sucesso!')),
+                          );
+                        }
                       },
                     ),
                   ),
@@ -405,7 +422,25 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             ),
                           ),
                         ),
-                        Row(
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: Text(
+                              "R\$ ${widget.servico.preco?.toStringAsFixed(2)}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Colors.white, // Added white text color for better contrast
+                              ),
+                            ),
+                          ),
+                        )
+                        /*Row(
                           children: [
                             Icon(
                               Icons.star,
@@ -418,7 +453,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                   fontWeight: FontWeight.w300, fontSize: 10),
                             ),
                           ],
-                        )
+                        ) */
                       ],
                     ),
                   ),
@@ -440,10 +475,41 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                     fontSize: 20,
                                   ),
                                 ),
+
                               ),
+
                             ),
+
                           ],
                         ),
+                         Padding(
+                           padding: const EdgeInsets.only(left: 25, top: 10),
+                           child: Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: Color(0xFFFCD40E),
+                                size: 15,
+                              ),
+                              Text(
+                                '4.5 (365 avaliações)',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w400, fontSize: 12),
+                              ),
+                            ],
+                                                   ),
+                         ),
+                        /*Padding(
+                          padding: const EdgeInsets.only(left: 30),
+                          child: Text(
+                            "R\$ ${widget.servico.preco?.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ), */
+
                         SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.only(left: 30),
@@ -451,7 +517,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             userDetails?['endereco'] ??
                                 'Endereço não disponível',
                             style: TextStyle(
-                                fontWeight: FontWeight.w200, fontSize: 11),
+                                fontWeight: FontWeight.w400, fontSize: 12),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
