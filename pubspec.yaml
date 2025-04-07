@@ -26,6 +26,7 @@ dependencies:
   hugeicons: ^0.0.7
   uuid: ^3.0.7
   table_calendar: ^3.0.9
+  email_validator: ^3.0.0
 
 dev_dependencies:
   flutter_test:
