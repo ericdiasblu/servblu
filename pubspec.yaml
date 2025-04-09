@@ -27,6 +27,8 @@ dependencies:
   uuid: ^3.0.7
   table_calendar: ^3.0.9
   email_validator: ^3.0.0
+  flutter_animate: ^4.2.0+1
+
 
 dev_dependencies:
   flutter_test:
