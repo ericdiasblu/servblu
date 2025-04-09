@@ -5,6 +5,7 @@ import 'package:servblu/widgets/build_header.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/services/disponibilidade_service.dart';
 import 'package:servblu/models/servicos/disponibilidade.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class DisponibilidadeScreen extends StatefulWidget {
   const DisponibilidadeScreen({super.key});
@@ -13,7 +14,7 @@ class DisponibilidadeScreen extends StatefulWidget {
   _DisponibilidadeScreenState createState() => _DisponibilidadeScreenState();
 }
 
-class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
+class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> with TickerProviderStateMixin {
   final SupabaseClient supabase = Supabase.instance.client;
   final DisponibilidadeService disponibilidadeService = DisponibilidadeService();
 
@@ -43,13 +44,53 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
     'Domingo'
   ];
 
+  // Códigos de dias para ícones
+  final Map<String, IconData> diasIcons = {
+    'Segunda-feira': Icons.looks_one,
+    'Terça-feira': Icons.looks_two,
+    'Quarta-feira': Icons.looks_3,
+    'Quinta-feira': Icons.looks_4,
+    'Sexta-feira': Icons.looks_5,
+    'Sábado': Icons.weekend,
+    'Domingo': Icons.wb_sunny,
+  };
+
   // Horários disponíveis para seleção (ex.: 900 = 09:00, 1300 = 13:00, etc.)
   final List<int> horarios = [900, 1000, 1100, 1400, 1500, 1600, 1700, 1800];
+
+  // Controller para a animação do calendário
+  late TabController _tabController;
+
+  // Lista de dias selecionados para uso no TabController
+  List<String> diasSelecionados = [];
 
   @override
   void initState() {
     super.initState();
+    // Inicialmente não temos dias selecionados
+    _tabController = TabController(length: 0, vsync: this);
     _carregarDisponibilidade();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // Método para reconstruir o TabController quando o número de dias muda
+  void _atualizarTabController() {
+    // Atualiza a lista de dias selecionados em ordem
+    diasSelecionados = disponibilidade.keys.toList();
+
+    // Cria um novo controller com o número correto de tabs
+    final int index = _tabController.index.clamp(0, diasSelecionados.length - 1 < 0 ? 0 : diasSelecionados.length - 1);
+    _tabController.dispose();
+    _tabController = TabController(
+      length: diasSelecionados.length,
+      vsync: this,
+      initialIndex: diasSelecionados.isEmpty ? 0 : (index >= diasSelecionados.length ? 0 : index),
+    );
   }
 
   /// Carrega a disponibilidade existente do usuário
@@ -92,6 +133,9 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
         }
       }
 
+      // Atualiza o TabController para os dias carregados
+      _atualizarTabController();
+
       // Log para depuração
       print('Dias originais carregados: $diasOriginais');
       print('IDs dos dias: $idsDias');
@@ -112,10 +156,20 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
       if (disponibilidade.containsKey(dia)) {
         print('Removendo dia: $dia');
         disponibilidade.remove(dia);
-        // Não removemos o ID aqui, apenas na hora de salvar
       } else {
         print('Adicionando dia: $dia');
         disponibilidade[dia] = <int>{};
+      }
+
+      // Atualiza o TabController após a mudança
+      _atualizarTabController();
+
+      // Se adicionamos um dia, navega para a tab desse dia
+      if (disponibilidade.containsKey(dia)) {
+        final int index = diasSelecionados.indexOf(dia);
+        if (index >= 0 && index < _tabController.length) {
+          _tabController.animateTo(index);
+        }
       }
     });
   }
@@ -132,6 +186,9 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
         if (disponibilidade[dia]!.isEmpty) {
           print('Todos horários removidos, removendo dia: $dia');
           disponibilidade.remove(dia);
+
+          // Atualiza o TabController após a remoção do dia
+          _atualizarTabController();
         }
       } else {
         disponibilidade[dia]!.add(horario);
@@ -143,6 +200,15 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
   Future<void> salvarDisponibilidade() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
 
     try {
       // Log para depuração
@@ -196,16 +262,76 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
         }
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Disponibilidade salva com sucesso!")),
-      );
-      // Retorna para a home ou outra rota, se desejado:
-      GoRouter.of(context).go(Routes.homePage);
+      // Fechar o dialog de loading
+      Navigator.pop(context);
+
+      // Mostrar animação de sucesso
+      _mostrarAnimacaoSucesso();
+
+      // Navegar após um atraso para permitir que a animação seja vista
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        GoRouter.of(context).go(Routes.homePage);
+      });
+
     } catch (e) {
+      // Fechar o dialog de loading
+      Navigator.pop(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao salvar disponibilidade: $e")),
+        SnackBar(
+          content: Text("Erro ao salvar disponibilidade: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+  }
+
+  void _mostrarAnimacaoSucesso() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          width: 300,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 5,
+                blurRadius: 7,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 80,
+              ).animate()
+                  .scale(duration: 500.ms, curve: Curves.easeOut)
+                  .fade(duration: 500.ms),
+              const SizedBox(height: 20),
+              Text(
+                "Disponibilidade salva com sucesso!",
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ).animate().fade(delay: 300.ms, duration: 500.ms),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatarHorario(int horario) {
+    String horarioStr = horario.toString().padLeft(4, '0');
+    return '${horarioStr.substring(0, 2)}:${horarioStr.substring(2)}';
   }
 
   @override
@@ -213,79 +339,338 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> {
     return Scaffold(
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          // BuildHeader já inclui a seta de voltar
-          BuildHeader(
-            title: 'Disponibilidade',
-            backPage: true,
-            onTap: () {
-              GoRouter.of(context).go(Routes.profilePage);
-            },
+          : Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.blue.shade100, Colors.white],
           ),
-          // Seletor de Dias da Semana
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Wrap(
-              spacing: 8,
-              children: diasSemana.map((dia) {
-                final bool selecionado = disponibilidade.containsKey(dia);
-                return ChoiceChip(
-                  label: Text(dia),
-                  selected: selecionado,
-                  onSelected: (_) => toggleDia(dia),
-                  selectedColor: Colors.blue,
-                  labelStyle: TextStyle(
-                    color: selecionado ? Colors.white : Colors.black,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          // Para cada dia selecionado, mostra os horários disponíveis
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: disponibilidade.keys.map((dia) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header personalizado com design moderno
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
                   children: [
-                    Text(
-                      'Horários para $dia:',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+                      onPressed: () {
+                        GoRouter.of(context).go(Routes.profilePage);
+                      },
                     ),
-                    Wrap(
-                      spacing: 8,
-                      children: horarios.map((horario) {
-                        final bool selecionado = disponibilidade[dia]!.contains(horario);
-                        return ChoiceChip(
-                          label: Text(
-                              '${horario.toString().padLeft(4, '0').substring(0, 2)}:${horario.toString().padLeft(4, '0').substring(2)}'
-                          ),
-                          selected: selecionado,
-                          onSelected: (_) => toggleHorario(dia, horario),
-                          selectedColor: Colors.green,
-                          labelStyle: TextStyle(
-                            color: selecionado ? Colors.white : Colors.black,
+                    const Expanded(
+                      child: Text(
+                        'Defina sua disponibilidade',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.help_outline, color: Colors.blue),
+                      onPressed: () {
+                        // Mostrar dica de ajuda
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Como funciona?'),
+                            content: const Text(
+                                'Selecione os dias da semana em que você está disponível e em seguida escolha os horários específicos para cada dia selecionado.'
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Entendi'),
+                              ),
+                            ],
                           ),
                         );
-                      }).toList(),
+                      },
                     ),
-                    const SizedBox(height: 16),
                   ],
-                );
-              }).toList(),
-            ),
+                ),
+              ),
+
+              // Calendário Semanal animado
+              Container(
+                height: 120,
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: diasSemana.length,
+                  itemBuilder: (context, index) {
+                    final dia = diasSemana[index];
+                    final bool selecionado = disponibilidade.containsKey(dia);
+
+                    return GestureDetector(
+                      onTap: () => toggleDia(dia),
+                      child: Container(
+                        width: 100,
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        decoration: BoxDecoration(
+                          color: selecionado ? Colors.blue : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              diasIcons[dia] ?? Icons.calendar_today,
+                              color: selecionado ? Colors.white : Colors.blue,
+                              size: 32,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              dia.split('-')[0], // Pega apenas "Segunda", "Terça", etc.
+                              style: TextStyle(
+                                color: selecionado ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (selecionado)
+                              Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ).animate()
+                          .scale(
+                        duration: 200.ms,
+                        curve: Curves.easeInOut,
+                        begin: const Offset(0.95, 0.95),
+                        end: const Offset(1.0, 1.0),
+                      )
+                          .animate(target: selecionado ? 1 : 0)
+                          .shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.3))
+                      ,
+                    );
+                  },
+                ),
+              ),
+
+              // Subtítulo
+              if (disponibilidade.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Selecione os horários para cada dia:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
+
+              // Se nenhum dia selecionado, mostrar mensagem
+              if (disponibilidade.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 80,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Selecione os dias em que você\nestá disponível',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Conteúdo dos dias com TabBarView para navegação
+              if (disponibilidade.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    children: [
+                      // Tabs para os dias selecionados - verificando se temos dias antes de mostrar
+                      if (diasSelecionados.isNotEmpty)
+                        TabBar(
+                          controller: _tabController,
+                          tabs: diasSelecionados.map((dia) {
+                            return Tab(
+                              text: dia.split('-')[0],
+                              icon: Icon(diasIcons[dia] ?? Icons.calendar_today),
+                            );
+                          }).toList(),
+                          isScrollable: true,
+                          indicatorColor: Colors.blue,
+                          labelColor: Colors.blue,
+                          unselectedLabelColor: Colors.grey,
+                        ),
+
+                      // Conteúdo das tabs - verificando se temos dias antes de mostrar
+                      if (diasSelecionados.isNotEmpty)
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: diasSelecionados.map((dia) {
+                              return SingleChildScrollView(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Grid de horários
+                                    GridView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        childAspectRatio: 2.5,
+                                        crossAxisSpacing: 10,
+                                        mainAxisSpacing: 10,
+                                      ),
+                                      itemCount: horarios.length,
+                                      itemBuilder: (context, index) {
+                                        final horario = horarios[index];
+                                        final bool selecionado = disponibilidade[dia]!.contains(horario);
+
+                                        return GestureDetector(
+                                          onTap: () => toggleHorario(dia, horario),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 300),
+                                            decoration: BoxDecoration(
+                                              color: selecionado
+                                                  ? Colors.green
+                                                  : Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.1),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.access_time,
+                                                  color: selecionado ? Colors.white : Colors.grey,
+                                                  size: 18,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _formatarHorario(horario),
+                                                  style: TextStyle(
+                                                    color: selecionado ? Colors.white : Colors.black87,
+                                                    fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ).animate(target: selecionado ? 1 : 0)
+                                              .scaleXY(end: 1.05, duration: 200.ms)
+                                              .then()
+                                              .scaleXY(end: 1.0, duration: 200.ms),
+                                        );
+                                      },
+                                    ),
+
+                                    // Imagem ilustrativa
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 24),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              Icons.schedule,
+                                              size: 64,
+                                              color: Colors.blue.withOpacity(0.5),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Horários selecionados: ${disponibilidade[dia]!.length}',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+              // Botão para salvar a disponibilidade
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: salvarDisponibilidade,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 5,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.save),
+                        const SizedBox(width: 8),
+                        Text(
+                          isEditing ? "Salvar Alterações" : "Salvar Disponibilidade",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOut),
+              ),
+            ],
           ),
-          // Botão para salvar a disponibilidade
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: salvarDisponibilidade,
-              child: Text(isEditing ? "Salvar Alterações" : "Salvar Disponibilidade"),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
