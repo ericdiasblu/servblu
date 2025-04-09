@@ -9,15 +9,16 @@ import 'package:servblu/services/agendamento_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:servblu/utils/date_helper.dart';
 
-
 class AgendamentoScreen extends StatefulWidget {
   final String idServico;
   final String idPrestador;
+  final String? nomeServico; // Novo parâmetro para o nome do serviço
 
   const AgendamentoScreen({
     Key? key,
     required this.idServico,
     required this.idPrestador,
+    this.nomeServico,
   }) : super(key: key);
 
   @override
@@ -37,6 +38,16 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
   int? _selectedHorario;
   bool _isLoading = true;
   bool _isPix = false;
+  String _formaPagamento = 'Dinheiro'; // Valor padrão
+
+  // Opções de pagamento disponíveis
+  final List<String> _opcoesPagamento = [
+    'Dinheiro',
+    'Cartão de Crédito',
+    'Cartão de Débito',
+    'Pix',
+    'Transferência Bancária'
+  ];
 
   // Lista de dias da semana em português
   final List<String> _diasSemana = DateHelper.diasSemana;
@@ -125,10 +136,6 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         orElse: () => throw Exception('Horário não encontrado'),
       );
 
-      // CORREÇÃO: Garantir que idHorario seja do tipo correto
-      // Se idDisponibilidade for UUID mas o banco espera int, extraia apenas o valor numérico
-      // ou converta adequadamente
-
       // Para simplificar, vamos usar o próprio valor numérico do horário
       int idHorarioParaAgendamento = _selectedHorario!; // Já verificamos que não é nulo acima
 
@@ -149,16 +156,21 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       // Criar o agendamento
       String idCliente = Supabase.instance.client.auth.currentUser!.id;
 
-      // CORREÇÃO: Usar o valor numérico do horário em vez do UUID
+      // Define o isPix com base na forma de pagamento selecionada
+      bool isPix = _formaPagamento == 'Pix';
+
+      // Criar o novo agendamento com a forma de pagamento
       Agendamento novoAgendamento = Agendamento(
         idAgendamento: _uuid.v4(),
         idCliente: idCliente,
         idPrestador: widget.idPrestador,
         idServico: widget.idServico,
-        idHorario: idHorarioParaAgendamento.toString(), // Convertemos para string
+        idHorario: idHorarioParaAgendamento.toString(),
         dataServico: dataFormatada,
         status: 'solicitado',
-        isPix: _isPix,
+        isPix: isPix,
+        formaPagamento: _formaPagamento,
+        nomeServico: widget.nomeServico,
       );
 
       await _agendamentoService.criarAgendamento(novoAgendamento);
@@ -205,6 +217,39 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Nome do serviço
+            if (widget.nomeServico != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Card(
+                  elevation: 2,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Serviço:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.nomeServico!,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
             const Text(
               'Selecione uma data',
               style: TextStyle(
@@ -320,17 +365,59 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
 
             const SizedBox(height: 24),
 
-            // Opção de pagamento por PIX
-            SwitchListTile(
-              title: const Text('Pagar com PIX'),
-              subtitle: const Text('Marque esta opção para pagar adiantado por PIX'),
-              value: _isPix,
-              onChanged: (bool value) {
-                setState(() {
-                  _isPix = value;
-                });
-              },
-              activeColor: Theme.of(context).primaryColor,
+            // Seleção de forma de pagamento
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Forma de Pagamento',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: _opcoesPagamento.map((opcao) {
+                        final bool isPagamentoPix = opcao == 'Pix';
+
+                        return RadioListTile<String>(
+                          title: Row(
+                            children: [
+                              Text(opcao),
+                              if (isPagamentoPix)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    '(Pagamento pelo app)',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          value: opcao,
+                          groupValue: _formaPagamento,
+                          onChanged: (value) {
+                            setState(() {
+                              _formaPagamento = value!;
+                              _isPix = isPagamentoPix;
+                            });
+                          },
+                          activeColor: Theme.of(context).primaryColor,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 32),
@@ -352,7 +439,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // Adicionando cor branca ao texto
+                    color: Colors.white,
                   ),
                 ),
               ),
