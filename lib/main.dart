@@ -3,11 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:servblu/router/router.dart';
 import 'package:servblu/auth/auth_service.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:timeago/timeago.dart' as timeago_pt;
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 
 
 void main() async {
+  timeago.setLocaleMessages('pt_br', timeago_pt.PtBrMessages());
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa o Firebase

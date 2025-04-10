@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:servblu/widgets/build_header.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 import '../../models/notificacao/notificacao.dart';
 import '../../models/notificacao/notification_repository.dart';
@@ -102,21 +104,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Notificações'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _carregarNotificacoes,
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          ElevatedButton(
+          BuildHeader(title: 'Notificações', backPage: false, refresh: true,onRefresh: _carregarNotificacoes,),
+          /*ElevatedButton(
             onPressed: _enviarNotificacaoTeste,
             child: Text('Enviar Notificação de Teste'),
-          ),
+          ),*/
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
@@ -163,18 +157,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   onDismissed: (direction) {
                     _excluirNotificacao(notificacao);
                   },
-                  child: ListTile(
-                    title: Text(notificacao.mensagem),
-                    subtitle: Text(
-                      notificacao.dataEnvio.toString(),
-                      style: TextStyle(
-                        color: notificacao.lida ? Colors.grey : Colors.black,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      tileColor: Colors.white,
+                      leading: CircleAvatar(
+                        backgroundColor: Color(0xFFEAEAEAFF),
+                        child: Image.asset('assets/icon_app.png',width: 28,height: 28,),
                       ),
+                      title: Text(
+                        notificacao.mensagem,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        timeago.format(notificacao.dataEnvio.toLocal(), locale: 'pt_br'),
+                        style: TextStyle(
+                          color: notificacao.lida ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                      trailing: notificacao.lida
+                          ? Icon(Icons.check, color: Colors.green)
+                          : null,
                     ),
-                    trailing: notificacao.lida
-                        ? Icon(Icons.check, color: Colors.green)
-                        : null,
                   ),
+
+
+
                 );
               },
             ),

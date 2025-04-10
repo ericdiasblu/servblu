@@ -19,7 +19,7 @@ dependencies:
   firebase_messaging: ^15.2.3
   flutter_masked_text2: ^0.9.1
   shared_preferences: ^2.5.2
-  intl: ^0.20.2
+  intl: ^0.18.0
   image_picker: ^1.1.2
   path: ^1.9.0
   google_sign_in: ^6.3.0
@@ -28,7 +28,7 @@ dependencies:
   table_calendar: ^3.0.9
   email_validator: ^3.0.0
   flutter_animate: ^4.2.0+1
-
+  timeago: ^3.6.1
 
 dev_dependencies:
   flutter_test:
@@ -53,3 +53,4 @@ flutter:
     - assets/home_image.jpg
     - assets/second_image.png
     - assets/offer_image.png
+    - assets/icon_app.png

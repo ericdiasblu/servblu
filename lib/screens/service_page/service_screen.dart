@@ -208,162 +208,162 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Column(
-            children: [
-              BuildHeader(title: 'Anunciar Serviço', backPage: false,),
-              // Wrap the scrollable content in an Expanded widget
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(), // Ensure scrolling
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(height: 20),
+          children: [
+            BuildHeader(title: 'Anunciar Serviço', backPage: false, refresh: false,),
+            // Wrap the scrollable content in an Expanded widget
+            Expanded(
+              child: SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(), // Ensure scrolling
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 20),
 
-                      // Image selection
-                      GestureDetector(
-                        onTap: _escolherImagem,
-                        child: Container(
-                          height: 180,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: _imagemSelecionada == null
-                              ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.camera_alt,
-                                size: 40,
-                                color: Color(0xFF017DFE),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Adicionar foto',
-                                style: TextStyle(
+                    // Image selection
+                    GestureDetector(
+                      onTap: _escolherImagem,
+                      child: Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF0F0F0),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: _imagemSelecionada == null
+                            ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.camera_alt,
+                              size: 40,
+                              color: Color(0xFF017DFE),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Adicionar foto',
+                              style: TextStyle(
                                   color: Color(0xFF017DFE),
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold
-                                ),
-                              ),
-                            ],
-                          )
-                              : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              _imagemSelecionada!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: 16),
-                      Text('Qual serviço você quer anunciar?',style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),),
-                      SizedBox(height: 16,),
-                      // Input Fields
-                      InputField(
-                        icon: Icons.work_outline,
-                        hintText: 'Nome do Serviço',
-                        obscureText: false,
-                        controller: _nomeController,
-                      ),
-
-                      SizedBox(height: 5),
-
-                      InputField(
-                        hintText: 'Descrição',
-                        obscureText: false,
-                        controller: _descricaoController,
-                        isDescription: true,
-                      ),
-
-                      SizedBox(height: 5),
-
-                      InputField(
-                        icon: Icons.attach_money,
-                        hintText: 'Preço (R\$)',
-                        obscureText: false,
-                        controller: _precoController,
-                      ),
-
-                      SizedBox(height: 5),
-
-                      // Category Dropdown
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFF017DFE),
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        margin: const EdgeInsets.only(bottom: 20),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.category_outlined, color: Color(0xFF017DFE)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButtonFormField<String>(
-                                  value: _categoriaSelecionada,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Categoria',
-                                    border: InputBorder.none,
-                                  ),
-                                  dropdownColor: Colors.white,
-                                  items: categorias.map((String categoria) {
-                                    return DropdownMenuItem<String>(
-                                      value: categoria,
-                                      child: Text(categoria),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _categoriaSelecionada = newValue;
-                                    });
-                                  },
-                                ),
                               ),
                             ),
                           ],
-                        ),
-                      ),
-
-                      // Continue Button
-                      ElevatedButton(
-                        onPressed: _cadastrarServico,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF2196F3),
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          'Anunciar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        )
+                            : ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            _imagemSelecionada!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
                           ),
                         ),
                       ),
+                    ),
 
-                      // Add extra space at the bottom to ensure the last element is fully visible
-                      SizedBox(height: 24),
-                    ],
-                  ),
+                    SizedBox(height: 16),
+                    Text('Qual serviço você quer anunciar?',style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),),
+                    SizedBox(height: 16,),
+                    // Input Fields
+                    InputField(
+                      icon: Icons.work_outline,
+                      hintText: 'Nome do Serviço',
+                      obscureText: false,
+                      controller: _nomeController,
+                    ),
+
+                    SizedBox(height: 5),
+
+                    InputField(
+                      hintText: 'Descrição',
+                      obscureText: false,
+                      controller: _descricaoController,
+                      isDescription: true,
+                    ),
+
+                    SizedBox(height: 5),
+
+                    InputField(
+                      icon: Icons.attach_money,
+                      hintText: 'Preço (R\$)',
+                      obscureText: false,
+                      controller: _precoController,
+                    ),
+
+                    SizedBox(height: 5),
+
+                    // Category Dropdown
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFF017DFE),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.category_outlined, color: Color(0xFF017DFE)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButtonFormField<String>(
+                                value: _categoriaSelecionada,
+                                decoration: const InputDecoration(
+                                  hintText: 'Categoria',
+                                  border: InputBorder.none,
+                                ),
+                                dropdownColor: Colors.white,
+                                items: categorias.map((String categoria) {
+                                  return DropdownMenuItem<String>(
+                                    value: categoria,
+                                    child: Text(categoria),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _categoriaSelecionada = newValue;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Continue Button
+                    ElevatedButton(
+                      onPressed: _cadastrarServico,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2196F3),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Anunciar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    // Add extra space at the bottom to ensure the last element is fully visible
+                    SizedBox(height: 24),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       ),
     );
   }
