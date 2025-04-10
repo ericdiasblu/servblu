@@ -5,6 +5,13 @@ import 'package:servblu/widgets/buildheaderwithtabs.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
+final List<String> tabItems = [
+  'Solicitado',
+  'Aguardando',
+  'Concluído',
+  'Recusado'
+];
+
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
 
@@ -14,7 +21,8 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   int _currentTabIndex = 0; // 0: Minhas Solicitações, 1: Minhas Ofertas
-  int _currentStatusIndex = 0; // 0: Solicitado, 1: Aguardando, 2: Concluído, 3: Recusado
+  int _currentStatusIndex =
+      0; // 0: Solicitado, 1: Aguardando, 2: Concluído, 3: Recusado
 
   final AgendamentoService _agendamentoService = AgendamentoService();
   List<Agendamento> _agendamentos = [];
@@ -41,10 +49,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       // Determinar qual tipo de agendamentos carregar
       if (_currentTabIndex == 0) {
         // Minhas Solicitações (como cliente)
-        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
+        agendamentos =
+            await _agendamentoService.listarAgendamentosPorCliente(userId);
       } else {
         // Minhas Ofertas (como prestador)
-        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
+        agendamentos =
+            await _agendamentoService.listarAgendamentosPorPrestador(userId);
       }
 
       // Filtrar por status
@@ -67,7 +77,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
 
       // Filtrar a lista de agendamentos pelo status atual
-      agendamentos = agendamentos.where((a) => a.status == statusFiltro).toList();
+      agendamentos =
+          agendamentos.where((a) => a.status == statusFiltro).toList();
 
       setState(() {
         _agendamentos = agendamentos;
@@ -157,21 +168,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
                 // Detalhes do agendamento
                 _buildInfoRow('Data', _formatarData(agendamento.dataServico)),
-                _buildInfoRow('Horário', _formatarHorario(agendamento.idHorario)),
+                _buildInfoRow(
+                    'Horário', _formatarHorario(agendamento.idHorario)),
 
                 // Mostrar nome do prestador ou cliente dependendo da aba
                 _buildInfoRow(
                     _currentTabIndex == 0 ? 'Prestador' : 'Cliente',
                     _currentTabIndex == 0
                         ? agendamento.nomePrestador ?? 'Não informado'
-                        : agendamento.nomeCliente ?? 'Não informado'
-                ),
+                        : agendamento.nomeCliente ?? 'Não informado'),
 
                 // Forma de pagamento
                 _buildInfoRow(
                     'Forma de pagamento',
-                    agendamento.formaPagamento ?? (agendamento.isPix ? 'Pix' : 'Não informado')
-                ),
+                    agendamento.formaPagamento ??
+                        (agendamento.isPix ? 'Pix' : 'Não informado')),
 
                 // ID do agendamento
                 _buildInfoRow('ID do agendamento', agendamento.idAgendamento),
@@ -263,13 +274,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   String _getButtonTextForStatus(String status) {
     switch (status) {
       case 'solicitado':
-        return _currentTabIndex == 0 ? 'Cancelar Solicitação' : 'Aceitar Solicitação';
+        return _currentTabIndex == 0
+            ? 'Cancelar Solicitação'
+            : 'Aceitar Solicitação';
       case 'aguardando':
-        return _currentTabIndex == 0 ? 'Confirmar Pagamento' : 'Verificar Pagamento';
+        return _currentTabIndex == 0
+            ? 'Confirmar Pagamento'
+            : 'Verificar Pagamento';
       case 'concluído':
         return _currentTabIndex == 0 ? 'Avaliar Serviço' : 'Ver Detalhes';
       case 'recusado':
-        return _currentTabIndex == 0 ? 'Ver Detalhes':'Ver Detalhes';
+        return _currentTabIndex == 0 ? 'Ver Detalhes' : 'Ver Detalhes';
       default:
         return 'Ver Detalhes';
     }
@@ -296,16 +311,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
           // Custom Tab Bar para os status
 
+// Agora vamos transformar o widget em um ListView.separated
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildTabButton('Solicitado', 0),
-                _buildTabButton('Aguardando', 1),
-                _buildTabButton('Concluído', 2),
-                _buildTabButton('Recusado', 3),
-              ],
+            child: SizedBox(
+              height: 40, // Define uma altura para o ListView
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: tabItems.length,
+                // Item builder
+                itemBuilder: (context, index) {
+                  return _buildTabButton(tabItems[index], index);
+                },
+                // Separator builder
+                separatorBuilder: (context, index) {
+                  return const SizedBox(width: 8); // Espaço entre os itens
+                },
+              ),
             ),
           ),
 
@@ -314,43 +336,44 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage != null
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  SizedBox(height: 16),
-                  Text(
-                    'Erro ao carregar agendamentos:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(_errorMessage!),
-                  ),
-                  ElevatedButton(
-                    onPressed: _carregarAgendamentos,
-                    child: Text('Tentar novamente'),
-                  ),
-                ],
-              ),
-            )
-                : _agendamentos.isEmpty
-                ? Center(
-              child: Text(
-                _currentTabIndex == 0
-                    ? 'Você não tem solicitações neste status'
-                    : 'Você não tem ofertas neste status',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-                : ListView.builder(
-              itemCount: _agendamentos.length,
-              itemBuilder: (context, index) {
-                final agendamento = _agendamentos[index];
-                return _buildAgendamentoCard(agendamento);
-              },
-            ),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline,
+                                color: Colors.red, size: 48),
+                            SizedBox(height: 16),
+                            Text(
+                              'Erro ao carregar agendamentos:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(_errorMessage!),
+                            ),
+                            ElevatedButton(
+                              onPressed: _carregarAgendamentos,
+                              child: Text('Tentar novamente'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _agendamentos.isEmpty
+                        ? Center(
+                            child: Text(
+                              _currentTabIndex == 0
+                                  ? 'Você não tem solicitações neste status'
+                                  : 'Você não tem ofertas neste status',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _agendamentos.length,
+                            itemBuilder: (context, index) {
+                              final agendamento = _agendamentos[index];
+                              return _buildAgendamentoCard(agendamento);
+                            },
+                          ),
           ),
         ],
       ),
@@ -370,12 +393,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               _carregarAgendamentos();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _currentStatusIndex == index
-                  ? Colors.blue
-                  : Colors.white,
-              foregroundColor: _currentStatusIndex == index
-                  ? Colors.white
-                  : Colors.blue,
+              backgroundColor:
+                  _currentStatusIndex == index ? Colors.blue : Colors.white,
+              foregroundColor:
+                  _currentStatusIndex == index ? Colors.white : Colors.blue,
               side: BorderSide(color: Colors.blue),
             ),
             child: Text(
@@ -419,7 +440,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Data e hora
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                  const Icon(Icons.calendar_today,
+                      size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
                     _formatarData(agendamento.dataServico),
@@ -442,9 +464,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getColorForStatus(agendamento.status).withOpacity(0.1),
+                      color: _getColorForStatus(agendamento.status)
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _getColorForStatus(agendamento.status),
