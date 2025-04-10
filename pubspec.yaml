@@ -28,7 +28,7 @@ dependencies:
   table_calendar: ^3.0.9
   email_validator: ^3.0.0
   flutter_animate: ^4.2.0+1
-
+  timeago: 3.2.2
 
 dev_dependencies:
   flutter_test:
@@ -53,3 +53,4 @@ flutter:
     - assets/home_image.jpg
     - assets/second_image.png
     - assets/offer_image.png
+    - assets/icon_app.png

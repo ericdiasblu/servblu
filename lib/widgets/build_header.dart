@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 class BuildHeader extends StatelessWidget {
   final String title;
   final bool backPage;
-  final GestureTapCallback? onTap;
+  final bool refresh;
+  final GestureTapCallback? onBack, onRefresh;
 
   const BuildHeader({
     super.key,
     required this.title,
     required this.backPage,
-    this.onTap,
+    required this.refresh,
+    this.onBack,
+    this.onRefresh,
   });
 
   @override
@@ -33,7 +36,7 @@ class BuildHeader extends StatelessWidget {
               Positioned(
                 left: 16,
                 child: GestureDetector(
-                  onTap: onTap,
+                  onTap: onBack,
                   child: Icon(
                     Icons.arrow_back,
                     color: Colors.white,
@@ -49,6 +52,17 @@ class BuildHeader extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            if (refresh)
+              Positioned(
+                right: 16,
+                child: GestureDetector(
+                  onTap: onRefresh,
+                  child: Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

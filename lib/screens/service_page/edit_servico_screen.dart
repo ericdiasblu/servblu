@@ -179,9 +179,9 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
             BuildHeader(
               title: 'Editar Serviço',
               backPage: true,
-              onTap: () {
+              onBack: () {
                 Navigator.pop(context);
-              },
+              }, refresh: false,
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -204,32 +204,32 @@ class _EditServicoScreenState extends State<EditServicoScreen> {
                               ),
                               child: _novaImagem == null
                                   ? Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.camera_alt,
-                                          size: 40,
-                                          color: Color(0xFF017DFE),
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Adicionar foto',
-                                          style: TextStyle(
-                                            color: Color(0xFF017DFE),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.file(
-                                        _novaImagem!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.camera_alt,
+                                    size: 40,
+                                    color: Color(0xFF017DFE),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Adicionar foto',
+                                    style: TextStyle(
+                                      color: Color(0xFF017DFE),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                ],
+                              )
+                                  : ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  _novaImagem!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                              ),
                             ),
                           ),
                           // Botão de remoção estilizado e posicionado no canto superior direito
