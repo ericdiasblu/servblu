@@ -217,8 +217,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Aqui você pode implementar ações específicas para cada status
-                      Navigator.pop(context);
+                      // Executar a ação apropriada baseada no status
+                      _executeActionForStatus(agendamento.status, agendamento);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
@@ -287,6 +287,37 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         return _currentTabIndex == 0 ? 'Ver Detalhes' : 'Ver Detalhes';
       default:
         return 'Ver Detalhes';
+    }
+  }
+
+  void _executeActionForStatus(String status, Agendamento agendamento) {
+    switch (status) {
+      case 'solicitado':
+        if (_currentTabIndex == 0) {
+          _cancelarSolicitacao(agendamento);
+        } else {
+          _aceitarSolicitacao(agendamento);
+        }
+        break;
+      case 'aguardando':
+        if (_currentTabIndex == 0) {
+          _confirmarPagamento(agendamento);
+        } else {
+          _verificarPagamento(agendamento);
+        }
+        break;
+      case 'concluído':
+        if (_currentTabIndex == 0) {
+          _avaliarServico(agendamento);
+        } else {
+          _verDetalhes(agendamento);
+        }
+        break;
+      case 'recusado':
+        _verDetalhes(agendamento);
+        break;
+      default:
+        _verDetalhes(agendamento);
     }
   }
 
@@ -546,4 +577,281 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         return Colors.grey;
     }
   }
+
+  void _cancelarSolicitacao(Agendamento agendamento) async {
+    try {
+      final agendamentoService = AgendamentoService();
+      await agendamentoService.atualizarStatusAgendamento(
+          agendamento.idAgendamento, 'cancelado');
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Solicitação cancelada com sucesso')),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao cancelar solicitação: $e')),
+      );
+    }
+  }
+
+  void _aceitarSolicitacao(Agendamento agendamento) async {
+    try {
+      final agendamentoService = AgendamentoService();
+      await agendamentoService.atualizarStatusAgendamento(
+          agendamento.idAgendamento, 'aguardando');
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Solicitação aceita com sucesso')),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao aceitar solicitação: $e')),
+      );
+    }
+  }
+
+  void _recusarSolicitacao(Agendamento agendamento) {
+    // Abrir modal para confirmar recusa e solicitar motivo
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String motivo = '';
+        return AlertDialog(
+          title: Text('Recusar Solicitação'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Tem certeza que deseja recusar esta solicitação?'),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Motivo da recusa (obrigatório)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                onChanged: (value) => motivo = value,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text('Confirmar'),
+              onPressed: () async {
+                if (motivo.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Informe o motivo da recusa')),
+                  );
+                  return;
+                }
+
+                try {
+                  final agendamentoService = AgendamentoService();
+                  await agendamentoService.atualizarStatusAgendamento(
+                      agendamento.idAgendamento, 'recusado');
+
+                  // Aqui você poderia adicionar o motivo em um campo específico no banco de dados
+                  // Por enquanto, vamos apenas fechar os diálogos e mostrar mensagem
+                  Navigator.pop(context); // Fecha o diálogo de confirmação
+                  Navigator.pop(context); // Fecha o modal de detalhes
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Solicitação recusada com sucesso')),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao recusar solicitação: $e')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmarPagamento(Agendamento agendamento) async {
+    try {
+      final agendamentoService = AgendamentoService();
+      await agendamentoService.atualizarStatusAgendamento(
+          agendamento.idAgendamento, 'confirmado');
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pagamento confirmado com sucesso')),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao confirmar pagamento: $e')),
+      );
+    }
+  }
+
+  void _verificarPagamento(Agendamento agendamento) async {
+    try {
+      // Buscar dados atualizados do agendamento
+      final agendamentoService = AgendamentoService();
+      final agendamentoAtualizado = await agendamentoService.buscarAgendamento(
+          agendamento.idAgendamento);
+
+      Navigator.pop(context);
+
+      // Verificar se o pagamento foi confirmado
+      if (agendamentoAtualizado.status == 'confirmado') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pagamento já realizado')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Aguardando pagamento')),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao verificar pagamento: $e')),
+      );
+    }
+  }
+
+  void _avaliarServico(Agendamento agendamento) {
+    // Abrir modal para avaliação
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        double nota = 3.0; // Valor padrão
+        return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text('Avaliar Serviço'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Como você avalia o serviço prestado?'),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('${nota.toInt()}'),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Slider(
+                            value: nota,
+                            min: 1,
+                            max: 5,
+                            divisions: 4,
+                            onChanged: (value) {
+                              setState(() {
+                                nota = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Comentário (opcional)',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    child: Text('Cancelar'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  TextButton(
+                    child: Text('Enviar Avaliação'),
+                    onPressed: () async {
+                      // Aqui você implementaria o envio da avaliação para o banco de dados
+                      // Por ora, apenas fechamos o modal e exibimos mensagem
+
+                      Navigator.pop(context); // Fecha o diálogo de avaliação
+                      Navigator.pop(context); // Fecha o modal de detalhes
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Avaliação enviada com sucesso')),
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+        );
+      },
+    );
+  }
+
+  void _verDetalhes(Agendamento agendamento) async {
+    try {
+      // Buscar detalhes completos do agendamento
+      final agendamentoService = AgendamentoService();
+      final detalhes = await agendamentoService.obterDetalhesAgendamento(
+          agendamento.idAgendamento);
+
+      // Aqui você pode manter o modal aberto e exibir os detalhes
+      // Em vez de fechar como estava fazendo antes
+
+      // Como estamos dentro de um modal que já exibe detalhes,
+      // esta função poderia ser usada para atualizar os dados exibidos
+      setState(() {
+        // Atualizar os detalhes exibidos no modal atual
+        // Ex: agendamentoDetalhado = detalhes;
+      });
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao buscar detalhes: $e')),
+      );
+    }
+  }
+
+// Função para gerenciar ação de minhas ofertas quando status é solicitado
+  void _gerenciarSolicitacao(Agendamento agendamento) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Gerenciar Solicitação'),
+          content: Text('Como deseja proceder com esta solicitação?'),
+          actions: [
+            TextButton(
+              child: Text('Aceitar'),
+              onPressed: () {
+                Navigator.pop(context); // Fecha este diálogo
+                _aceitarSolicitacao(agendamento);
+              },
+            ),
+            TextButton(
+              child: Text('Recusar'),
+              onPressed: () {
+                Navigator.pop(context); // Fecha este diálogo
+                _recusarSolicitacao(agendamento);
+              },
+            ),
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+
