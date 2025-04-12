@@ -53,7 +53,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     if (notificacao.id != null) {
       try {
         // Adicionar método de exclusão no repositório
-        await _repository.excluirNotificacaoes(notificacao.id!);
+        await _repository.excluirNotificacoes(notificacao.id!);
 
         // Remover da lista local
         setState(() {
