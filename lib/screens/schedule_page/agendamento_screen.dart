@@ -40,6 +40,8 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
   bool _isPix = false;
   String _formaPagamento = 'Dinheiro'; // Valor padrão
 
+  final supabase = Supabase.instance.client;
+
   // Opções de pagamento disponíveis
   final List<String> _opcoesPagamento = [
     'Dinheiro',
@@ -180,6 +182,13 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Agendamento solicitado com sucesso!')),
         );
+        // Sistema Notificação
+        final response = await supabase.functions.invoke('send-notification', body: {
+          'to_user_id': widget.idPrestador,   // <— chave correta
+          'title': 'Novo Agendamento!',
+          'body': 'Um usuário acabou de agendar seu serviço. Confira agora!'
+        });
+
         Navigator.pop(context, true);
       }
     } catch (e) {

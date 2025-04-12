@@ -49,37 +49,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  Future<void> _enviarNotificacaoTeste() async {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
-
-    if (userId != null) {
-      try {
-        await _repository.enviarNotificacao(
-          toUserId: userId,
-          title: 'Teste de Notificação',
-          body: 'Esta é uma notificação de teste!',
-          tipoNotificacao: 'teste',
-          data: {'type': 'test', 'redirectTo': 'home'},
-        );
-
-        await _carregarNotificacoes();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Notificação enviada!')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e')),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Usuário não autenticado!')),
-      );
-    }
-  }
-
   Future<void> _excluirNotificacao(Notificacao notificacao) async {
     if (notificacao.id != null) {
       try {
@@ -108,10 +77,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: Column(
         children: [
           BuildHeader(title: 'Notificações', backPage: false, refresh: true,onRefresh: _carregarNotificacoes,),
-          /*ElevatedButton(
-            onPressed: _enviarNotificacaoTeste,
-            child: Text('Enviar Notificação de Teste'),
-          ),*/
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
