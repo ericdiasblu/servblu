@@ -1,38 +1,31 @@
 class Notificacao {
   final int? id;
-  final String idUsuario;
+  final String userId;
   final String mensagem;
-  final bool lida;
   final DateTime dataEnvio;
-  final String tipoNotificacao;
+  final bool lida;
 
   Notificacao({
     this.id,
-    required this.idUsuario,
+    required this.userId,
     required this.mensagem,
-    this.lida = false,
     required this.dataEnvio,
-    required this.tipoNotificacao,
+    this.lida = false,
   });
 
-  factory Notificacao.fromJson(Map<String, dynamic> json) {
-    return Notificacao(
-      id: json['id'],
-      idUsuario: json['id_usuario'],
-      mensagem: json['mensagem'],
-      lida: json['lida'] ?? false,
-      dataEnvio: DateTime.parse(json['data_envio']),
-      tipoNotificacao: json['tipo_notificacao'],
-    );
-  }
+  factory Notificacao.fromMap(Map<String, dynamic> m) => Notificacao(
+    id: m['id'] as int,
+    userId: m['id_usuario'] as String,
+    mensagem: m['mensagem'] as String,
+    dataEnvio: DateTime.parse(m['data_envio'] as String),
+    lida: m['lida'] as bool,
+  );
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id_usuario': idUsuario,
-      'mensagem': mensagem,
-      'lida': lida,
-      'data_envio': dataEnvio.toIso8601String(),
-      'tipo_notificacao': tipoNotificacao,
-    };
-  }
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'id_usuario': userId,
+    'mensagem': mensagem,
+    'data_envio': dataEnvio.toIso8601String(),
+    'lida': lida,
+  };
 }

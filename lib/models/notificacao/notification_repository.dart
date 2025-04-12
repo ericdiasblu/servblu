@@ -5,7 +5,7 @@ class NotificacaoRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // Método para enviar notificação e salvar no banco
-  Future<Notificacao> enviarNotificacao({
+  /* Future<Notificacao> enviarNotificacao({
     required String toUserId,
     required String title,
     required String body,
@@ -48,22 +48,29 @@ class NotificacaoRepository {
       print('Erro ao enviar e salvar notificação: $e');
       rethrow;
     }
-  }
+  }*/
 
   // Método para listar notificações de um usuário
-  Future<List<Notificacao>> listarNotificacoes(String idUsuario) async {
-    try {
-      final response = await _supabase
-          .from('notificacoes')
-          .select()
-          .eq('id_usuario', idUsuario)
-          .order('data_envio', ascending: false);
+  Future<List<Notificacao>> listarNotificacoes(String userId) async {
+    final res = await _supabase
+        .from('notificacoes')
+        .select()
+        .eq('id_usuario', userId)
+        .order('data_envio', ascending: false);
+    return (res as List)
+        .map((m) => Notificacao.fromMap(m))
+        .toList();
+  }
 
-      return response.map((json) => Notificacao.fromJson(json)).toList();
-    } catch (e) {
-      print('Erro ao listar notificações: $e');
-      return [];
-    }
+  Future<void> saveNotificacao(Notificacao n) async {
+    await _supabase.from('notificacoes').insert(n.toMap());
+  }
+
+  Future<void> excluirNotificacaoes(int id) async {
+    await _supabase
+        .from('notificacoes')
+        .delete()
+        .eq('id', id);
   }
 
   Future<void> excluirNotificacao(int idNotificacao) async {
