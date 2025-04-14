@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:servblu/models/servicos/servico.dart';
-import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/services/servico_service.dart';
 import 'package:servblu/screens/home_page/search_screen.dart';
 import 'package:servblu/widgets/build_circle_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

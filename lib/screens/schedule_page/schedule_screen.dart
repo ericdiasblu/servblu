@@ -3,7 +3,9 @@ import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
 import 'package:servblu/widgets/buildheaderwithtabs.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
+import 'package:servblu/utils/formatters/agendamento_formatter.dart';
+import 'package:servblu/utils/helpers/agendamento_status_helper.dart';
+import 'package:servblu/services/agendamento_actions.dart';
 
 final List<String> tabItems = [
   'Solicitado',
@@ -98,28 +100,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
   }
 
-  // Formatar horário (agora com tratamento robusto de tipos)
-  String _formatarHorario(dynamic horario) {
-    // Se já for string, tenta formatar
-    if (horario is String) {
-      try {
-        int horarioInt = int.parse(horario);
-        String horarioStr = horarioInt.toString().padLeft(4, '0');
-        return '${horarioStr.substring(0, 2)}:${horarioStr.substring(2)}';
-      } catch (e) {
-        return horario.toString();
-      }
-    }
-    // Se for inteiro, formata diretamente
-    else if (horario is int) {
-      String horarioStr = horario.toString().padLeft(4, '0');
-      return '${horarioStr.substring(0, 2)}:${horarioStr.substring(2)}';
-    }
-    // Qualquer outro tipo, converte para string
-    else {
-      return horario?.toString() ?? 'N/A';
-    }
-  }
 
   void _mostrarDetalhesAgendamento(Agendamento agendamento) {
     setState(() {
@@ -167,25 +147,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 const SizedBox(height: 24),
 
                 // Detalhes do agendamento
-                _buildInfoRow('Data', _formatarData(agendamento.dataServico)),
+                _buildInfoRow('Data', AgendamentoFormatter.formatarData(agendamento.dataServico)),
                 _buildInfoRow(
-                    'Horário', _formatarHorario(agendamento.idHorario)),
+                    'Horário', AgendamentoFormatter.formatarHorario(agendamento.idHorario)),
 
                 // Mostrar nome do prestador ou cliente dependendo da aba
                 _buildInfoRow(
                     _currentTabIndex == 0 ? 'Prestador' : 'Cliente',
                     _currentTabIndex == 0
-                        ? agendamento.nomePrestador ?? 'Não informado'
-                        : agendamento.nomeCliente ?? 'Não informado'),
+                        ? agendamento.nomePrestador ?? '${agendamento.nomePrestador}'
+                        : agendamento.nomeCliente ?? '${agendamento.nomeCliente}'),
 
                 // Forma de pagamento
                 _buildInfoRow(
                     'Forma de pagamento',
                     agendamento.formaPagamento ??
-                        (agendamento.isPix ? 'Pix' : 'Não informado')),
+                        (agendamento.isPix ? 'Pix' : '${agendamento.formaPagamento}')),
 
                 // ID do agendamento
-                _buildInfoRow('ID do agendamento', agendamento.idAgendamento),
+                _buildInfoRow('ID do agendamento', AgendamentoFormatter.formatarId(agendamento.idAgendamento)),
 
                 const SizedBox(height: 30),
 
@@ -193,8 +173,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Row(
                   children: [
                     Icon(
-                      _getIconForStatus(agendamento.status),
-                      color: _getColorForStatus(agendamento.status),
+                      AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                      color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -203,7 +183,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: _getColorForStatus(agendamento.status),
+                        color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       ),
                     ),
                   ],
@@ -218,7 +198,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       // Executar a ação apropriada baseada no status
-                      _executeActionForStatus(agendamento.status, agendamento);
+                      AgendamentoActions.executeActionForStatus(
+                        context,
+                        agendamento.status,
+                        agendamento,
+                        _currentTabIndex,
+                            () {
+                          // Função de callback para atualizar a UI
+                          setState(() {
+                            // Atualizar lista de agendamentos se necessário
+                            _carregarAgendamentos();
+                          });
+                        },
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
@@ -227,7 +219,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                     ),
                     child: Text(
-                      _getButtonTextForStatus(agendamento.status),
+                      AgendamentoStatusHelper.getButtonTextForStatus(agendamento.status, _currentTabIndex),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -246,16 +238,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
             ),
           ),
           Expanded(
@@ -271,55 +266,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  String _getButtonTextForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return _currentTabIndex == 0
-            ? 'Cancelar Solicitação'
-            : 'Aceitar Solicitação';
-      case 'aguardando':
-        return _currentTabIndex == 0
-            ? 'Confirmar Pagamento'
-            : 'Verificar Pagamento';
-      case 'concluído':
-        return _currentTabIndex == 0 ? 'Avaliar Serviço' : 'Ver Detalhes';
-      case 'recusado':
-        return _currentTabIndex == 0 ? 'Ver Detalhes' : 'Ver Detalhes';
-      default:
-        return 'Ver Detalhes';
-    }
-  }
 
-  void _executeActionForStatus(String status, Agendamento agendamento) {
-    switch (status) {
-      case 'solicitado':
-        if (_currentTabIndex == 0) {
-          _cancelarSolicitacao(agendamento);
-        } else {
-          _aceitarSolicitacao(agendamento);
-        }
-        break;
-      case 'aguardando':
-        if (_currentTabIndex == 0) {
-          _confirmarPagamento(agendamento);
-        } else {
-          _verificarPagamento(agendamento);
-        }
-        break;
-      case 'concluído':
-        if (_currentTabIndex == 0) {
-          _avaliarServico(agendamento);
-        } else {
-          _verDetalhes(agendamento);
-        }
-        break;
-      case 'recusado':
-        _verDetalhes(agendamento);
-        break;
-      default:
-        _verDetalhes(agendamento);
-    }
-  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -475,14 +424,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
-                    _formatarData(agendamento.dataServico),
+                    AgendamentoFormatter.formatarData(agendamento.dataServico),
                     style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.access_time, size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
-                    _formatarHorario(agendamento.idHorario),
+                    AgendamentoFormatter.formatarHorario(agendamento.idHorario),
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -496,13 +445,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 children: [
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getColorForStatus(agendamento.status)
+                      color: AgendamentoStatusHelper.getColorForStatus(agendamento.status)
                           .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getColorForStatus(agendamento.status),
+                        color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                         width: 1,
                       ),
                     ),
@@ -510,8 +459,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _getIconForStatus(agendamento.status),
-                          color: _getColorForStatus(agendamento.status),
+                          AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                          color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                           size: 14,
                         ),
                         const SizedBox(width: 4),
@@ -519,7 +468,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           agendamento.status,
                           style: TextStyle(
                             fontSize: 12,
-                            color: _getColorForStatus(agendamento.status),
+                            color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -535,323 +484,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  String formatarId(String id) {
-    return id.length > 8 ? id.substring(0, 8) : id;
-  }
 
-  String _formatarData(String dataString) {
-    try {
-      final data = DateTime.parse(dataString);
-      return DateFormat('dd/MM/yyyy').format(data);
-    } catch (e) {
-      return dataString;
-    }
-  }
-
-  IconData _getIconForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return Icons.pending_outlined;
-      case 'aguardando':
-        return Icons.payment;
-      case 'concluído':
-        return Icons.check_circle_outline;
-      case 'recusado':
-        return Icons.cancel_outlined;
-      default:
-        return Icons.error_outline;
-    }
-  }
-
-  Color _getColorForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return Colors.orange;
-      case 'aguardando':
-        return Colors.deepPurple;
-      case 'concluído':
-        return Colors.green;
-      case 'recusado':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  void _cancelarSolicitacao(Agendamento agendamento) async {
-    try {
-      final agendamentoService = AgendamentoService();
-      await agendamentoService.atualizarStatusAgendamento(
-          agendamento.idAgendamento, 'cancelado');
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Solicitação cancelada com sucesso')),
-      );
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao cancelar solicitação: $e')),
-      );
-    }
-  }
-
-  void _aceitarSolicitacao(Agendamento agendamento) async {
-    try {
-      final agendamentoService = AgendamentoService();
-      await agendamentoService.atualizarStatusAgendamento(
-          agendamento.idAgendamento, 'aguardando');
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Solicitação aceita com sucesso')),
-      );
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao aceitar solicitação: $e')),
-      );
-    }
-  }
-
-  void _recusarSolicitacao(Agendamento agendamento) {
-    // Abrir modal para confirmar recusa e solicitar motivo
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String motivo = '';
-        return AlertDialog(
-          title: Text('Recusar Solicitação'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Tem certeza que deseja recusar esta solicitação?'),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Motivo da recusa (obrigatório)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                onChanged: (value) => motivo = value,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancelar'),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text('Confirmar'),
-              onPressed: () async {
-                if (motivo.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Informe o motivo da recusa')),
-                  );
-                  return;
-                }
-
-                try {
-                  final agendamentoService = AgendamentoService();
-                  await agendamentoService.atualizarStatusAgendamento(
-                      agendamento.idAgendamento, 'recusado');
-
-                  // Aqui você poderia adicionar o motivo em um campo específico no banco de dados
-                  // Por enquanto, vamos apenas fechar os diálogos e mostrar mensagem
-                  Navigator.pop(context); // Fecha o diálogo de confirmação
-                  Navigator.pop(context); // Fecha o modal de detalhes
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Solicitação recusada com sucesso')),
-                  );
-                } catch (e) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro ao recusar solicitação: $e')),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _confirmarPagamento(Agendamento agendamento) async {
-    try {
-      final agendamentoService = AgendamentoService();
-      await agendamentoService.atualizarStatusAgendamento(
-          agendamento.idAgendamento, 'confirmado');
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pagamento confirmado com sucesso')),
-      );
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao confirmar pagamento: $e')),
-      );
-    }
-  }
-
-  void _verificarPagamento(Agendamento agendamento) async {
-    try {
-      // Buscar dados atualizados do agendamento
-      final agendamentoService = AgendamentoService();
-      final agendamentoAtualizado = await agendamentoService.buscarAgendamento(
-          agendamento.idAgendamento);
-
-      Navigator.pop(context);
-
-      // Verificar se o pagamento foi confirmado
-      if (agendamentoAtualizado.status == 'confirmado') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pagamento já realizado')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Aguardando pagamento')),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao verificar pagamento: $e')),
-      );
-    }
-  }
-
-  void _avaliarServico(Agendamento agendamento) {
-    // Abrir modal para avaliação
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        double nota = 3.0; // Valor padrão
-        return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: Text('Avaliar Serviço'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Como você avalia o serviço prestado?'),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('${nota.toInt()}'),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Slider(
-                            value: nota,
-                            min: 1,
-                            max: 5,
-                            divisions: 4,
-                            onChanged: (value) {
-                              setState(() {
-                                nota = value;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Comentário (opcional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    child: Text('Cancelar'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  TextButton(
-                    child: Text('Enviar Avaliação'),
-                    onPressed: () async {
-                      // Aqui você implementaria o envio da avaliação para o banco de dados
-                      // Por ora, apenas fechamos o modal e exibimos mensagem
-
-                      Navigator.pop(context); // Fecha o diálogo de avaliação
-                      Navigator.pop(context); // Fecha o modal de detalhes
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Avaliação enviada com sucesso')),
-                      );
-                    },
-                  ),
-                ],
-              );
-            }
-        );
-      },
-    );
-  }
-
-  void _verDetalhes(Agendamento agendamento) async {
-    try {
-      // Buscar detalhes completos do agendamento
-      final agendamentoService = AgendamentoService();
-      final detalhes = await agendamentoService.obterDetalhesAgendamento(
-          agendamento.idAgendamento);
-
-      // Aqui você pode manter o modal aberto e exibir os detalhes
-      // Em vez de fechar como estava fazendo antes
-
-      // Como estamos dentro de um modal que já exibe detalhes,
-      // esta função poderia ser usada para atualizar os dados exibidos
-      setState(() {
-        // Atualizar os detalhes exibidos no modal atual
-        // Ex: agendamentoDetalhado = detalhes;
-      });
-
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao buscar detalhes: $e')),
-      );
-    }
-  }
-
-// Função para gerenciar ação de minhas ofertas quando status é solicitado
-  void _gerenciarSolicitacao(Agendamento agendamento) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Gerenciar Solicitação'),
-          content: Text('Como deseja proceder com esta solicitação?'),
-          actions: [
-            TextButton(
-              child: Text('Aceitar'),
-              onPressed: () {
-                Navigator.pop(context); // Fecha este diálogo
-                _aceitarSolicitacao(agendamento);
-              },
-            ),
-            TextButton(
-              child: Text('Recusar'),
-              onPressed: () {
-                Navigator.pop(context); // Fecha este diálogo
-                _recusarSolicitacao(agendamento);
-              },
-            ),
-            TextButton(
-              child: Text('Cancelar'),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
 
 

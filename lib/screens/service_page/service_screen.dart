@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 
 import 'package:servblu/models/servicos/servico.dart';
-import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/services/servico_service.dart';
 
 import '../../widgets/build_header.dart';
 

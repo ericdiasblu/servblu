@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/models/servicos/servico.dart';
-import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/services/servico_service.dart';
 import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
