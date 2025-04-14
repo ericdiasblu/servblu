@@ -137,8 +137,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // Campos de entrada
               InputField(icon: Icons.person, hintText: "Nome", controller: _nameController, obscureText: false),
               InputField(icon: Icons.email, hintText: "Email", controller: _emailController, obscureText: false),
-              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true),
-              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true),
+              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true,isPassword: true,),
+              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true,isPassword: true,),
               InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false, maskedController: _phoneController),
               BuildDropdownField(icon: Icons.home, hintText: "Bairro", controller: _addressController),
               const SizedBox(height: 20),
