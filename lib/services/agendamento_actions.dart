@@ -58,51 +58,14 @@ class AgendamentoActions {
 
   static void confirmarPagamento(BuildContext context, Agendamento agendamento,
       Function refreshData) async {
-    try {
-      final agendamentoService = AgendamentoService();
-      await agendamentoService.atualizarStatusAgendamento(
-          agendamento.idAgendamento, 'confirmado');
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pagamento confirmado com sucesso')),
-      );
-      refreshData();
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao confirmar pagamento: $e')),
-      );
-    }
+    Navigator.pop(context);
+    // função pagamento
   }
 
   static void verificarPagamento(BuildContext context, Agendamento agendamento,
       Function refreshData) async {
-    try {
-      // Buscar dados atualizados do agendamento
-      final agendamentoService = AgendamentoService();
-      final agendamentoAtualizado =
-          await agendamentoService.buscarAgendamento(agendamento.idAgendamento);
-
-      Navigator.pop(context);
-
-      // Verificar se o pagamento foi confirmado
-      if (agendamentoAtualizado.status == 'confirmado') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pagamento já realizado')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Aguardando pagamento')),
-        );
-      }
-      refreshData();
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao verificar pagamento: $e')),
-      );
-    }
+    Navigator.pop(context);
+    // função verificar status pagamento
   }
 
   static void avaliarServico(

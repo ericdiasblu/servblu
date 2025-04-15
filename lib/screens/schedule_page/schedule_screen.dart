@@ -14,6 +14,8 @@ final List<String> tabItems = [
   'Recusado'
 ];
 
+
+
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
 
@@ -38,6 +40,52 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _carregarAgendamentos();
   }
 
+  Future<void> _verificarEAtualizarStatusAgendamentos(List<Agendamento> agendamentos) async {
+    final now = DateTime.now();
+    final atualizacoes = <Future<void>>[];
+
+    for (final agendamento in agendamentos) {
+      if (agendamento.status == 'aguardando') {
+        try {
+          // Converter a data de string para DateTime
+          final dataServico = DateTime.parse(agendamento.dataServico); // Formato: '2025-04-02'
+
+          // Converter o horário de int para horas e minutos
+          // Por exemplo: 900 -> 9:00, 1330 -> 13:30
+          final horarioInt = int.tryParse(agendamento.idHorario.toString()) ?? 0;
+          final hora = horarioInt ~/ 100;
+          final minuto = horarioInt % 100;
+
+          // Criar um DateTime com a data do serviço e o horário
+          final dataHoraServico = DateTime(
+            dataServico.year,
+            dataServico.month,
+            dataServico.day,
+            hora,
+            minuto,
+          );
+
+          // Se o horário do serviço já passou, atualizar o status para 'concluído'
+          if (now.isAfter(dataHoraServico)) {
+            atualizacoes.add(
+                _agendamentoService.atualizarStatusAgendamento(
+                    agendamento.idAgendamento,
+                    'concluído'
+                )
+            );
+          }
+        } catch (e) {
+          print('Erro ao verificar agendamento ${agendamento.idAgendamento}: $e');
+        }
+      }
+    }
+
+    // Esperar todas as atualizações terminarem
+    if (atualizacoes.isNotEmpty) {
+      await Future.wait(atualizacoes);
+    }
+  }
+
   Future<void> _carregarAgendamentos() async {
     setState(() {
       _isLoading = true;
@@ -51,12 +99,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       // Determinar qual tipo de agendamentos carregar
       if (_currentTabIndex == 0) {
         // Minhas Solicitações (como cliente)
-        agendamentos =
-            await _agendamentoService.listarAgendamentosPorCliente(userId);
+        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
       } else {
         // Minhas Ofertas (como prestador)
-        agendamentos =
-            await _agendamentoService.listarAgendamentosPorPrestador(userId);
+        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
+      }
+
+      // Verificar e atualizar status de agendamentos que já passaram do horário
+      await _verificarEAtualizarStatusAgendamentos(agendamentos);
+
+      // Recarregar a lista após as atualizações
+      if (_currentTabIndex == 0) {
+        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
+      } else {
+        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
       }
 
       // Filtrar por status
@@ -79,8 +135,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
 
       // Filtrar a lista de agendamentos pelo status atual
-      agendamentos =
-          agendamentos.where((a) => a.status == statusFiltro).toList();
+      agendamentos = agendamentos.where((a) => a.status == statusFiltro).toList();
 
       setState(() {
         _agendamentos = agendamentos;

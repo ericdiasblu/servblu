@@ -38,11 +38,9 @@ class AgendamentoStatusHelper {
             ? 'Cancelar Solicitação'
             : 'Aceitar ou Recusar';
       case 'aguardando':
-        return currentTabIndex == 0
-            ? 'Confirmar Pagamento'
-            : 'Verificar Pagamento';
+        return currentTabIndex == 0 ? 'Pagar' : 'Verificar Pagamento';
       case 'concluído':
-        return currentTabIndex == 0 ? 'Avaliar Serviço' : 'Ver Detalhes';
+        return currentTabIndex == 0 ? 'Avaliar Serviço' : 'Voltar';
       case 'recusado':
         return currentTabIndex == 0 ? 'Ver Detalhes' : 'Ver Detalhes';
       default:
