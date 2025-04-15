@@ -16,13 +16,9 @@ class AgendamentoService {
     }
   }
 
-  /// Retorna os agendamentos realizados por um contratante.
-
-  /// Retorna os agendamentos recebidos por um prestador.
-
   /// Atualiza o status do agendamento.
   Future<void> atualizarStatusAgendamento(
-      String idAgendamento, String novoStatus) async {
+      String idAgendamento, String novoStatus, {String? motivoRecusa}) async {
     try {
       final validStatuses = [
         'solicitado',
@@ -36,9 +32,19 @@ class AgendamentoService {
         throw Exception('Status inválido.');
       }
 
+      // Preparar dados para atualização
+      Map<String, dynamic> dadosAtualizacao = {'status': novoStatus};
+
+      // Se o status for recusado e houver motivo, incluir o motivo na atualização
+      if (novoStatus == 'recusado' && motivoRecusa != null && motivoRecusa.trim().isNotEmpty) {
+        dadosAtualizacao['motivo_recusa'] = motivoRecusa;
+      }
+
+      // Atualizar o agendamento
       await supabase
           .from('agendamentos')
-          .update({'status': novoStatus}).eq('id_agendamento', idAgendamento);
+          .update(dadosAtualizacao)
+          .eq('id_agendamento', idAgendamento);
     } catch (e) {
       throw Exception('Erro ao atualizar status: $e');
     }
@@ -46,7 +52,7 @@ class AgendamentoService {
 
   /// Verifica se o horário já foi agendado para o prestador em determinada data.
   Future<bool> verificarDisponibilidade(
-      String idPrestador, String dataServico, String idHorario) async {
+      String idPrestador, String dataServico, dynamic idHorario) async {
     try {
       final List<Map<String, dynamic>> response = await supabase
           .from('agendamentos')
@@ -66,11 +72,9 @@ class AgendamentoService {
   Future<Agendamento> obterDetalhesAgendamento(String idAgendamento) async {
     try {
       final List<Map<String, dynamic>> response =
-          await supabase.from('agendamentos').select('''
+      await supabase.from('agendamentos').select('''
             *,
-            servicos:id_servico (nome),
-            prestadores:id_prestador (nome),
-            clientes:id_cliente (nome)
+            servicos:id_servico (nome)
           ''').eq('id_agendamento', idAgendamento).limit(1);
 
       if (response.isEmpty) {
@@ -79,9 +83,33 @@ class AgendamentoService {
 
       final json = response.first;
       final agendamento = Agendamento.fromJson(json);
-      agendamento.nomeServico = json['servicos']?['nome'];
-      agendamento.nomePrestador = json['prestadores']?['nome'];
-      agendamento.nomeCliente = json['clientes']?['nome'];
+
+      if (json['servicos'] != null) {
+        agendamento.nomeServico = json['servicos']['nome'];
+      }
+
+      // Buscar nomes de prestador e cliente
+      try {
+        final prestadorResponse = await supabase
+            .from('usuarios')
+            .select('nome')
+            .eq('id_usuario', agendamento.idPrestador)
+            .single();
+        agendamento.nomePrestador = prestadorResponse['nome'];
+      } catch (e) {
+        print('Erro ao buscar nome do prestador: $e');
+      }
+
+      try {
+        final clienteResponse = await supabase
+            .from('usuarios')
+            .select('nome')
+            .eq('id_usuario', agendamento.idCliente)
+            .single();
+        agendamento.nomeCliente = clienteResponse['nome'];
+      } catch (e) {
+        print('Erro ao buscar nome do cliente: $e');
+      }
 
       return agendamento;
     } catch (e) {
@@ -96,8 +124,7 @@ class AgendamentoService {
       // Consulta para buscar agendamentos onde o usuário é o cliente
       final response = await supabase.from('agendamentos').select('''
             *,
-            servicos:id_servico (nome),
-            usuarios!id_prestador (nome)
+            servicos:id_servico (nome)
           ''').eq('id_cliente', idCliente);
 
       // Mapear os resultados para objetos Agendamento
@@ -110,9 +137,16 @@ class AgendamentoService {
           agendamento.nomeServico = item['servicos']['nome'];
         }
 
-        // Adicionar nome do prestador
-        if (item['usuarios'] != null) {
-          agendamento.nomePrestador = item['usuarios']['nome'];
+        try {
+          // Buscar nome do prestador
+          final prestadorResponse = await supabase
+              .from('usuarios')
+              .select('nome')
+              .eq('id_usuario', agendamento.idPrestador)
+              .single();
+          agendamento.nomePrestador = prestadorResponse['nome'];
+        } catch (e) {
+          print('Erro ao buscar nome do prestador: $e');
         }
 
         agendamentos.add(agendamento);
@@ -132,8 +166,7 @@ class AgendamentoService {
       // Consulta para buscar agendamentos onde o usuário é o prestador
       final response = await supabase.from('agendamentos').select('''
             *,
-            servicos:id_servico (nome),
-            usuarios!id_cliente (nome)
+            servicos:id_servico (nome)
           ''').eq('id_prestador', idPrestador);
 
       // Mapear os resultados para objetos Agendamento
@@ -146,9 +179,16 @@ class AgendamentoService {
           agendamento.nomeServico = item['servicos']['nome'];
         }
 
-        // Adicionar nome do cliente
-        if (item['usuarios'] != null) {
-          agendamento.nomeCliente = item['usuarios']['nome'];
+        try {
+          // Buscar nome do cliente
+          final clienteResponse = await supabase
+              .from('usuarios')
+              .select('nome')
+              .eq('id_usuario', agendamento.idCliente)
+              .single();
+          agendamento.nomeCliente = clienteResponse['nome'];
+        } catch (e) {
+          print('Erro ao buscar nome do cliente: $e');
         }
 
         agendamentos.add(agendamento);
@@ -164,32 +204,57 @@ class AgendamentoService {
   // Buscar detalhes de um agendamento específico
   Future<Agendamento> buscarAgendamento(String idAgendamento) async {
     try {
-      final response = await supabase.from('agendamentos').select('''
-            *,
-            servicos:id_servico (nome),
-            prestador:usuarios!id_prestador (nome),
-            cliente:usuarios!id_cliente (nome)
-          ''').eq('id_agendamento', idAgendamento).single();
+      final response = await supabase
+          .from('agendamentos')
+          .select('*, servicos:id_servico (nome)')
+          .eq('id_agendamento', idAgendamento)
+          .single();
 
       final agendamento = Agendamento.fromJson(response);
 
-      // Adicionar informações adicionais
+      // Adicionar informações adicionais do serviço
       if (response['servicos'] != null) {
         agendamento.nomeServico = response['servicos']['nome'];
       }
 
-      if (response['prestador'] != null) {
-        agendamento.nomePrestador = response['prestador']['nome'];
+      try {
+        // Buscar nome do prestador
+        final prestadorResponse = await supabase
+            .from('usuarios')
+            .select('nome')
+            .eq('id_usuario', agendamento.idPrestador)
+            .single();
+        agendamento.nomePrestador = prestadorResponse['nome'];
+      } catch (e) {
+        print('Erro ao buscar nome do prestador: $e');
       }
 
-      if (response['cliente'] != null) {
-        agendamento.nomeCliente = response['cliente']['nome'];
+      try {
+        // Buscar nome do cliente
+        final clienteResponse = await supabase
+            .from('usuarios')
+            .select('nome')
+            .eq('id_usuario', agendamento.idCliente)
+            .single();
+        agendamento.nomeCliente = clienteResponse['nome'];
+      } catch (e) {
+        print('Erro ao buscar nome do cliente: $e');
       }
 
       return agendamento;
     } catch (e) {
       print('Erro ao buscar detalhes do agendamento: $e');
       throw Exception('Erro ao buscar detalhes do agendamento: $e');
+    }
+  }
+
+  Future<void> removerAgendamento(String idAgendamento) async {
+    try {
+      await supabase.from('agendamentos').delete().eq('id_agendamento', idAgendamento);
+      return; // Success
+    } catch (e) {
+      print('Erro ao remover agendamento: $e');
+      throw Exception('Erro ao remover agendamento: $e');
     }
   }
 }

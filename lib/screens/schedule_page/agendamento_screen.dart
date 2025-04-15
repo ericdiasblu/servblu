@@ -7,7 +7,7 @@ import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/disponibilidade_service.dart';
 import 'package:servblu/services/agendamento_service.dart';
 import 'package:uuid/uuid.dart';
-import 'package:servblu/utils/date_helper.dart';
+import 'package:servblu/utils/helpers/date_helper.dart';
 
 class AgendamentoScreen extends StatefulWidget {
   final String idServico;
