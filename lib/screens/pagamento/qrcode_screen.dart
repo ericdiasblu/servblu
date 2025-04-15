@@ -136,7 +136,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               MaterialPageRoute(
                 builder: (context) => PaymentStatusScreen(
                   successful: true,
-                  txid: pixProvider.currentCharge!.txid,
+                  txid: pixProvider.currentCharge!.txid, valorServico:  widget.agendamento.precoServico, prestadorId: widget.agendamento.idPrestador,agendamentoId: widget.agendamento.idAgendamento
                 ),
               ),
             );
@@ -148,7 +148,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 builder: (context) => PaymentStatusScreen(
                   successful: false,
                   errorMessage: 'Pagamento expirado',
-                  txid: pixProvider.currentCharge!.txid,
+                  txid: pixProvider.currentCharge!.txid, valorServico:  widget.agendamento.precoServico, prestadorId: widget.agendamento.idPrestador,agendamentoId: widget.agendamento.idAgendamento
                 ),
               ),
             );
@@ -170,7 +170,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           MaterialPageRoute(
             builder: (context) => PaymentStatusScreen(
               successful: true,
-              txid: pixProvider.currentCharge!.txid,
+              txid: pixProvider.currentCharge!.txid, valorServico:  widget.agendamento.precoServico, prestadorId: widget.agendamento.idPrestador, agendamentoId: widget.agendamento.idAgendamento
+              ,
             ),
           ),
         );
@@ -185,7 +186,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             builder: (context) => PaymentStatusScreen(
               successful: false,
               errorMessage: 'Status do pagamento: $status',
-              txid: pixProvider.currentCharge!.txid,
+              txid: pixProvider.currentCharge!.txid, valorServico:  widget.agendamento.precoServico, prestadorId: widget.agendamento.idPrestador,agendamentoId: widget.agendamento.idAgendamento
             ),
           ),
         );
