@@ -212,7 +212,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     _currentTabIndex == 0
                         ? agendamento.nomePrestador ?? '${agendamento.nomePrestador}'
                         : agendamento.nomeCliente ?? '${agendamento.nomeCliente}'),
-
+                _buildInfoRow('Valor', agendamento.precoServico.toString()),
                 // Forma de pagamento
                 _buildInfoRow(
                     'Forma de pagamento',

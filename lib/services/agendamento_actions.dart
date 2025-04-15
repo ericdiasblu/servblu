@@ -3,6 +3,8 @@ import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../screens/pagamento/qrcode_screen.dart';
+
 class AgendamentoActions {
   static void executeActionForStatus(BuildContext context, String status,
       Agendamento agendamento, int currentTabIndex, Function refreshData) {
@@ -63,9 +65,15 @@ class AgendamentoActions {
 
     // Verifica se o pagamento é via PIX
     if (agendamento.isPix == true) {
-      // Se for PIX, apenas fecha o modal e retorna
-      // Futuramente você adicionará a lógica de pagamento PIX aqui
-      return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(
+            agendamento: agendamento,  // Passando o objeto agendamento completo
+            description: 'Pagamento de serviço: ${agendamento.nomeServico}',
+          ),
+        ),
+      );
     } else {
       // Se não for PIX, busca as informações de contato do prestador
       try {

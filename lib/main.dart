@@ -5,6 +5,8 @@ import 'package:servblu/router/router.dart';
 import 'package:servblu/auth/auth_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:timeago/timeago.dart' as timeago_pt;
+import 'package:provider/provider.dart';
+import 'package:servblu/providers/pix_provider.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 
@@ -47,14 +49,21 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: isLoggedIn,
-      builder: (context, loggedIn, child) {
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          routerConfig: router,
-        );
-      },
+    return MultiProvider(
+      providers: [
+        // Adicione o PixProvider aqui para que esteja disponível em todo o aplicativo
+        ChangeNotifierProvider(create: (_) => PixProvider()),
+        // Você pode adicionar outros providers aqui conforme necessário
+      ],
+      child: ValueListenableBuilder<bool>(
+        valueListenable: isLoggedIn,
+        builder: (context, loggedIn, child) {
+          return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

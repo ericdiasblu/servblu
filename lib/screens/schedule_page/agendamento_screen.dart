@@ -13,12 +13,14 @@ class AgendamentoScreen extends StatefulWidget {
   final String idServico;
   final String idPrestador;
   final String? nomeServico; // Novo parâmetro para o nome do serviço
+  final double? precoServico;
 
   const AgendamentoScreen({
     Key? key,
     required this.idServico,
     required this.idPrestador,
     this.nomeServico,
+    this.precoServico,
   }) : super(key: key);
 
   @override
@@ -173,6 +175,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         isPix: isPix,
         formaPagamento: _formaPagamento,
         nomeServico: widget.nomeServico,
+        precoServico: widget.precoServico
       );
 
       await _agendamentoService.criarAgendamento(novoAgendamento);
