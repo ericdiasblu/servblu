@@ -117,6 +117,22 @@ class AgendamentoService {
     }
   }
 
+  // Adicione esta função ao AgendamentoService para buscar detalhes do prestador
+  Future<Map<String, dynamic>> obterDetalhesPrestador(String idPrestador) async {
+    try {
+      final response = await supabase
+          .from('usuarios')
+          .select('nome, telefone')
+          .eq('id_usuario', idPrestador)
+          .single();
+
+      return response;
+    } catch (e) {
+      print('Erro ao buscar detalhes do prestador: $e');
+      throw Exception('Erro ao buscar informações do prestador: $e');
+    }
+  }
+
   // Listar agendamentos onde o usuário é o cliente
   Future<List<Agendamento>> listarAgendamentosPorCliente(
       String idCliente) async {
