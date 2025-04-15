@@ -1,25 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para formatação de texto
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
-class InputField extends StatelessWidget {
+class InputField extends StatefulWidget {
   final IconData? icon;
   final String hintText;
-  final TextEditingController? controller; // Controlador de texto padrão
-  final MaskedTextController? maskedController; // Controlador de máscara
-  final EdgeInsetsGeometry? margin; // Parâmetro opcional
+  final TextEditingController? controller;
+  final MaskedTextController? maskedController;
+  final EdgeInsetsGeometry? margin;
   final bool obscureText;
-  final bool isDescription; // Novo parâmetro
+  final bool isDescription;
+  final bool isPassword;
 
   const InputField({
     Key? key,
     this.icon,
     required this.hintText,
     required this.obscureText,
-    this.controller, // Controlador opcional
-    this.maskedController, // Controlador de máscara opcional
+    this.controller,
+    this.maskedController,
     this.margin,
-    this.isDescription = false, // Padrão: campo normal
+    this.isDescription = false,
+    this.isPassword = false,
   }) : super(key: key);
+
+  @override
+  State<InputField> createState() => _InputFieldState();
+}
+
+class _InputFieldState extends State<InputField> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscureText;
+  }
+
+  void _toggleVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +53,20 @@ class InputField extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      margin: margin ?? const EdgeInsets.only(bottom: 20),
+      margin: widget.margin ?? const EdgeInsets.only(bottom: 20),
       child: Row(
-        crossAxisAlignment: isDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment: widget.isDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          if(!isDescription)
-          Icon(icon, color: const Color(0xFF017DFE)),
+          if (!widget.isDescription)
+            Icon(widget.icon, color: const Color(0xFF017DFE)),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              obscureText: obscureText,
-              controller: maskedController ?? controller, // Usar o controlador de máscara se disponível
-              maxLines: isDescription ? 5 : 1, // Ajusta o tamanho do campo
+              obscureText: _obscureText,
+              controller: widget.maskedController ?? widget.controller,
+              maxLines: widget.isDescription ? 5 : 1,
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: widget.hintText,
                 border: InputBorder.none,
                 hintStyle: const TextStyle(
                   color: Colors.black54,
@@ -54,6 +75,14 @@ class InputField extends StatelessWidget {
               ),
             ),
           ),
+          if (widget.isPassword)
+            IconButton(
+              icon: Icon(
+                _obscureText ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: _toggleVisibility,
+            ),
         ],
       ),
     );

@@ -116,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: Icons.lock,
               hintText: "Senha",
               controller: _passwordController,
+              isPassword: true,
             ),
 
             // Link "Esqueceu sua senha?" à direita
