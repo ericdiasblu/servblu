@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AgendamentoActions {
   static void executeActionForStatus(BuildContext context, String status,
@@ -15,7 +16,7 @@ class AgendamentoActions {
         break;
       case 'aguardando':
         if (currentTabIndex == 0) {
-          confirmarPagamento(context, agendamento, refreshData);
+          Pagamento(context, agendamento, refreshData);
         } else {
           verificarPagamento(context, agendamento, refreshData);
         }
@@ -56,10 +57,116 @@ class AgendamentoActions {
     }
   }
 
-  static void confirmarPagamento(BuildContext context, Agendamento agendamento,
+  static void Pagamento(BuildContext context, Agendamento agendamento,
       Function refreshData) async {
-    Navigator.pop(context);
-    // função pagamento
+    Navigator.pop(context); // Fecha o modal atual
+
+    // Verifica se o pagamento é via PIX
+    if (agendamento.isPix == true) {
+      // Se for PIX, apenas fecha o modal e retorna
+      // Futuramente você adicionará a lógica de pagamento PIX aqui
+      return;
+    } else {
+      // Se não for PIX, busca as informações de contato do prestador
+      try {
+        final AgendamentoService _agendamentoService = AgendamentoService();
+        final prestadorInfo = await _agendamentoService.obterDetalhesPrestador(agendamento.idPrestador);
+
+        // Mostrar modal com informações para pagamento
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Instruções de Pagamento'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Por favor, entre em contato com o prestador para realizar o pagamento:',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  SizedBox(height: 16),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(
+                          text: 'Prestador: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '${prestadorInfo['nome']}'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(
+                          text: 'Telefone: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '${prestadorInfo['telefone']}'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(
+                          text: 'Forma de pagamento: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '${agendamento.formaPagamento}'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Lembre-se de realizar o pagamento antes da data do serviço.',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (refreshData != null) {
+                      refreshData();
+                    }
+                  },
+                  child: Text('Entendi'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    // Tenta iniciar uma chamada telefônica
+                    final Uri url = Uri.parse('tel:${prestadorInfo['telefone']}');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  },
+                  child: Text('Ligar agora'),
+                ),
+              ],
+            );
+          },
+        );
+      } catch (e) {
+        // Em caso de erro, mostrar um snackbar com a mensagem
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar informações do prestador. Tente novamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        print('Erro ao buscar detalhes do prestador: $e');
+      }
+    }
   }
 
   static void verificarPagamento(BuildContext context, Agendamento agendamento,
