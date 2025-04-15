@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servblu/models/servicos/servico.dart';
-import 'package:servblu/models/servicos/servico_service.dart';
+import 'package:servblu/services/servico_service.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/widgets/build_header.dart';
 import 'package:servblu/widgets/input_field.dart';

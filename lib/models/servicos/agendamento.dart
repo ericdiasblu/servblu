@@ -7,10 +7,11 @@ class Agendamento {
   final String dataServico;
   final String status;
   final bool isPix;
-  final String? formaPagamento; // Novo campo adicionado
-  String? nomeServico; // Novo campo para exibir o nome do serviço
-  String? nomePrestador; // Nome do prestador para exibição
-  String? nomeCliente; // Nome do cliente para exibição
+  final String? formaPagamento;
+  final String? motivoRecusa; // Novo campo para o motivo da recusa
+  String? nomeServico;
+  String? nomePrestador;
+  String? nomeCliente;
 
   Agendamento({
     required this.idAgendamento,
@@ -22,6 +23,7 @@ class Agendamento {
     this.status = 'solicitado',
     this.isPix = false,
     this.formaPagamento,
+    this.motivoRecusa,
     this.nomeServico,
     this.nomePrestador,
     this.nomeCliente,
@@ -38,6 +40,7 @@ class Agendamento {
       status: json['status']?.toString() ?? 'solicitado',
       isPix: json['is_pix'] == true,
       formaPagamento: json['forma_pagamento']?.toString(),
+      motivoRecusa: json['motivo_recusa']?.toString(),
       nomeServico: json['nome_servico']?.toString(),
       nomePrestador: json['nome_prestador']?.toString(),
       nomeCliente: json['nome_cliente']?.toString(),
@@ -55,6 +58,7 @@ class Agendamento {
       'status': status,
       'is_pix': isPix,
       'forma_pagamento': formaPagamento,
+      'motivo_recusa': motivoRecusa,
     };
   }
 }

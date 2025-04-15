@@ -3,7 +3,9 @@ import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
 import 'package:servblu/widgets/buildheaderwithtabs.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
+import 'package:servblu/utils/formatters/agendamento_formatter.dart';
+import 'package:servblu/utils/helpers/agendamento_status_helper.dart';
+import 'package:servblu/services/agendamento_actions.dart';
 
 final List<String> tabItems = [
   'Solicitado',
@@ -11,6 +13,8 @@ final List<String> tabItems = [
   'Concluído',
   'Recusado'
 ];
+
+
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -36,6 +40,52 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _carregarAgendamentos();
   }
 
+  Future<void> _verificarEAtualizarStatusAgendamentos(List<Agendamento> agendamentos) async {
+    final now = DateTime.now();
+    final atualizacoes = <Future<void>>[];
+
+    for (final agendamento in agendamentos) {
+      if (agendamento.status == 'aguardando') {
+        try {
+          // Converter a data de string para DateTime
+          final dataServico = DateTime.parse(agendamento.dataServico); // Formato: '2025-04-02'
+
+          // Converter o horário de int para horas e minutos
+          // Por exemplo: 900 -> 9:00, 1330 -> 13:30
+          final horarioInt = int.tryParse(agendamento.idHorario.toString()) ?? 0;
+          final hora = horarioInt ~/ 100;
+          final minuto = horarioInt % 100;
+
+          // Criar um DateTime com a data do serviço e o horário
+          final dataHoraServico = DateTime(
+            dataServico.year,
+            dataServico.month,
+            dataServico.day,
+            hora,
+            minuto,
+          );
+
+          // Se o horário do serviço já passou, atualizar o status para 'concluído'
+          if (now.isAfter(dataHoraServico)) {
+            atualizacoes.add(
+                _agendamentoService.atualizarStatusAgendamento(
+                    agendamento.idAgendamento,
+                    'concluído'
+                )
+            );
+          }
+        } catch (e) {
+          print('Erro ao verificar agendamento ${agendamento.idAgendamento}: $e');
+        }
+      }
+    }
+
+    // Esperar todas as atualizações terminarem
+    if (atualizacoes.isNotEmpty) {
+      await Future.wait(atualizacoes);
+    }
+  }
+
   Future<void> _carregarAgendamentos() async {
     setState(() {
       _isLoading = true;
@@ -49,12 +99,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       // Determinar qual tipo de agendamentos carregar
       if (_currentTabIndex == 0) {
         // Minhas Solicitações (como cliente)
-        agendamentos =
-            await _agendamentoService.listarAgendamentosPorCliente(userId);
+        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
       } else {
         // Minhas Ofertas (como prestador)
-        agendamentos =
-            await _agendamentoService.listarAgendamentosPorPrestador(userId);
+        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
+      }
+
+      // Verificar e atualizar status de agendamentos que já passaram do horário
+      await _verificarEAtualizarStatusAgendamentos(agendamentos);
+
+      // Recarregar a lista após as atualizações
+      if (_currentTabIndex == 0) {
+        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
+      } else {
+        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
       }
 
       // Filtrar por status
@@ -77,8 +135,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
 
       // Filtrar a lista de agendamentos pelo status atual
-      agendamentos =
-          agendamentos.where((a) => a.status == statusFiltro).toList();
+      agendamentos = agendamentos.where((a) => a.status == statusFiltro).toList();
 
       setState(() {
         _agendamentos = agendamentos;
@@ -98,28 +155,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
   }
 
-  // Formatar horário (agora com tratamento robusto de tipos)
-  String _formatarHorario(dynamic horario) {
-    // Se já for string, tenta formatar
-    if (horario is String) {
-      try {
-        int horarioInt = int.parse(horario);
-        String horarioStr = horarioInt.toString().padLeft(4, '0');
-        return '${horarioStr.substring(0, 2)}:${horarioStr.substring(2)}';
-      } catch (e) {
-        return horario.toString();
-      }
-    }
-    // Se for inteiro, formata diretamente
-    else if (horario is int) {
-      String horarioStr = horario.toString().padLeft(4, '0');
-      return '${horarioStr.substring(0, 2)}:${horarioStr.substring(2)}';
-    }
-    // Qualquer outro tipo, converte para string
-    else {
-      return horario?.toString() ?? 'N/A';
-    }
-  }
 
   void _mostrarDetalhesAgendamento(Agendamento agendamento) {
     setState(() {
@@ -167,25 +202,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 const SizedBox(height: 24),
 
                 // Detalhes do agendamento
-                _buildInfoRow('Data', _formatarData(agendamento.dataServico)),
+                _buildInfoRow('Data', AgendamentoFormatter.formatarData(agendamento.dataServico)),
                 _buildInfoRow(
-                    'Horário', _formatarHorario(agendamento.idHorario)),
+                    'Horário', AgendamentoFormatter.formatarHorario(agendamento.idHorario)),
 
                 // Mostrar nome do prestador ou cliente dependendo da aba
                 _buildInfoRow(
                     _currentTabIndex == 0 ? 'Prestador' : 'Cliente',
                     _currentTabIndex == 0
-                        ? agendamento.nomePrestador ?? 'Não informado'
-                        : agendamento.nomeCliente ?? 'Não informado'),
+                        ? agendamento.nomePrestador ?? '${agendamento.nomePrestador}'
+                        : agendamento.nomeCliente ?? '${agendamento.nomeCliente}'),
 
                 // Forma de pagamento
                 _buildInfoRow(
                     'Forma de pagamento',
                     agendamento.formaPagamento ??
-                        (agendamento.isPix ? 'Pix' : 'Não informado')),
+                        (agendamento.isPix ? 'Pix' : '${agendamento.formaPagamento}')),
 
                 // ID do agendamento
-                _buildInfoRow('ID do agendamento', agendamento.idAgendamento),
+                _buildInfoRow('ID do agendamento', AgendamentoFormatter.formatarId(agendamento.idAgendamento)),
 
                 const SizedBox(height: 30),
 
@@ -193,8 +228,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Row(
                   children: [
                     Icon(
-                      _getIconForStatus(agendamento.status),
-                      color: _getColorForStatus(agendamento.status),
+                      AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                      color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -203,7 +238,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: _getColorForStatus(agendamento.status),
+                        color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       ),
                     ),
                   ],
@@ -217,8 +252,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Aqui você pode implementar ações específicas para cada status
-                      Navigator.pop(context);
+                      // Executar a ação apropriada baseada no status
+                      AgendamentoActions.executeActionForStatus(
+                        context,
+                        agendamento.status,
+                        agendamento,
+                        _currentTabIndex,
+                            () {
+                          // Função de callback para atualizar a UI
+                          setState(() {
+                            // Atualizar lista de agendamentos se necessário
+                            _carregarAgendamentos();
+                          });
+                        },
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
@@ -227,7 +274,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                     ),
                     child: Text(
-                      _getButtonTextForStatus(agendamento.status),
+                      AgendamentoStatusHelper.getButtonTextForStatus(agendamento.status, _currentTabIndex),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -246,16 +293,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
             ),
           ),
           Expanded(
@@ -271,24 +321,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  String _getButtonTextForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return _currentTabIndex == 0
-            ? 'Cancelar Solicitação'
-            : 'Aceitar Solicitação';
-      case 'aguardando':
-        return _currentTabIndex == 0
-            ? 'Confirmar Pagamento'
-            : 'Verificar Pagamento';
-      case 'concluído':
-        return _currentTabIndex == 0 ? 'Avaliar Serviço' : 'Ver Detalhes';
-      case 'recusado':
-        return _currentTabIndex == 0 ? 'Ver Detalhes' : 'Ver Detalhes';
-      default:
-        return 'Ver Detalhes';
-    }
-  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -444,14 +479,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
-                    _formatarData(agendamento.dataServico),
+                    AgendamentoFormatter.formatarData(agendamento.dataServico),
                     style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.access_time, size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
-                    _formatarHorario(agendamento.idHorario),
+                    AgendamentoFormatter.formatarHorario(agendamento.idHorario),
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -465,13 +500,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 children: [
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getColorForStatus(agendamento.status)
+                      color: AgendamentoStatusHelper.getColorForStatus(agendamento.status)
                           .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getColorForStatus(agendamento.status),
+                        color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                         width: 1,
                       ),
                     ),
@@ -479,8 +514,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _getIconForStatus(agendamento.status),
-                          color: _getColorForStatus(agendamento.status),
+                          AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                          color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                           size: 14,
                         ),
                         const SizedBox(width: 4),
@@ -488,7 +523,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           agendamento.status,
                           style: TextStyle(
                             fontSize: 12,
-                            color: _getColorForStatus(agendamento.status),
+                            color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -504,46 +539,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  String formatarId(String id) {
-    return id.length > 8 ? id.substring(0, 8) : id;
-  }
 
-  String _formatarData(String dataString) {
-    try {
-      final data = DateTime.parse(dataString);
-      return DateFormat('dd/MM/yyyy').format(data);
-    } catch (e) {
-      return dataString;
-    }
-  }
-
-  IconData _getIconForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return Icons.pending_outlined;
-      case 'aguardando':
-        return Icons.payment;
-      case 'concluído':
-        return Icons.check_circle_outline;
-      case 'recusado':
-        return Icons.cancel_outlined;
-      default:
-        return Icons.error_outline;
-    }
-  }
-
-  Color _getColorForStatus(String status) {
-    switch (status) {
-      case 'solicitado':
-        return Colors.orange;
-      case 'aguardando':
-        return Colors.deepPurple;
-      case 'concluído':
-        return Colors.green;
-      case 'recusado':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 }
+
+
