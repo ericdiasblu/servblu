@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../screens/pagamento/qrcode_screen.dart';
@@ -21,6 +22,13 @@ class AgendamentoActions {
           Pagamento(context, agendamento, refreshData);
         } else {
           verificarPagamento(context, agendamento, refreshData);
+        }
+        break;
+      case 'confirmado':  // Novo status após pagamento confirmado
+        if (currentTabIndex == 0) {
+          verDetalhes(context, agendamento, refreshData);
+        } else {
+          marcarComoConcluido(context, agendamento, refreshData);
         }
         break;
       case 'concluído':
@@ -179,8 +187,66 @@ class AgendamentoActions {
 
   static void verificarPagamento(BuildContext context, Agendamento agendamento,
       Function refreshData) async {
-    Navigator.pop(context);
-    // função verificar status pagamento
+    // Mostrar indicador de carregamento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    try {
+      final agendamentoService = AgendamentoService();
+      final supabase = Supabase.instance.client;
+
+      // Verifica se existe pagamento confirmado para este agendamento
+      final pagamento = await supabase
+          .from('pagamentos')
+          .select()
+          .eq('id_agendamento', agendamento.idAgendamento)
+          .eq('status', 'confirmado')
+          .maybeSingle();
+
+      // Fecha o indicador de carregamento
+      Navigator.pop(context);
+
+      if (pagamento != null) {
+        // Pagamento confirmado - atualizar status para "confirmado"
+        await agendamentoService.atualizarStatusAgendamento(
+            agendamento.idAgendamento, 'confirmado');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pagamento confirmado! O serviço está agendado e aguardando a data.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Pagamento não encontrado ou não confirmado
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('O pagamento ainda não foi confirmado.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
+      refreshData(); // Atualiza a lista de agendamentos
+    } catch (e) {
+      // Fecha o indicador de carregamento em caso de erro
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao verificar pagamento: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print('Erro ao verificar pagamento: $e');
+    }
   }
 
   static void avaliarServico(
@@ -377,6 +443,89 @@ class AgendamentoActions {
         SnackBar(content: Text('Erro ao aceitar solicitação: $e')),
       );
     }
+  }
+
+  // Dentro de AgendamentoActions.dart
+
+  static void marcarComoConcluido(BuildContext context, Agendamento agendamento,
+      Function refreshData) async {
+
+    // Salva o contexto do ModalBottomSheet para usar depois
+    final modalContext = context;
+
+    // Mostra o diálogo de confirmação e aguarda o resultado (true se confirmar, false/null se cancelar)
+    final bool? confirmou = await showDialog<bool>(
+      context: modalContext, // Usa o contexto que abriu o modal
+      builder: (BuildContext dialogContext) { // Contexto interno do diálogo
+        return AlertDialog(
+          title: Text('Confirmar Conclusão'),
+          content: Text('Tem certeza que deseja marcar este serviço como concluído?'),
+          actions: [
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () => Navigator.pop(dialogContext, false), // Retorna false
+            ),
+            TextButton(
+              child: Text('Confirmar'),
+              onPressed: () => Navigator.pop(dialogContext, true), // Retorna true
+            ),
+          ],
+        );
+      },
+    );
+
+    // Só executa as ações se o usuário confirmou (resultado foi true)
+    if (confirmou == true) {
+      // Opcional: Mostrar um indicador de loading enquanto atualiza
+      // showDialog(context: modalContext, barrierDismissible: false, builder: (_) => Center(child: CircularProgressIndicator()));
+
+      try {
+        final agendamentoService = AgendamentoService();
+        await agendamentoService.atualizarStatusAgendamento(
+            agendamento.idAgendamento, 'concluído');
+
+        // Opcional: Fecha o loading
+        // if (Navigator.canPop(modalContext)) Navigator.pop(modalContext);
+
+        // Fecha o ModalBottomSheet original APÓS o sucesso da operação
+        // Verifica se o modal ainda está na árvore antes de fechar
+        if (ModalRoute.of(modalContext)?.isCurrent ?? false) {
+          Navigator.pop(modalContext);
+        }
+
+        // Mostra o SnackBar na tela subjacente (ScheduleScreen)
+        ScaffoldMessenger.of(modalContext).showSnackBar(
+          const SnackBar(
+            content: Text('Serviço marcado como concluído!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Atualiza a lista na ScheduleScreen
+        refreshData();
+
+      } catch (e) {
+        print("Erro ao marcar como concluido: $e"); // Log do erro
+
+        // Opcional: Fecha o loading
+        // if (Navigator.canPop(modalContext)) Navigator.pop(modalContext);
+
+        // Fecha o ModalBottomSheet original MESMO em caso de erro para não ficar preso
+        if (ModalRoute.of(modalContext)?.isCurrent ?? false) {
+          Navigator.pop(modalContext);
+        }
+
+        // Mostra o SnackBar de erro
+        ScaffoldMessenger.of(modalContext).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao atualizar status: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // Você pode decidir se quer chamar refreshData() aqui também ou não
+      }
+    }
+    // Se confirmou for false ou null, não faz nada (o diálogo já foi fechado)
   }
 
   static void gerenciarSolicitacao(

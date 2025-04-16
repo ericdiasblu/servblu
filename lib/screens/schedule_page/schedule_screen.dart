@@ -10,6 +10,7 @@ import 'package:servblu/services/agendamento_actions.dart';
 final List<String> tabItems = [
   'Solicitado',
   'Aguardando',
+  'Confirmado',
   'Concluído',
   'Recusado'
 ];
@@ -45,13 +46,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final atualizacoes = <Future<void>>[];
 
     for (final agendamento in agendamentos) {
-      if (agendamento.status == 'aguardando') {
+      // Verifica agendamentos com status "confirmado"
+      if (agendamento.status == 'confirmado') {
         try {
           // Converter a data de string para DateTime
-          final dataServico = DateTime.parse(agendamento.dataServico); // Formato: '2025-04-02'
+          final dataServico = DateTime.parse(agendamento.dataServico);
 
           // Converter o horário de int para horas e minutos
-          // Por exemplo: 900 -> 9:00, 1330 -> 13:30
           final horarioInt = int.tryParse(agendamento.idHorario.toString()) ?? 0;
           final hora = horarioInt ~/ 100;
           final minuto = horarioInt % 100;
@@ -125,9 +126,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           statusFiltro = 'aguardando';
           break;
         case 2:
-          statusFiltro = 'concluído';
+          statusFiltro = 'confirmado';  // Status confirmado (pagamento feito, aguardando data)
           break;
         case 3:
+          statusFiltro = 'concluído';  // Status concluído (serviço realizado)
+          break;
+        case 4:
           statusFiltro = 'recusado';
           break;
         default:

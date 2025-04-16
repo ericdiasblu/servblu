@@ -281,4 +281,22 @@ class AgendamentoService {
       throw Exception('Erro ao remover agendamento: $e');
     }
   }
+
+  // Adicione esse método na classe AgendamentoService
+  Future<bool> verificarPagamentoConfirmado(String idAgendamento) async {
+    try {
+      final pagamentos = await supabase
+          .from('pagamentos')
+          .select()
+          .eq('id_agendamento', idAgendamento)
+          .eq('status', 'confirmado');
+
+      return pagamentos.isNotEmpty;
+    } catch (e) {
+      print('Erro ao verificar pagamento: $e');
+      throw Exception('Erro ao verificar status do pagamento: $e');
+    }
+  }
+
+
 }
