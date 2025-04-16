@@ -96,7 +96,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Descrição: ${widget.description}',
+                      '${widget.description}',
                       style: const TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 24),

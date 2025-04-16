@@ -50,7 +50,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           .limit(1);
 
       // If payment already exists, don't create another one
-      if (existingPayment != null && existingPayment.isNotEmpty) {
+      if (existingPayment.isNotEmpty) { // Changed this line
         print('Pagamento já registrado anteriormente. Ignorando inserção.');
         return;
       }
@@ -71,7 +71,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
       print('Pagamento registrado com sucesso!');
     } catch (error) {
       print('Erro ao registrar pagamento: $error');
-      throw Exception('Falha ao registrar pagamento: $error');
+      // Instead of throwing an exception, we'll just log the error
+      // This prevents the error from propagating up
     }
   }
 
@@ -97,8 +98,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
 
       // Se encontramos o pagamento e o status_saldo já está como 'processado',
       // significa que o saldo já foi atualizado
-      if (existingPayment != null &&
-          existingPayment.isNotEmpty &&
+      if (existingPayment.isNotEmpty &&
           existingPayment[0]['status_saldo'] == 'processado') {
         setState(() {
           _saldoAtualizado = true;
@@ -117,10 +117,6 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           .select('saldo')
           .eq('id_usuario', widget.prestadorId)
           .single();
-
-      if (response == null) {
-        throw Exception('Prestador não encontrado');
-      }
 
       // Obtém o saldo atual (ou define como 0 se for nulo)
       double saldoAtual = (response['saldo'] as num?)?.toDouble() ?? 0.0;
