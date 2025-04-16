@@ -406,6 +406,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
+                      GestureDetector(
+                        onTap: () {
+                          context.go(Routes.editarPerfil);
+                        },
+                        child: const
+                        Text(
+                          "Editar Perfil",
+                          style: TextStyle(
+                            color: Color(0xFF017DFE),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       Align(
                         alignment: Alignment.centerLeft,

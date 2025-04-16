@@ -15,6 +15,7 @@ import '../screens/schedule_page/schedule_screen.dart';
 import '../screens/service_page/service_screen.dart';
 import 'package:servblu/screens/service_page/service_list_screen.dart';
 import 'package:servblu/screens/schedule_page/disponibilidade_screen.dart';
+import 'package:servblu/screens/profile_page/edit_profile.dart';
 
 // Chave global do navegador
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -99,6 +100,11 @@ final router = GoRouter(
       path: '/disponibilidade',
       name: Routes.disponibilidadePage,
       builder: (context, state) => const DisponibilidadeScreen(),
+    ),
+    GoRoute(
+      path: '/editarperfil',
+      name: Routes.editarPerfil,
+      builder: (context, state) => const EditProfileScreen(),
     ),
 
     // Rotas que usam o shell de navegação (com barra inferior)
