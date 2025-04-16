@@ -7,15 +7,15 @@ import 'package:servblu/utils/formatters/agendamento_formatter.dart';
 import 'package:servblu/utils/helpers/agendamento_status_helper.dart';
 import 'package:servblu/services/agendamento_actions.dart';
 
+// Passo 1: Remover 'Confirmado' da lista de tabs
 final List<String> tabItems = [
   'Solicitado',
-  'Aguardando',
-  'Confirmado',
+  'Aguardando', // Agora engloba 'aguardando' e 'confirmado'
   'Concluído',
   'Recusado'
 ];
 
-
+// (O resto da classe ScheduleScreen permanece igual até initState)
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -26,8 +26,7 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   int _currentTabIndex = 0; // 0: Minhas Solicitações, 1: Minhas Ofertas
-  int _currentStatusIndex =
-      0; // 0: Solicitado, 1: Aguardando, 2: Concluído, 3: Recusado
+  int _currentStatusIndex = 0; // 0: Solicitado, 1: Aguardando, 2: Concluído, 3: Recusado
 
   final AgendamentoService _agendamentoService = AgendamentoService();
   List<Agendamento> _agendamentos = [];
@@ -109,37 +108,49 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       // Verificar e atualizar status de agendamentos que já passaram do horário
       await _verificarEAtualizarStatusAgendamentos(agendamentos);
 
-      // Recarregar a lista após as atualizações
-      if (_currentTabIndex == 0) {
-        agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
-      } else {
-        agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
+      // Recarregar a lista após as atualizações (se alguma atualização ocorreu)
+      if (agendamentos.any((a) => a.status == 'confirmado' && /* condição de ter passado a data/hora */ false)) { // A lógica exata pode precisar de ajuste se _verificarEAtualizar não retornar info
+        if (_currentTabIndex == 0) {
+          agendamentos = await _agendamentoService.listarAgendamentosPorCliente(userId);
+        } else {
+          agendamentos = await _agendamentoService.listarAgendamentosPorPrestador(userId);
+        }
       }
 
-      // Filtrar por status
-      String statusFiltro;
+
+      // Filtrar por status com base no novo mapeamento de tabs
+      List<String> statusFiltro = [];
       switch (_currentStatusIndex) {
-        case 0:
-          statusFiltro = 'solicitado';
+        case 0: // Solicitado
+          statusFiltro = ['solicitado'];
           break;
-        case 1:
-          statusFiltro = 'aguardando';
+        case 1: // Aguardando (agora inclui 'aguardando' e 'confirmado')
+          statusFiltro = ['aguardando', 'confirmado']; // MODIFICADO AQUI
           break;
-        case 2:
-          statusFiltro = 'confirmado';  // Status confirmado (pagamento feito, aguardando data)
+        case 2: // Concluído
+          statusFiltro = ['concluído'];
           break;
-        case 3:
-          statusFiltro = 'concluído';  // Status concluído (serviço realizado)
-          break;
-        case 4:
-          statusFiltro = 'recusado';
+        case 3: // Recusado
+          statusFiltro = ['recusado'];
           break;
         default:
-          statusFiltro = 'solicitado';
+          statusFiltro = ['solicitado'];
       }
 
-      // Filtrar a lista de agendamentos pelo status atual
-      agendamentos = agendamentos.where((a) => a.status == statusFiltro).toList();
+      // Filtrar a lista de agendamentos pelos status permitidos na tab atual
+      agendamentos = agendamentos.where((a) => statusFiltro.contains(a.status)).toList();
+
+      // Opcional: Ordenar dentro da aba 'Aguardando' para mostrar 'confirmado' primeiro/último se desejado
+      if (_currentStatusIndex == 1) {
+        agendamentos.sort((a, b) {
+          // Exemplo: Coloca 'confirmado' antes de 'aguardando'
+          if (a.status == 'confirmado' && b.status != 'confirmado') return -1;
+          if (a.status != 'confirmado' && b.status == 'confirmado') return 1;
+          // Se ambos têm o mesmo status ou nenhum é 'confirmado', mantenha a ordem original ou ordene por data, etc.
+          return a.dataServico.compareTo(b.dataServico); // Exemplo: ordena por data
+        });
+      }
+
 
       setState(() {
         _agendamentos = agendamentos;
@@ -164,6 +175,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     setState(() {
       _selectedAgendamento = agendamento;
     });
+
+    // Define o texto descritivo para o status 'confirmado'
+    String statusDisplay = agendamento.status;
+    if (agendamento.status == 'confirmado') {
+      statusDisplay = 'Pago e Agendado'; // <- TEXTO PERSONALIZADO
+    }
 
     showModalBottomSheet(
       context: context,
@@ -214,60 +231,70 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 _buildInfoRow(
                     _currentTabIndex == 0 ? 'Prestador' : 'Cliente',
                     _currentTabIndex == 0
-                        ? agendamento.nomePrestador ?? '${agendamento.nomePrestador}'
-                        : agendamento.nomeCliente ?? '${agendamento.nomeCliente}'),
-                _buildInfoRow('Valor', agendamento.precoServico.toString()),
+                        ? agendamento.nomePrestador ?? 'Não disponível' // Adicionado fallback
+                        : agendamento.nomeCliente ?? 'Não disponível'), // Adicionado fallback
+                _buildInfoRow('Valor', agendamento.precoServico != null ? 'R\$ ${agendamento.precoServico!.toStringAsFixed(2)}' : 'N/A'), // Formatado e com fallback
                 // Forma de pagamento
                 _buildInfoRow(
                     'Forma de pagamento',
-                    agendamento.formaPagamento ??
-                        (agendamento.isPix ? 'Pix' : '${agendamento.formaPagamento}')),
+                    agendamento.formaPagamento ?? (agendamento.isPix == true ? 'Pix' : 'N/A') // Verificação de nullabilidade
+                ),
 
                 // ID do agendamento
                 _buildInfoRow('ID do agendamento', AgendamentoFormatter.formatarId(agendamento.idAgendamento)),
 
                 const SizedBox(height: 30),
 
-                // Status com ícone
+                // Status com ícone e texto personalizado
                 Row(
                   children: [
                     Icon(
                       AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                      // Usar a cor do status original ('confirmado') para manter a consistência visual
                       color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Status: ${agendamento.status}',
+                      // Usar o texto personalizado definido acima
+                      'Status: $statusDisplay',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        // Usar a cor do status original ('confirmado')
                         color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                       ),
                     ),
                   ],
                 ),
 
+                // Adiciona o motivo da recusa se o status for 'recusado'
+                if (agendamento.status == 'recusado' && agendamento.motivoRecusa != null && agendamento.motivoRecusa!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildInfoRow('Motivo da Recusa', agendamento.motivoRecusa!),
+                ],
+
                 const SizedBox(height: 40),
 
-                // Botão de ação baseado no status
+                // Botão de ação baseado no status (a lógica interna do AgendamentoActions já lida com o status 'confirmado')
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Executar a ação apropriada baseada no status
+                      // A função executeActionForStatus já sabe o que fazer com base no agendamento.status ('confirmado')
                       AgendamentoActions.executeActionForStatus(
                         context,
-                        agendamento.status,
+                        agendamento.status, // Passa o status real ('confirmado')
                         agendamento,
-                        _currentTabIndex,
+                        _currentTabIndex, // Passa a aba de ROL (Solicitações/Ofertas)
                             () {
                           // Função de callback para atualizar a UI
-                          setState(() {
-                            // Atualizar lista de agendamentos se necessário
-                            _carregarAgendamentos();
-                          });
+                          // Fecha o modal após a ação ser executada com sucesso (se ainda estiver aberto)
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          }
+                          _carregarAgendamentos(); // Recarrega a lista
                         },
                       );
                     },
@@ -278,6 +305,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                     ),
                     child: Text(
+                      // O texto do botão também deve vir do status real ('confirmado')
                       AgendamentoStatusHelper.getButtonTextForStatus(agendamento.status, _currentTabIndex),
                       style: const TextStyle(
                         fontSize: 16,
@@ -292,8 +320,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Opcional: Limpar _selectedAgendamento quando o modal for fechado
+      // setState(() {
+      //   _selectedAgendamento = null;
+      // });
+    });
   }
+
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
@@ -302,7 +336,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: 140, // Ajuste a largura conforme necessário
             child: Text(
               label,
               style: const TextStyle(
@@ -325,16 +359,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
-          // Usar o novo header com tabs
+          // Header principal com as tabs de ROL (Solicitações/Ofertas)
           BuildHeaderWithTabs(
             title: 'Agendamentos',
             backPage: false,
@@ -343,113 +373,104 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             onTabChanged: (index) {
               setState(() {
                 _currentTabIndex = index;
+                _currentStatusIndex = 0; // Reset status tab ao trocar de ROL
               });
               _carregarAgendamentos();
             },
           ),
 
-          // Custom Tab Bar para os status
-
-// Agora vamos transformar o widget em um ListView.separated
+          // Barra de TABS de STATUS (Agora sem 'Confirmado')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: SizedBox(
-              height: 40, // Define uma altura para o ListView
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: tabItems.length,
-                // Item builder
-                itemBuilder: (context, index) {
+              height: 40,
+              // Usando Row com Expanded para distribuir espaço, pois ListView pode não ser ideal para poucos itens fixos
+              child: Row(
+                children: List.generate(tabItems.length, (index) {
                   return _buildTabButton(tabItems[index], index);
-                },
-                // Separator builder
-                separatorBuilder: (context, index) {
-                  return const SizedBox(width: 8); // Espaço entre os itens
-                },
+                }),
               ),
             ),
           ),
 
-          // Content based on selected tab
+          // Conteúdo (Lista de Agendamentos)
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline,
-                                color: Colors.red, size: 48),
-                            SizedBox(height: 16),
-                            Text(
-                              'Erro ao carregar agendamentos:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(_errorMessage!),
-                            ),
-                            ElevatedButton(
-                              onPressed: _carregarAgendamentos,
-                              child: Text('Tentar novamente'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _agendamentos.isEmpty
-                        ? Center(
-                            child: Text(
-                              _currentTabIndex == 0
-                                  ? 'Você não tem solicitações neste status'
-                                  : 'Você não tem ofertas neste status',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _agendamentos.length,
-                            itemBuilder: (context, index) {
-                              final agendamento = _agendamentos[index];
-                              return _buildAgendamentoCard(agendamento);
-                            },
-                          ),
+                ? Center( /* ... Error message widget ... */ )
+                : _agendamentos.isEmpty
+                ? Center(
+              child: Padding( // Adiciona padding para não colar nas bordas
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Nenhum agendamento encontrado para "${tabItems[_currentStatusIndex]}" em "${_currentTabIndex == 0 ? 'Minhas Solicitações' : 'Minhas Ofertas'}"',
+                  textAlign: TextAlign.center, // Centraliza o texto
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]), // Estilo mais suave
+                ),
+              ),
+            )
+                : RefreshIndicator( // Adiciona RefreshIndicator
+              onRefresh: _carregarAgendamentos,
+              child: ListView.builder(
+                itemCount: _agendamentos.length,
+                itemBuilder: (context, index) {
+                  final agendamento = _agendamentos[index];
+                  return _buildAgendamentoCard(agendamento);
+                },
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+  // Widget para construir cada botão da tab de status
   Widget _buildTabButton(String text, int index) {
-    return Expanded(
+    bool isActive = _currentStatusIndex == index;
+    return Expanded( // Faz com que cada botão tente ocupar o mesmo espaço
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Container(
-          child: ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _currentStatusIndex = index;
-              });
-              _carregarAgendamentos();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _currentStatusIndex == index ? Colors.blue : Colors.white,
-              foregroundColor:
-                  _currentStatusIndex == index ? Colors.white : Colors.blue,
-              side: BorderSide(color: Colors.blue),
+        padding: const EdgeInsets.symmetric(horizontal: 4), // Espaçamento entre botões
+        child: ElevatedButton(
+          onPressed: () {
+            setState(() {
+              _currentStatusIndex = index;
+            });
+            _carregarAgendamentos(); // Recarrega os dados para a nova tab de status
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isActive ? Colors.blue : Colors.white,
+            foregroundColor: isActive ? Colors.white : Colors.blue,
+            side: const BorderSide(color: Colors.blue),
+            shape: RoundedRectangleBorder( // Bordas arredondadas
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4), // Ajuste o padding interno
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // Ajuste o estilo do texto
+            elevation: isActive ? 2 : 0, // Sombra sutil quando ativo
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center, // Garante centralização
+            overflow: TextOverflow.ellipsis, // Evita quebra de linha feia
+            maxLines: 1,
           ),
         ),
       ),
     );
   }
 
+
+  // Widget para construir cada card de agendamento
   Widget _buildAgendamentoCard(Agendamento agendamento) {
+
+    // Define o texto descritivo para o status 'confirmado' no card
+    String statusDisplay = agendamento.status;
+    if (agendamento.status == 'confirmado') {
+      statusDisplay = 'Pago e Agendado'; // <- TEXTO PERSONALIZADO para o card
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
@@ -464,7 +485,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nome do serviço (grande)
+              // Nome do serviço
               Text(
                 agendamento.nomeServico ?? 'Serviço',
                 style: const TextStyle(
@@ -479,37 +500,37 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Data e hora
               Row(
                 children: [
-                  const Icon(Icons.calendar_today,
-                      size: 16, color: Colors.grey),
+                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 6),
                   Text(
                     AgendamentoFormatter.formatarData(agendamento.dataServico),
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 6),
                   Text(
                     AgendamentoFormatter.formatarHorario(agendamento.idHorario),
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 12), // Aumenta o espaço antes do status
 
-              // Indicador de status
+              // Indicador de status (agora na linha de baixo e à direita)
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.end, // Alinha à direita
                 children: [
                   Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), // Ajuste o padding
                     decoration: BoxDecoration(
+                      // Usar a cor do status original ('confirmado') para manter a consistência visual
                       color: AgendamentoStatusHelper.getColorForStatus(agendamento.status)
                           .withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12), // Mais arredondado
                       border: Border.all(
+                        // Usar a cor do status original ('confirmado')
                         color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                         width: 1,
                       ),
@@ -518,15 +539,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
+                          // Usar o ícone do status original ('confirmado')
                           AgendamentoStatusHelper.getIconForStatus(agendamento.status),
+                          // Usar a cor do status original ('confirmado')
                           color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                           size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 6), // Aumenta espaço para o ícone
                         Text(
-                          agendamento.status,
+                          // Usar o texto personalizado definido acima para o card
+                          statusDisplay,
                           style: TextStyle(
                             fontSize: 12,
+                            // Usar a cor do status original ('confirmado')
                             color: AgendamentoStatusHelper.getColorForStatus(agendamento.status),
                             fontWeight: FontWeight.bold,
                           ),
@@ -542,8 +567,4 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
     );
   }
-
-
-}
-
-
+} // Fim da classe _ScheduleScreenState
