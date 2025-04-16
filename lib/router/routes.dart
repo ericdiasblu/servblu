@@ -12,4 +12,5 @@ class Routes {
   static const String searchPage = '/search';
   static const String serviceListPage = '/service-list';
   static const String disponibilidadePage = '/disponibilidade';
+  static const String editarPerfil = '/editarperfil';
 }
