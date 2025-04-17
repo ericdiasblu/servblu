@@ -5,7 +5,7 @@ import '../models/pagamento/pix_qrcode.dart';
 
 class PixService {
   // Substitua pela URL do seu backend
-  final String baseUrl = 'https://efi-pix-backend.onrender.com/api/pix';
+  final String baseUrl = 'http://10.0.2.2:3000/api/pix';
 
   // Cria uma cobrança PIX
   Future<PixCharge> createCharge({
