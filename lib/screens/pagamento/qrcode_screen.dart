@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:servblu/models/servicos/agendamento.dart'; // Verifique o caminho
 import 'package:servblu/providers/pix_provider.dart'; // Verifique o caminho
 import 'package:servblu/screens/pagamento/status_pagamento_screen.dart'; // Verifique o caminho
+import 'package:servblu/widgets/build_header.dart';
 import 'package:servblu/widgets/pix_qrcode_widget.dart'; // Verifique o caminho
 
 class PaymentScreen extends StatefulWidget {
@@ -324,22 +325,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       print("ERRO CRÍTICO na navegação (push): $e");
       // Em caso de erro na própria navegação, tentamos voltar com 'false'
       if (mounted) {
-        // Tentativa de fallback com pushAndRemoveUntil (remove PaymentScreen da pilha)
-        // NÃO VAI RETORNAR RESULTADO para o await original
-        /*
-         Navigator.pushAndRemoveUntil(
-           context,
-           MaterialPageRoute(
-             builder: (context) => PaymentStatusScreen(
-               successful: false, // Força falha
-               errorMessage: "Erro crítico durante navegação: ${e.toString()}",
-               // ... outros parâmetros ...
-             ),
-           ),
-           (route) => false,
-         );
-         */
-        // Alternativa: Apenas voltar com false
         Navigator.maybePop(context, false);
       }
     }
@@ -358,127 +343,286 @@ class _PaymentScreenState extends State<PaymentScreen>
         return true; // Permite a ação de voltar (que retornará null para o await)
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Pagamento PIX'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              // Ação do botão de voltar na AppBar
-              print("Botão Voltar AppBar: Cancelando timer e voltando com resultado 'null'.");
-              _periodicCheckTimer?.cancel();
-              // Retorna null para o await Navigator.push que chamou esta tela
-              Navigator.maybePop(context, null);
-            },
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              BuildHeader(title: "Pague com PIX", backPage: true, refresh: false,onBack: (){
+                print("Botão Voltar AppBar: Cancelando timer e voltando com resultado 'null'.");
+                _periodicCheckTimer?.cancel();
+                Navigator.maybePop(context, null);
+              },),
+              Consumer<PixProvider>(
+                builder: (context, pixProvider, child) {
+                  // Estado de Loading Inicial
+                  if (pixProvider.isLoading &&
+                      pixProvider.currentCharge == null &&
+                      pixProvider.error == null) {
+                    return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
+                            ),
+                            SizedBox(height: 16),
+                            Text('Gerando QR Code PIX...',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        )
+                    );
+                  }
+          
+                  // Erro na Geração da Cobrança
+                  if (pixProvider.error != null && pixProvider.currentCharge == null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Icon(Icons.error_outline, color: Colors.red, size: 70),
+                            ),
+                            SizedBox(height: 24),
+                            Text('Erro ao Gerar PIX',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold
+                                ),
+                                textAlign: TextAlign.center
+                            ),
+                            SizedBox(height: 16),
+                            Text(pixProvider.error!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.red[700], fontSize: 16)
+                            ),
+                            SizedBox(height: 32),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: _isNavigating ? null : _initializePayment,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF017DFE),
+                                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text('Tentar Novamente', style: TextStyle(fontSize: 16)),
+                                ),
+                                SizedBox(width: 16),
+                                ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.grey.shade300,
+                                      foregroundColor: Colors.black87,
+                                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () => Navigator.maybePop(context, false),
+                                    child: Text('Cancelar', style: TextStyle(fontSize: 16))
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+          
+                  // Tela Principal com QR Code
+                  if (pixProvider.currentCharge != null) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text('Valor', style: TextStyle(fontSize: 16, color: Colors.grey[700],fontWeight: FontWeight.w400)),
+                              SizedBox(height: 8),
+                              Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFF3F3F3),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                        'R\$ ${widget.agendamento.precoServico?.toStringAsFixed(2) ?? '0.00'}',
+                                        style: TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        )
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Text(
+                                  widget.description,
+                                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                  textAlign: TextAlign.center
+                              ),
+                              SizedBox(height: 32),
+          
+                              (pixProvider.currentQRCode != null)
+                                  ? Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      spreadRadius: 1,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: PixQRCodeWidget(
+                                    qrCodeImage: pixProvider.currentQRCode!.qrCodeImage,
+                                    qrCodeText: pixProvider.currentQRCode!.qrCodeText
+                                ),
+                              )
+                                  : Container(
+                                height: 250,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
+                                  ),
+                                ),
+                              ),
+          
+                              SizedBox(height: 32),
+                              ElevatedButton.icon(
+                                icon: pixProvider.isLoading
+                                    ? SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                    : Icon(Icons.refresh,color: Colors.white,),
+                                label: Text(
+                                  pixProvider.isLoading ? 'Verificando...' : 'Verificar Pagamento',
+                                  style: TextStyle(fontSize: 16,color: Colors.white),
+                                ),
+                                onPressed: _isNavigating || pixProvider.isLoading ? null : () {
+                                  print("Botão 'Verificar Manualmente' pressionado.");
+                                  _checkPaymentStatus(context, pixProvider, isPeriodic: false);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF017DFE),
+                                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFF3F3F3),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    if (_periodicCheckTimer?.isActive ?? false)
+                                      Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(
+                                                height: 16,
+                                                width: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
+                                                )
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                                'Verificação automática ativa',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Color(0xFF017DFE),
+                                                  fontWeight: FontWeight.w500,
+                                                )
+                                            )
+                                          ]
+                                      )
+                                    else if (pixProvider.currentCharge?.status == 'ATIVA')
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                                          SizedBox(width: 10),
+                                          Text(
+                                              'Verificação automática inativa',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.orange,
+                                                fontWeight: FontWeight.w500,
+                                              )
+                                          )
+                                        ],
+                                      ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Abra seu aplicativo bancário e escaneie o QR Code ou copie o código PIX para pagar.',
+                                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+          
+                  // Estado fallback
+                  return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
+                          ),
+                          SizedBox(height: 16),
+                          Text('Carregando informações...', style: TextStyle(fontSize: 16)),
+                        ],
+                      )
+                  );
+                },
+              ),
+            ],
           ),
         ),
-        body: Consumer<PixProvider>(
-          builder: (context, pixProvider, child) {
-            // Estado de Loading Inicial
-            if (pixProvider.isLoading &&
-                pixProvider.currentCharge == null &&
-                pixProvider.error == null) {
-              return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Gerando QR Code PIX...'),
-                    ],
-                  ));
-            }
-
-            // Erro na Geração da Cobrança
-            if (pixProvider.error != null &&
-                pixProvider.currentCharge == null) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                      const SizedBox(height: 20),
-                      Text('Erro ao Gerar PIX', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.red), textAlign: TextAlign.center),
-                      const SizedBox(height: 10),
-                      Text(pixProvider.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red, fontSize: 16)),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                          onPressed: _isNavigating ? null : _initializePayment,
-                          child: const Text('Tentar Novamente')),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-                          onPressed: () => Navigator.maybePop(context, false), // Volta com falha
-                          child: const Text('Cancelar e Voltar')
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            // Tela Principal com QR Code
-            if (pixProvider.currentCharge != null) {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text('Pague com PIX', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      Text('Valor: R\$ ${widget.agendamento.precoServico?.toStringAsFixed(2) ?? '0.00'}', style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 8),
-                      Text(widget.description, style: const TextStyle(fontSize: 16, color: Colors.grey), textAlign: TextAlign.center),
-                      const SizedBox(height: 24),
-
-                      (pixProvider.currentQRCode != null)
-                          ? PixQRCodeWidget(
-                          qrCodeImage: pixProvider.currentQRCode!.qrCodeImage,
-                          qrCodeText: pixProvider.currentQRCode!.qrCodeText)
-                          : const Padding( padding: EdgeInsets.symmetric(vertical: 40), child: CircularProgressIndicator()),
-
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _isNavigating || pixProvider.isLoading ? null : () {
-                          print("Botão 'Verificar Manualmente' pressionado.");
-                          _checkPaymentStatus(context, pixProvider, isPeriodic: false);
-                        },
-                        child: pixProvider.isLoading
-                            ? const SizedBox( height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('Verificar Pagamento Manualmente'),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text('O status será verificado automaticamente.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      const SizedBox(height: 10),
-                      if (_periodicCheckTimer?.isActive ?? false)
-                        const Row(mainAxisSize: MainAxisSize.min, children: [
-                          SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
-                          SizedBox(width: 8),
-                          Text('Verificação automática ativa...', style: TextStyle(fontSize: 11, color: Colors.grey))
-                        ])
-                      else if (pixProvider.currentCharge?.status == 'ATIVA')
-                        const Text('Verificação automática inativa.', style: TextStyle(fontSize: 11, color: Colors.orange))
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            // Estado fallback
-            return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Carregando informações...'),
-                  ],
-                ));
-          },
-        ),
-      ),
+      )
     );
   }
 }

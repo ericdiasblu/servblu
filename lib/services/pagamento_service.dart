@@ -24,7 +24,9 @@ class PixService {
       Uri.parse('$baseUrl/charges'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-      'amount': (amount * 100).toInt(), // Converter para string ao invés de int
+        'amount': amount.toString(), // Converter para string ao invés de int
+        //'amount': (amount * 100).toInt(),
+
         // Ou se o backend espera inteiros, mantenha como está: 'amount': (amount * 100).toInt(),
         'description': description,
         'expiresIn': expiresIn,

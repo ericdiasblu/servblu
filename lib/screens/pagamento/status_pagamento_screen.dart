@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/servicos/agendamento.dart'; // Verifique o caminho
-import 'package:servblu/services/agendamento_service.dart'; // **** IMPORT NECESSÁRIO ****
+import 'package:servblu/models/servicos/agendamento.dart';
+import 'package:servblu/services/agendamento_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// Importar Provider se precisar chamar refresh do provider de agendamentos
-// import 'package:provider/provider.dart';
-// import 'package:servblu/providers/agendamento_provider.dart'; // Exemplo
 
 class PaymentStatusScreen extends StatefulWidget {
-  final bool successful; // Indica se o PIX foi CONCLUIDA (ou similar) ANTES de chamar esta tela
-  final String? errorMessage; // Mensagem de erro da API PIX ou validação interna da PaymentScreen
+  final bool successful;
+  final String? errorMessage;
   final String txid;
-  final double? valorServico; // Valor pode ser nulo se houve erro antes
-  final String prestadorId; // Pode ser placeholder de erro
-  final String agendamentoId; // Pode ser placeholder de erro
-  final Agendamento? agendamento; // Agendamento original
+  final double? valorServico;
+  final String prestadorId;
+  final String agendamentoId;
+  final Agendamento? agendamento;
 
   const PaymentStatusScreen({
     Key? key,
-    required this.successful, // Este é o status do PIX que levou a esta tela
+    required this.successful,
     this.errorMessage,
     required this.txid,
     required this.valorServico,
@@ -38,8 +35,6 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
   final _supabase = Supabase.instance.client;
   final AgendamentoService _agendamentoService = AgendamentoService();
   bool _isProcessingDatabase = false;
-
-  // Guarda o resultado final do processamento backend para retornar
   bool _finalBackendResult = false;
 
   @override
@@ -50,7 +45,6 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     print("Erro PIX pré-tela (se houver): ${widget.errorMessage}");
     print("------------------------------------");
 
-    // Só tenta processar no backend se o pagamento PIX foi considerado bem-sucedido PELA TELA ANTERIOR
     if (widget.successful &&
         widget.agendamentoId.isNotEmpty && !widget.agendamentoId.contains("ERRO_") &&
         widget.prestadorId.isNotEmpty && !widget.prestadorId.contains("ERRO_") &&
@@ -58,11 +52,11 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
         widget.valorServico != null && widget.valorServico! > 0)
     {
       print("initState PaymentStatusScreen: PIX OK inicial. Iniciando processamento no backend...");
-      _processarPagamentoCompletoComLock(); // Não precisa de await aqui
+      _processarPagamentoCompletoComLock();
     } else if (!widget.successful) {
       print("initState PaymentStatusScreen: PIX falhou ANTES desta tela. Nenhum processamento backend.");
       _processandoBackend = false;
-      _finalBackendResult = false; // Garante que o resultado retornado será false
+      _finalBackendResult = false;
     } else {
       print("ERRO FATAL no initState PaymentStatusScreen: Dados inválidos recebidos, apesar do PIX ter sido 'successful' antes. Abortando.");
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,7 +64,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           setState(() {
             _mensagemErroProcessamentoBackend = "Erro interno: Dados inválidos (${widget.agendamentoId}, ${widget.prestadorId}, etc).";
             _processandoBackend = false;
-            _finalBackendResult = false; // Garante que o resultado retornado será false
+            _finalBackendResult = false;
           });
         }
       });
@@ -78,6 +72,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
   }
 
   Future<void> _processarPagamentoCompletoComLock() async {
+    // O código para esta função e as outras funções de processamento permanecem os mesmos
     if (_isProcessingDatabase) {
       print("Lock DB: Ignorando chamada duplicada para processar txid: ${widget.txid}");
       return;
@@ -94,14 +89,14 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
 
     bool agendamentoStatusOk = false;
     bool saldoOk = false;
-    bool processamentoGeralOk = false; // Flag geral do backend
+    bool processamentoGeralOk = false;
 
     try {
       agendamentoStatusOk = await _atualizarStatusAgendamentoParaConfirmado();
 
       if (agendamentoStatusOk) {
         if (mounted) setState(() => _statusAgendamentoAtualizado = true);
-        saldoOk = await _atualizarSaldoPrestador(); // Já tem idempotência
+        saldoOk = await _atualizarSaldoPrestador();
         if (saldoOk && mounted) {
           setState(() => _saldoPrestadorAtualizado = true);
         } else if (!saldoOk && mounted && _mensagemErroProcessamentoBackend == null) {
@@ -112,7 +107,6 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           setState(() => _mensagemErroProcessamentoBackend = "Falha ao confirmar agendamento.");
         }
       }
-      // Define o sucesso geral do backend
       processamentoGeralOk = agendamentoStatusOk && saldoOk;
 
     } catch (e) {
@@ -124,9 +118,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           _saldoPrestadorAtualizado = false;
         });
       }
-      processamentoGeralOk = false; // Falha geral
+      processamentoGeralOk = false;
     } finally {
-      // Define o resultado final que será retornado ao fechar a tela
       _finalBackendResult = processamentoGeralOk;
       print("Processamento Backend Finalizado. Resultado final: $_finalBackendResult");
 
@@ -140,8 +133,9 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     }
   }
 
-  // Função _atualizarStatusAgendamentoParaConfirmado (sem alterações)
+  // Mantenha os métodos existentes: _atualizarStatusAgendamentoParaConfirmado, _registrarPagamento, _atualizarSaldoPrestador
   Future<bool> _atualizarStatusAgendamentoParaConfirmado() async {
+    // Código existente...
     print("_atualizarStatusAgendamento: Tentando agendamento ${widget.agendamentoId} para 'confirmado'.");
     try {
       final currentAgendamento = await _supabase
@@ -173,8 +167,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     }
   }
 
-  // Função _registrarPagamento (sem alterações)
   Future<bool> _registrarPagamento() async {
+    // Código existente...
     final String tabelaPagamentos = 'pagamentos';
     print("_registrarPagamento: Verificando/Inserindo txid ${widget.txid} em '$tabelaPagamentos'");
     try {
@@ -220,8 +214,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     }
   }
 
-  // Função _atualizarSaldoPrestador (sem alterações)
   Future<bool> _atualizarSaldoPrestador() async {
+    // Código existente...
     final String tabelaPagamentos = 'pagamentos';
     final String tabelaUsuarios = 'usuarios';
     final String colIdPagamento = 'id_pagamento';
@@ -313,18 +307,17 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // Erro combinado: prioriza erro do backend, senão erro do PIX (que veio da tela anterior)
+    // Erro combinado: prioriza erro do backend, senão erro do PIX
     String? displayError = _mensagemErroProcessamentoBackend ?? widget.errorMessage;
 
     // Condição de sucesso REAL (PIX foi OK ANTES + Backend processou TUDO OK AGORA)
-    bool isFullySuccessful = widget.successful && // PIX foi OK antes
-        _statusAgendamentoAtualizado && // Backend: Agendamento OK
-        _saldoPrestadorAtualizado &&    // Backend: Saldo OK
-        !_processandoBackend &&         // Backend: Não está mais processando
-        _mensagemErroProcessamentoBackend == null; // Backend: Sem erros
+    bool isFullySuccessful = widget.successful &&
+        _statusAgendamentoAtualizado &&
+        _saldoPrestadorAtualizado &&
+        !_processandoBackend &&
+        _mensagemErroProcessamentoBackend == null;
 
     // Condição de Falha no PIX (antes de chegar aqui)
     bool isPixFailure = !widget.successful;
@@ -332,95 +325,259 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     // Condição de Falha no Backend (PIX foi OK antes, mas algo falhou aqui)
     bool isBackendFailure = widget.successful && !_finalBackendResult && !_processandoBackend;
 
-
+    // Definindo cores e ícones baseados no status
     IconData statusIcon;
     Color statusColor;
     String titleMessage;
+    String? subMessage;
 
     if (_processandoBackend) {
       statusIcon = Icons.hourglass_empty;
-      statusColor = Colors.blue;
-      titleMessage = 'Processando Confirmação...';
+      statusColor = const Color(0xFF017DFE); // Cor principal do app
+      titleMessage = 'Processando Pagamento';
+      subMessage = 'Aguarde um momento...';
     } else if (isFullySuccessful) {
       statusIcon = Icons.check_circle;
       statusColor = Colors.green;
-      titleMessage = 'Pagamento Confirmado!';
+      titleMessage = 'Pagamento Confirmado';
+      subMessage = 'Seu agendamento foi confirmado com sucesso!';
     } else if (isPixFailure) {
       statusIcon = Icons.error;
       statusColor = Colors.red;
-      // Usa o erro que veio da PaymentScreen se houver, senão msg genérica
-      titleMessage = widget.errorMessage ?? 'Falha no Pagamento PIX';
+      titleMessage = 'Falha no Pagamento';
+      subMessage = widget.errorMessage;
     } else if (isBackendFailure) {
       statusIcon = Icons.warning;
       statusColor = Colors.orange;
-      // Usa o erro específico do backend se houver, senão msg genérica
-      titleMessage = _mensagemErroProcessamentoBackend ?? 'Erro no Processamento Interno';
-    } else { // Fallback
+      titleMessage = 'Erro no Processamento';
+      subMessage = _mensagemErroProcessamentoBackend;
+    } else {
       statusIcon = Icons.help_outline;
       statusColor = Colors.grey;
       titleMessage = 'Status Indefinido';
+      subMessage = 'Não foi possível determinar o status do pagamento.';
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Status do Pagamento'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(
+        color: const Color(0xFFF3F3F3), // Mesma cor de fundo da HomePageContent
+        child: Column(
             children: [
-              Icon(statusIcon, color: statusColor, size: 80),
-              const SizedBox(height: 24),
-              Text(
-                titleMessage,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: statusColor),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Detalhes do Processamento Backend (Loading ou Resultado)
-              if (_processandoBackend)
-                const Column( children: [ CircularProgressIndicator(), SizedBox(height: 12), Text('Confirmando no sistema...', style: TextStyle(fontSize: 14)), ],),
-
-              // Mensagem de Sucesso Total (Backend OK)
-              if (isFullySuccessful)
-                const Padding( padding: EdgeInsets.only(top: 8.0), child: Text( 'Seu agendamento foi confirmado.', style: TextStyle(fontSize: 16, color: Colors.black87), textAlign: TextAlign.center,),),
-
-              // Mensagem de ERRO (PIX ou Backend) - Exibe APENAS se não estiver mais processando
-              if (displayError != null && !_processandoBackend && !isFullySuccessful)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text( displayError, style: const TextStyle(fontSize: 16, color: Colors.red), textAlign: TextAlign.center,),
+              // Header com estilo similar ao da HomePageContent
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF017DFE),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
                 ),
+                padding: const EdgeInsets.only(top: 50,bottom: 20,left: 30,right: 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () {
+                            Navigator.pop(context, _finalBackendResult);
+                          },
+                        ),
+                        const SizedBox(width: 20),
+                        const Text(
+                          "Status do Pagamento",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
 
-              const SizedBox(height: 24),
+              // Conteúdo principal
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 30),
+                        // Card de status
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                spreadRadius: 2,
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Ícone de status
+                              _processandoBackend
+                                  ? SizedBox(
+                                height: 80,
+                                width: 80,
+                                child: CircularProgressIndicator(
+                                  color: statusColor,
+                                  strokeWidth: 5,
+                                ),
+                              )
+                                  : Icon(
+                                statusIcon,
+                                color: statusColor,
+                                size: 80,
+                              ),
+                              const SizedBox(height: 24),
+                              // Título
+                              Text(
+                                titleMessage,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: statusColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              // Mensagem secundária
+                              if (subMessage != null)
+                                Text(
+                                  subMessage,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black.withOpacity(0.7),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              const SizedBox(height: 24),
+                              // Linha separadora
+                              Divider(color: Colors.grey.withOpacity(0.3)),
+                              const SizedBox(height: 24),
+                              // Detalhes da transação
+                              _buildTransactionDetail(
+                                'ID da Transação',
+                                widget.txid,
+                                Icons.receipt,
+                              ),
+                              const SizedBox(height: 16),
+                              if (widget.valorServico != null)
+                                _buildTransactionDetail(
+                                  'Valor',
+                                  'R\$ ${widget.valorServico!.toStringAsFixed(2)}',
+                                  Icons.attach_money,
+                                ),
+                              if (isFullySuccessful) ...[
+                                const SizedBox(height: 16),
+                                _buildTransactionDetail(
+                                  'Status',
+                                  'Confirmado',
+                                  Icons.verified,
+                                  valueColor: Colors.green,
+                                ),
+                              ],
+                              if (isPixFailure || isBackendFailure) ...[
+                                const SizedBox(height: 16),
+                                _buildTransactionDetail(
+                                  'Status',
+                                  isPixFailure ? 'Falha no PIX' : 'Erro de Processamento',
+                                  Icons.error_outline,
+                                  valueColor: Colors.red,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        // Botão de voltar para agendamentos
+                        ElevatedButton(
+                          onPressed: () {
+                            print("Botão 'Voltar' pressionado. Retornando resultado: $_finalBackendResult");
+                            Navigator.pop(context, _finalBackendResult);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF017DFE),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: const Text(
+                            'Voltar para Agendamentos',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ),
+    );
+  }
 
-              // Detalhes Fixos
-              Text('ID Transação PIX: ${widget.txid}', style: const TextStyle(fontSize: 14, color: Colors.grey), textAlign: TextAlign.center),
-              if (widget.valorServico != null && widget.valorServico! > 0)
-                Text('Valor Pago: R\$ ${widget.valorServico!.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              const SizedBox(height: 32),
-
-              // Botão para voltar
-              ElevatedButton(
-                onPressed: () {
-                  // **** MODIFICAÇÃO: Usa pop com o resultado FINAL do backend ****
-                  // Se estava processando backend, _finalBackendResult terá true/false.
-                  // Se PIX falhou antes, _finalBackendResult é false.
-                  // Se houve erro de dados inválidos, _finalBackendResult é false.
-                  print("PaymentStatusScreen: Botão 'Voltar' pressionado. Retornando resultado: $_finalBackendResult");
-                  Navigator.pop(context, _finalBackendResult);
-                },
-                style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), textStyle: const TextStyle(fontSize: 16) ),
-                child: const Text('Voltar para Agendamentos'),
+  // Widget para detalhes da transação
+  Widget _buildTransactionDetail(String label, String value, IconData icon, {Color? valueColor}) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF017DFE).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: const Color(0xFF017DFE),
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: valueColor ?? Colors.black,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
