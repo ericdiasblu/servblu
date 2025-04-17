@@ -4,276 +4,513 @@ import 'package:servblu/services/agendamento_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// ****** VERIFIQUE SE O CAMINHO ESTÁ CORRETO ******
-import '../screens/pagamento/qrcode_screen.dart'; // PaymentScreen
-// ************************************************
-
+// Verifique se o caminho para PaymentScreen está correto
+import '../screens/pagamento/qrcode_screen.dart';
 
 class AgendamentoActions {
-  static void executeActionForStatus(BuildContext context, String status,
-      Agendamento agendamento, int currentTabIndex, Function refreshData) {
+  // Assinatura do método principal modificada para aceitar o novo callback
+  static void executeActionForStatus(
+      BuildContext context, // Contexto do Modal/Dialog onde a ação foi iniciada
+      String status,
+      Agendamento agendamento,
+      int currentTabIndex, // 0: Cliente, 1: Prestador
+      // Callback para informar ScheduleScreen sobre o resultado
+      Function(bool success, {String? newStatus}) onComplete)
+  {
+    // Funções auxiliares para chamar o callback onComplete
+    void simpleSuccess() => onComplete(true);
+    void successWithStatus(String newStatus) => onComplete(true, newStatus: newStatus);
+    void failure() => onComplete(false);
 
-    final BuildContext primaryContext = context;
-    void closeModalAndRefresh() { if (Navigator.canPop(primaryContext)) Navigator.pop(primaryContext); refreshData(); }
-    void closeModalOnly() { if (Navigator.canPop(primaryContext)) Navigator.pop(primaryContext); }
+    // Função auxiliar para fechar dialogs locais (como o de 'Gerenciar')
+    // O fechamento do modal principal é feito pelo onComplete em ScheduleScreen
+    void closeLocalDialog(BuildContext dialogContext) {
+      if (Navigator.canPop(dialogContext)) {
+        Navigator.pop(dialogContext);
+      }
+    }
+
+    print("AgendamentoActions: Executando ação para status '$status' na aba ROL $currentTabIndex");
 
     switch (status) {
       case 'solicitado':
-        if (currentTabIndex == 0) { cancelarSolicitacao(primaryContext, agendamento, refreshData); }
-        else { gerenciarSolicitacao(primaryContext, agendamento, refreshData, closeModalOnly); }
+        if (currentTabIndex == 0) { // Cliente
+          cancelarSolicitacao(context, agendamento, simpleSuccess, failure);
+        } else { // Prestador
+          // gerenciarSolicitacao abre um dialog local. Passamos callbacks para aceitar/recusar
+          // e uma função para fechar *esse* dialog local.
+          gerenciarSolicitacao(context, agendamento, successWithStatus, failure, closeLocalDialog);
+        }
         break;
+
       case 'aguardando':
-        if (currentTabIndex == 0) { Pagamento(primaryContext, agendamento, refreshData, closeModalOnly); }
-        else { verificarPagamento(primaryContext, agendamento, refreshData); }
+        if (currentTabIndex == 0) { // Cliente
+          // Pagamento pode envolver navegação ou mostrar dialog. Usa simpleSuccess/failure.
+          pagamento(context, agendamento, simpleSuccess, failure);
+        } else { // Prestador
+          verificarPagamento(context, agendamento, simpleSuccess, failure);
+        }
         break;
+
       case 'confirmado':
-        if (currentTabIndex == 0) { print("Ação Cliente 'confirmado': Fechando modal."); closeModalOnly(); }
-        else { marcarComoConcluido(primaryContext, agendamento, refreshData); }
+        if (currentTabIndex == 0) { // Cliente (Ação 'Ver Detalhes' implícita)
+          print("Ação Cliente 'confirmado': Nenhuma ação backend, chamando simpleSuccess para fechar modal.");
+          simpleSuccess(); // Apenas sinaliza sucesso para fechar o modal
+        } else { // Prestador
+          marcarComoConcluido(context, agendamento, simpleSuccess, failure);
+        }
         break;
+
       case 'concluído':
-        if (currentTabIndex == 0) { avaliarServico(primaryContext, agendamento, refreshData, closeModalOnly); }
-        else { voltar(primaryContext, agendamento, refreshData); }
+        if (currentTabIndex == 0) { // Cliente
+          avaliarServico(context, agendamento, simpleSuccess, failure, closeLocalDialog);
+        } else { // Prestador (Ação 'Voltar' implícita)
+          print("Ação Prestador 'concluído': Nenhuma ação backend, chamando simpleSuccess para fechar modal.");
+          simpleSuccess(); // Apenas sinaliza sucesso para fechar o modal
+        }
         break;
+
       case 'recusado':
-        verDetalhes(primaryContext, agendamento, refreshData, closeModalOnly);
+      // Ver detalhes geralmente mostra info, não muda status.
+        verDetalhesRecusa(context, agendamento, simpleSuccess, failure, closeLocalDialog);
         break;
+
       default:
-        print("Status não mapeado: $status. Fechando modal."); closeModalOnly();
+        print("Status não mapeado para ação: $status. Chamando simpleSuccess.");
+        simpleSuccess(); // Comportamento padrão: sucesso para fechar modal
     }
   }
 
-  // --- Métodos de Ação ---
+  // --- Métodos de Ação (Adaptados com onSuccess/onFailure) ---
 
-  static void cancelarSolicitacao(BuildContext context, Agendamento agendamento, Function refreshData) async {
-    // (Código mantido - com confirmação e loading)
-    final bool? confirm = await showDialog<bool>(
-      context: context, builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        title: Text('Confirmar Cancelamento'),
-        content: Text('Tem certeza que deseja cancelar esta solicitação? Esta ação não pode ser desfeita.'),
-        actions: <Widget>[
-          TextButton( child: Text('Não'), onPressed: () => Navigator.pop(dialogContext, false)),
-          TextButton( child: Text('Sim, Cancelar'), style: TextButton.styleFrom(foregroundColor: Colors.red), onPressed: () => Navigator.pop(dialogContext, true)),
-        ],
-      );
-    },
+  static void _showLoadingDialog(BuildContext context, {String message = 'Processando...'}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text(message)]),
+      ),
     );
-    if (confirm != true) return;
-    showDialog( context: context, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator()));
+  }
+
+  static void _hideLoadingDialog(BuildContext context) {
+    // Garante que estamos no contexto certo para fechar
+    // Verifica se há uma rota modal (como o dialog) para fechar
+    if(Navigator.of(context, rootNavigator: true).canPop()) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  static void cancelarSolicitacao(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context, builder: (BuildContext dialogContext) => AlertDialog(
+      title: Text('Confirmar Cancelamento'),
+      content: Text('Tem certeza que deseja cancelar esta solicitação?'),
+      actions: <Widget>[
+        TextButton( child: Text('Não'), onPressed: () => Navigator.pop(dialogContext, false)),
+        TextButton( child: Text('Sim, Cancelar'), style: TextButton.styleFrom(foregroundColor: Colors.red), onPressed: () => Navigator.pop(dialogContext, true)),
+      ],
+    ),
+    );
+    if (confirm != true) {
+      // Não chama onSuccess nem onFailure se o usuário cancelou a confirmação
+      print("Cancelamento de solicitação abortado pelo usuário.");
+      return;
+    }
+
+    _showLoadingDialog(context);
     try {
       final agendamentoService = AgendamentoService();
       await agendamentoService.removerAgendamento(agendamento.idAgendamento);
-      Navigator.pop(context); // Fecha loading
-      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Solicitação cancelada com sucesso')),);
-      refreshData();
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Solicitação cancelada com sucesso'), backgroundColor: Colors.green),);
+      onSuccess(); // Chama onSuccess
     } catch (e) {
-      Navigator.pop(context); // Fecha loading
-      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Erro ao cancelar solicitação: $e')),);
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Erro ao cancelar: $e'), backgroundColor: Colors.red),);
+      onFailure(); // Chama onFailure
     }
   }
 
-  static void Pagamento(BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) {
-    closeModalCallback(); // Fecha modal de ações original
-
-    if (agendamento.isPix == true) {
-      final description = 'Pagamento de serviço: ${agendamento.nomeServico ?? 'Serviço Indefinido'}';
-      print("AgendamentoActions.Pagamento: Iniciando fluxo PIX...");
-      Navigator.push(
-        context,
-        MaterialPageRoute( builder: (context) => PaymentScreen( agendamento: agendamento, description: description,)),
-      ).then((_) { // Executa QUANDO voltar do fluxo de pagamento (PaymentScreen ou PaymentStatusScreen)
-        print("AgendamentoActions.Pagamento: Retornou do fluxo de pagamento PIX. Chamando refreshData().");
-        refreshData(); // Atualiza a lista na ScheduleScreen
-      });
-    } else {
-      _showNonPixPaymentInstructions(context, agendamento); // Lógica Não-PIX
-    }
-  }
-
-  // CORRIGIDO: Removida a vírgula extra no botão "Ligar agora"
-  static void _showNonPixPaymentInstructions(BuildContext context, Agendamento agendamento) async {
-    showDialog( context: context, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator()));
-    try {
-      final AgendamentoService _agendamentoService = AgendamentoService();
-      final prestadorInfo = await _agendamentoService.obterDetalhesPrestador(agendamento.idPrestador);
-      Navigator.pop(context); // Fecha loading
-      showDialog( context: context, builder: (BuildContext dialogContext) {
+  // Prestador: Dialog para escolher Aceitar ou Recusar
+  static void gerenciarSolicitacao(BuildContext context, Agendamento agendamento, Function(String newStatus) onSuccessWithStatus, Function onFailure, Function(BuildContext) closeLocalDialog) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) { // Usar dialogContext internamente
         return AlertDialog(
-          title: Text('Instruções de Pagamento'),
-          content: Column(
-              mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text( 'Por favor, entre em contato com o prestador para combinar o pagamento:', style: TextStyle(fontSize: 16)), SizedBox(height: 16),
-            RichText( text: TextSpan( style: TextStyle(fontSize: 16, color: Colors.black), children: [ TextSpan(text: 'Prestador: ', style: TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: '${prestadorInfo['nome'] ?? 'N/A'}'), ],),), SizedBox(height: 8),
-            RichText( text: TextSpan( style: TextStyle(fontSize: 16, color: Colors.black), children: [ TextSpan(text: 'Telefone: ', style: TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: '${prestadorInfo['telefone'] ?? 'N/A'}'), ],),), SizedBox(height: 8),
-            RichText( text: TextSpan( style: TextStyle(fontSize: 16, color: Colors.black), children: [ TextSpan(text: 'Forma de pagamento: ', style: TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: '${agendamento.formaPagamento ?? 'A combinar'}'), ],),), SizedBox(height: 16),
-            Text( 'Após o pagamento ser confirmado pelo prestador, o status será atualizado.', style: TextStyle(fontStyle: FontStyle.italic)),
-          ]),
+          title: Text('Gerenciar Solicitação'),
+          content: Text('O que deseja fazer com este pedido de ${agendamento.nomeCliente ?? 'Cliente'}?'),
           actions: [
-            TextButton( onPressed: () => Navigator.pop(dialogContext), child: Text('Entendi')),
             TextButton(
-                onPressed: () async {
-                  final telefone = prestadorInfo['telefone'];
-                  if (telefone != null) {
-                    final Uri url = Uri.parse('tel:$telefone');
-                    try {
-                      if (await canLaunchUrl(url)) { await launchUrl(url); }
-                      else { ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Não foi possível abrir o discador.'))); }
-                    } catch (e) { ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Erro ao tentar realizar a ligação.'))); }
-                  } else { ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Número de telefone indisponível.'))); }
-                }, // <--- VÍRGULA REMOVIDA DAQUI
-                child: Text('Ligar agora')
+              child: Text('Aceitar'),
+              onPressed: () {
+                closeLocalDialog(dialogContext); // Fecha este dialog ANTES de chamar a ação
+                aceitarSolicitacao(context, agendamento, onSuccessWithStatus, onFailure);
+              },
+            ),
+            TextButton(
+              child: Text('Recusar'),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () {
+                closeLocalDialog(dialogContext); // Fecha este dialog ANTES de chamar a ação
+                recusarSolicitacao(context, agendamento, onSuccessWithStatus, onFailure);
+              },
+            ),
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () => closeLocalDialog(dialogContext), // Apenas fecha este dialog
             ),
           ],
         );
-      });
-    } catch (e) {
-      Navigator.pop(context); // Fecha loading
-      ScaffoldMessenger.of(context).showSnackBar( SnackBar( content: Text('Erro ao carregar informações do prestador: $e'), backgroundColor: Colors.red,));
-      print('Erro ao buscar detalhes do prestador: $e');
-    }
+      },
+    );
   }
 
 
-  static void verificarPagamento(BuildContext context, Agendamento agendamento, Function refreshData) async {
-    // (Código mantido - com checagem dupla e refresh condicional)
-    final currentContext = context;
-    if (Navigator.canPop(currentContext)) Navigator.pop(currentContext); // Fecha modal ações
-    showDialog( context: currentContext, barrierDismissible: false, builder: (BuildContext dialogContext) => const Center( child: CircularProgressIndicator()));
-    try {
-      final agendamentoService = AgendamentoService(); final supabase = Supabase.instance.client; bool statusMudou = false;
-      final pagamentoConfirmado = await supabase.from('pagamentos').select('id_pagamento').eq('id_agendamento', agendamento.idAgendamento).eq('status', 'confirmado').limit(1).maybeSingle();
-      Navigator.pop(currentContext); // Fecha loading
-      if (pagamentoConfirmado != null) {
-        if(agendamento.status != 'confirmado') {
-          print("Verificar Pagamento: Atualizando agendamento para 'confirmado'.");
-          await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'confirmado'); statusMudou = true;
-          ScaffoldMessenger.of(currentContext).showSnackBar( const SnackBar( content: Text('Pagamento verificado e status atualizado!'), backgroundColor: Colors.green));
-        } else {
-          print("Verificar Pagamento: Agendamento já estava 'confirmado'.");
-          ScaffoldMessenger.of(currentContext).showSnackBar( const SnackBar( content: Text('O pagamento já foi confirmado anteriormente.'), backgroundColor: Colors.blue));
-        }
-      } else {
-        print("Verificar Pagamento: Nenhum pagamento 'confirmado' encontrado.");
-        ScaffoldMessenger.of(currentContext).showSnackBar( const SnackBar( content: Text('O pagamento correspondente ainda não foi encontrado ou confirmado.'), backgroundColor: Colors.orange));
-      }
-      if (statusMudou) refreshData();
-    } catch (e) {
-      if (Navigator.canPop(currentContext)) Navigator.pop(currentContext); // Fecha loading erro
-      ScaffoldMessenger.of(currentContext).showSnackBar( SnackBar( content: Text('Erro ao verificar pagamento: $e'), backgroundColor: Colors.red));
-      print('Erro ao verificar pagamento: $e');
-    }
-  }
-
-  static void avaliarServico( BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) {
-    // (Código mantido - com estrelas)
-    final primaryContext = context;
-    closeModalCallback(); // Fecha modal de ações
-    showDialog( context: primaryContext, builder: (BuildContext dialogContext) {
-      double nota = 3.0; final comentarioController = TextEditingController();
-      return StatefulBuilder(builder: (context, setStateDialog) {
-        return AlertDialog(
-          title: Text('Avaliar Serviço'),
-          content: SingleChildScrollView( child: Column( mainAxisSize: MainAxisSize.min, children: [
-            Text('Como você avalia o serviço prestado por ${agendamento.nomePrestador ?? "este prestador"}?'), SizedBox(height: 16),
-            Row( mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (index) { return IconButton( icon: Icon( index < nota ? Icons.star : Icons.star_border, color: Colors.amber,), onPressed: () => setStateDialog(() => nota = (index + 1).toDouble())); }),),
-            Text('${nota.toInt()} de 5 estrelas'), SizedBox(height: 16),
-            TextField( controller: comentarioController, decoration: InputDecoration( labelText: 'Comentário (opcional)', hintText: 'Descreva sua experiência...', border: OutlineInputBorder()), maxLines: 3, keyboardType: TextInputType.multiline),
-          ],),
-          ),
-          actions: [
-            TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext)),
-            TextButton( child: Text('Enviar Avaliação'), onPressed: () async { Navigator.pop(dialogContext); /* TODO: Lógica de envio backend */ ScaffoldMessenger.of(primaryContext).showSnackBar(SnackBar(content: Text('Avaliação enviada (simulação)'))); }),
-          ],
-        );
-      });
-    });
-  }
-
-  static void voltar(BuildContext context, Agendamento agendamento, Function refreshData) {
-    // (Código mantido)
-    if (Navigator.canPop(context)) { Navigator.pop(context); }
-  }
-
-  static void verDetalhes(BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) async {
-    // (Código mantido - focado em 'recusado')
-    closeModalCallback(); // Fecha modal de ações
-    if (agendamento.status == 'recusado') {
-      showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator()));
-      try {
-        final agendamentoService = AgendamentoService(); String motivo = agendamento.motivoRecusa ?? '';
-        if (motivo.isEmpty) { Agendamento detalhes = await agendamentoService.obterDetalhesAgendamento(agendamento.idAgendamento); motivo = detalhes.motivoRecusa ?? 'Motivo não informado.';}
-        Navigator.pop(context); // Fecha loading
-        showDialog( context: context, builder: (BuildContext dialogContext) {
-          return AlertDialog( title: Text('Motivo da Recusa'), content: Text(motivo.isNotEmpty ? '"$motivo"' : 'Motivo não especificado.'), actions: [ TextButton( onPressed: () => Navigator.pop(dialogContext), child: Text('Fechar'))]);
-        });
-      } catch (e) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao buscar motivo da recusa: $e'))); }
-    } else { print("Ver Detalhes: Chamado para status '${agendamento.status}'. Nenhuma ação extra definida."); }
-  }
-
-  static void recusarSolicitacao( BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) {
-    // (Código mantido - com validação)
-    closeModalCallback(); // Fecha modal de ações
-    showDialog( context: context, builder: (BuildContext dialogContext) {
-      String motivo = ''; final formKey = GlobalKey<FormState>();
-      return AlertDialog( title: Text('Recusar Solicitação'), content: Form( key: formKey, child: Column( mainAxisSize: MainAxisSize.min, children: [ Text('Tem certeza que deseja recusar esta solicitação?'), SizedBox(height: 16), TextFormField( decoration: InputDecoration( labelText: 'Motivo da recusa *', hintText: 'Informe o motivo...', border: OutlineInputBorder()), maxLines: 3, validator: (v) { if (v == null || v.trim().isEmpty) return 'O motivo é obrigatório.'; if (v.trim().length < 5) return 'O motivo deve ter pelo menos 5 caracteres.'; return null; }, onSaved: (v) => motivo = v ?? ''), ],),),
-        actions: [
-          TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext)),
-          TextButton( child: Text('Confirmar Recusa'), style: TextButton.styleFrom(foregroundColor: Colors.red), onPressed: () async { if (formKey.currentState!.validate()) { formKey.currentState!.save(); Navigator.pop(dialogContext); showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator())); try { final agendamentoService = AgendamentoService(); await agendamentoService.atualizarStatusAgendamento(agendamento.idAgendamento, 'recusado', motivoRecusa: motivo); Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Solicitação recusada com sucesso'))); refreshData(); } catch (e) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao recusar solicitação: $e')));}}}),
-        ],
-      );
-    });
-  }
-
-  static void aceitarSolicitacao(BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) async {
-    // (Código mantido - com confirmação)
-    closeModalCallback(); // Fecha modal de ações
-    final bool? confirm = await showDialog<bool>( context: context, builder: (BuildContext dialogContext) {
-      return AlertDialog( title: Text('Aceitar Solicitação?'), content: Text('Deseja aceitar este agendamento? O cliente será notificado para realizar o pagamento.'), actions: [ TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text('Cancelar')), TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text('Sim, Aceitar')),]);
-    });
+  // Prestador: Ação de Aceitar
+  static void aceitarSolicitacao(BuildContext context, Agendamento agendamento, Function(String newStatus) onSuccessWithStatus, Function onFailure) async {
+    // Confirmação opcional, mas recomendada
+    final bool? confirm = await showDialog<bool>( context: context, builder: (BuildContext dialogContext) =>
+        AlertDialog( title: Text('Aceitar Solicitação?'), content: Text('O cliente será notificado para pagar.'), actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text('Sim, Aceitar')),
+        ]
+        )
+    );
     if (confirm != true) return;
-    showDialog( context: context, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator()));
+
+    _showLoadingDialog(context, message: 'Aceitando...');
     try {
-      final agendamentoService = AgendamentoService(); await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'aguardando');
-      Navigator.pop(context); // Fecha loading
-      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Solicitação aceita. Aguardando pagamento do cliente.')),);
-      refreshData();
+      final agendamentoService = AgendamentoService();
+      // Atualiza o status para 'aguardando' (pagamento)
+      await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'aguardando');
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Solicitação aceita! Aguardando pagamento.'), backgroundColor: Colors.green),);
+      onSuccessWithStatus('aguardando'); // Chama onSuccess com o NOVO status
     } catch (e) {
-      Navigator.pop(context); // Fecha loading
-      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Erro ao aceitar solicitação: $e')),);
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Erro ao aceitar: $e'), backgroundColor: Colors.red),);
+      onFailure(); // Chama onFailure
     }
   }
 
-  static void marcarComoConcluido(BuildContext context, Agendamento agendamento, Function refreshData) async {
-    // (Código mantido - com confirmação)
-    final primaryContext = context;
-    final bool? confirmou = await showDialog<bool>( context: primaryContext, builder: (BuildContext dialogContext) {
-      return AlertDialog( title: Text('Confirmar Conclusão'), content: Text('Tem certeza que deseja marcar este serviço como concluído?'), actions: [ TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext, false)), TextButton( child: Text('Confirmar'), onPressed: () => Navigator.pop(dialogContext, true)),],);
-    });
+  // Prestador: Ação de Recusar (abre dialog para motivo)
+  static void recusarSolicitacao( BuildContext context, Agendamento agendamento, Function(String newStatus) onSuccessWithStatus, Function onFailure) {
+    showDialog(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          String motivo = '';
+          final formKey = GlobalKey<FormState>();
+          return AlertDialog(
+            title: Text('Recusar Solicitação'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Por favor, informe o motivo da recusa.'),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    decoration: InputDecoration( labelText: 'Motivo *', hintText: 'Ex: Horário indisponível', border: OutlineInputBorder()),
+                    maxLines: 3,
+                    validator: (v) => (v == null || v.trim().length < 5) ? 'Motivo muito curto (mín. 5).' : null,
+                    onSaved: (v) => motivo = v?.trim() ?? '',
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext)), // Fecha só o dialog do motivo
+              TextButton(
+                  child: Text('Confirmar Recusa'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      formKey.currentState!.save();
+                      Navigator.pop(dialogContext); // Fecha dialog do motivo
+
+                      _showLoadingDialog(context, message: 'Recusando...');
+                      try {
+                        final agendamentoService = AgendamentoService();
+                        // Atualiza status e adiciona motivo
+                        await agendamentoService.atualizarStatusAgendamento(agendamento.idAgendamento, 'recusado', motivoRecusa: motivo);
+                        _hideLoadingDialog(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Solicitação recusada.'), backgroundColor: Colors.orange));
+                        onSuccessWithStatus('recusado'); // Chama onSuccess com o NOVO status
+                      } catch (e) {
+                        _hideLoadingDialog(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao recusar: $e'), backgroundColor: Colors.red));
+                        onFailure(); // Chama onFailure
+                      }
+                    }
+                  }
+              ),
+            ],
+          );
+        }
+    );
+  }
+
+
+  // Cliente: Inicia fluxo de pagamento
+  static void pagamento(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure) {
+    // Fecha o modal de detalhes original ANTES de navegar ou mostrar dialog
+    // (A responsabilidade foi movida para o onComplete em ScheduleScreen)
+
+    if (agendamento.isPix == true && agendamento.precoServico != null && agendamento.precoServico! > 0) {
+      final description = 'Pagamento: ${agendamento.nomeServico ?? 'Serviço'}';
+      print("AgendamentoActions.pagamento: Iniciando fluxo PIX...");
+      Navigator.push(
+        context,
+        MaterialPageRoute( builder: (ctx) => PaymentScreen( agendamento: agendamento, description: description,)),
+      ).then((paymentResult) {
+        // Este 'then' executa DEPOIS que a tela de pagamento (ou status) é fechada.
+        // O resultado do pagamento (se houve) pode estar em paymentResult (precisa ajustar PaymentScreen para retornar algo).
+        print("AgendamentoActions.pagamento: Retornou do fluxo PIX. Resultado: $paymentResult. Chamando onSuccess para refresh.");
+        // Independentemente do resultado do pagamento, chamamos onSuccess
+        // para que ScheduleScreen recarregue a lista (o status pode ou não ter mudado).
+        onSuccess();
+      }).catchError((error) {
+        print("Erro durante navegação para PaymentScreen: $error");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao iniciar pagamento: $error'), backgroundColor: Colors.red));
+        onFailure(); // Chama onFailure se a navegação falhar
+      });
+
+    } else if(agendamento.isPix == false) {
+      // Lógica Não-PIX (mostrar instruções)
+      _showNonPixPaymentInstructions(context, agendamento, onSuccess, onFailure);
+    } else {
+      // Caso Pix seja true, mas preço é nulo ou zero, ou isPix é nulo
+      print("AgendamentoActions.pagamento: Condição inválida para pagamento (isPix: ${agendamento.isPix}, preco: ${agendamento.precoServico})");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não é possível iniciar pagamento. Verifique detalhes do serviço.'), backgroundColor: Colors.orange));
+      onFailure(); // Considera falha se não pode iniciar
+    }
+  }
+
+  // Cliente: Mostrar instruções para pagamento não-PIX
+  static void _showNonPixPaymentInstructions(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure) async {
+    _showLoadingDialog(context, message: 'Buscando contato...');
+    try {
+      final AgendamentoService _agendamentoService = AgendamentoService();
+      final prestadorInfo = await _agendamentoService.obterDetalhesPrestador(agendamento.idPrestador);
+      _hideLoadingDialog(context);
+
+      showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            final telefone = prestadorInfo['telefone'] as String?;
+            final canCall = telefone != null && telefone.isNotEmpty;
+            return AlertDialog(
+              title: Text('Instruções de Pagamento'),
+              content: SingleChildScrollView( // Para evitar overflow
+                child: Column(
+                    mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text( 'Combine o pagamento diretamente com o prestador:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), SizedBox(height: 16),
+                  _buildPrestadorInfoRow('Prestador:', prestadorInfo['nome'] ?? 'N/A'),
+                  _buildPrestadorInfoRow('Telefone:', telefone ?? 'N/A'),
+                  _buildPrestadorInfoRow('Pagamento:', agendamento.formaPagamento ?? 'A combinar'),
+                  SizedBox(height: 16),
+                  Text( 'O status será atualizado após a confirmação do prestador.', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
+                ]),
+              ),
+              actions: [
+                TextButton( onPressed: () => Navigator.pop(dialogContext), child: Text('Entendi')),
+                if (canCall)
+                  TextButton(
+                      onPressed: () async {
+                        final Uri url = Uri.parse('tel:$telefone');
+                        try {
+                          if (await canLaunchUrl(url)) { await launchUrl(url); }
+                          else { ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Não foi possível abrir o discador.'))); }
+                        } catch (e) { ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Erro ao tentar ligar.'))); }
+                      },
+                      child: Text('Ligar agora')
+                  ),
+              ],
+            );
+          }
+      ).then((_) {
+        // Após fechar o dialog de instruções, consideramos a "ação" concluída.
+        onSuccess();
+      });
+
+    } catch (e) {
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar( content: Text('Erro ao buscar contato: $e'), backgroundColor: Colors.red,));
+      print('Erro ao buscar detalhes do prestador: $e');
+      onFailure(); // Chama onFailure em caso de erro ao buscar dados
+    }
+  }
+  // Helper para formatar linha de info do prestador no dialog
+  static Widget _buildPrestadorInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: RichText( text: TextSpan( style: TextStyle(fontSize: 15, color: Colors.black87), children: [
+        TextSpan(text: label, style: TextStyle(fontWeight: FontWeight.bold)),
+        TextSpan(text: ' $value'),
+      ],),),
+    );
+  }
+
+
+  // Prestador: Verifica se pagamento PIX foi confirmado no Supabase
+  static void verificarPagamento(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure) async {
+    _showLoadingDialog(context, message: 'Verificando...');
+    try {
+      final agendamentoService = AgendamentoService();
+      final supabase = Supabase.instance.client;
+      bool statusMudou = false;
+
+      // Verifica na tabela 'pagamentos' se existe um pagamento confirmado para este agendamento
+      final pagamentoConfirmado = await supabase.from('pagamentos')
+          .select('id_pagamento')
+          .eq('id_agendamento', agendamento.idAgendamento)
+          .eq('status', 'confirmado') // Busca especificamente por 'confirmado'
+          .limit(1)
+          .maybeSingle();
+
+      _hideLoadingDialog(context);
+
+      if (pagamentoConfirmado != null) { // Encontrou pagamento confirmado
+        if (agendamento.status != 'confirmado') { // E o agendamento ainda não está 'confirmado'
+          print("Verificar Pagamento: Pagamento encontrado. Atualizando agendamento ${agendamento.idAgendamento} para 'confirmado'.");
+          await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'confirmado');
+          statusMudou = true;
+          ScaffoldMessenger.of(context).showSnackBar( const SnackBar( content: Text('Pagamento confirmado e status atualizado!'), backgroundColor: Colors.green));
+        } else {
+          print("Verificar Pagamento: Agendamento ${agendamento.idAgendamento} já estava 'confirmado'.");
+          ScaffoldMessenger.of(context).showSnackBar( const SnackBar( content: Text('Pagamento já confirmado anteriormente.'), backgroundColor: Colors.blue));
+        }
+      } else { // Não encontrou pagamento confirmado
+        print("Verificar Pagamento: Pagamento para ${agendamento.idAgendamento} ainda não confirmado no sistema.");
+        ScaffoldMessenger.of(context).showSnackBar( const SnackBar( content: Text('Pagamento ainda não consta como confirmado.'), backgroundColor: Colors.orange));
+      }
+      // Chama onSuccess independentemente de ter mudado o status ou não,
+      // pois a verificação foi concluída com sucesso. A UI vai recarregar.
+      onSuccess();
+
+    } catch (e) {
+      _hideLoadingDialog(context);
+      ScaffoldMessenger.of(context).showSnackBar( SnackBar( content: Text('Erro ao verificar pagamento: $e'), backgroundColor: Colors.red));
+      print('Erro ao verificar pagamento: $e');
+      onFailure(); // Chama onFailure em caso de erro
+    }
+  }
+
+  // Prestador: Marca o serviço como concluído
+  static void marcarComoConcluido(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure) async {
+    final bool? confirmou = await showDialog<bool>( context: context, builder: (BuildContext dialogContext) =>
+        AlertDialog( title: Text('Confirmar Conclusão'), content: Text('Marcar este serviço como concluído?'), actions: [
+          TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext, false)),
+          TextButton( child: Text('Confirmar'), onPressed: () => Navigator.pop(dialogContext, true)),
+        ],
+        )
+    );
+
     if (confirmou == true) {
-      if (Navigator.canPop(primaryContext)) Navigator.pop(primaryContext); // Fecha modal detalhes
-      showDialog( context: primaryContext, barrierDismissible: false, builder: (BuildContext context) => Center(child: CircularProgressIndicator()));
+      _showLoadingDialog(context, message: 'Finalizando...');
       try {
-        final agendamentoService = AgendamentoService(); await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'concluído');
-        Navigator.pop(primaryContext); // Fecha loading
-        ScaffoldMessenger.of(primaryContext).showSnackBar( const SnackBar( content: Text('Serviço marcado como concluído!'), backgroundColor: Colors.green));
-        refreshData();
+        final agendamentoService = AgendamentoService();
+        await agendamentoService.atualizarStatusAgendamento( agendamento.idAgendamento, 'concluído');
+        _hideLoadingDialog(context);
+        ScaffoldMessenger.of(context).showSnackBar( const SnackBar( content: Text('Serviço marcado como concluído!'), backgroundColor: Colors.green));
+        onSuccess(); // Chama onSuccess
       } catch (e) {
-        print("Erro ao marcar como concluido: $e"); Navigator.pop(primaryContext); // Fecha loading
-        ScaffoldMessenger.of(primaryContext).showSnackBar( SnackBar( content: Text('Erro ao atualizar status: $e'), backgroundColor: Colors.red));
+        _hideLoadingDialog(context);
+        print("Erro ao marcar como concluido: $e");
+        ScaffoldMessenger.of(context).showSnackBar( SnackBar( content: Text('Erro ao finalizar: $e'), backgroundColor: Colors.red));
+        onFailure(); // Chama onFailure
       }
     }
+    // Se confirmou == false, não faz nada e não chama callbacks
   }
 
-  static void gerenciarSolicitacao( BuildContext context, Agendamento agendamento, Function refreshData, Function closeModalCallback) {
-    // (Código mantido - chamando aceitar/recusar)
-    closeModalCallback(); // Fecha modal de ações
-    showDialog( context: context, builder: (BuildContext dialogContext) {
-      return AlertDialog( title: Text('Gerenciar Solicitação'), content: Text('Escolha uma ação para esta solicitação:'), actions: [
-        TextButton( child: Text('Aceitar'), onPressed: () { Navigator.pop(dialogContext); aceitarSolicitacao(context, agendamento, refreshData, () {}); }), // Callback vazio
-        TextButton( child: Text('Recusar'), style: TextButton.styleFrom(foregroundColor: Colors.red), onPressed: () { Navigator.pop(dialogContext); recusarSolicitacao(context, agendamento, refreshData, () {}); }), // Callback vazio
-        TextButton( child: Text('Cancelar'), onPressed: () => Navigator.pop(dialogContext)),
-      ],);
-    });
+
+  // Cliente: Abre dialog para avaliação (Simulação)
+  static void avaliarServico(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure, Function(BuildContext) closeLocalDialog) {
+    showDialog(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          double nota = 3.0;
+          final comentarioController = TextEditingController();
+          return StatefulBuilder(builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text('Avaliar Serviço'),
+              content: SingleChildScrollView(
+                child: Column( mainAxisSize: MainAxisSize.min, children: [
+                  Text('Como foi o serviço de ${agendamento.nomePrestador ?? "este prestador"}?'), SizedBox(height: 16),
+                  Row( mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (index) {
+                    return IconButton(
+                        icon: Icon( index < nota ? Icons.star : Icons.star_border, color: Colors.amber, size: 30,),
+                        onPressed: () => setStateDialog(() => nota = (index + 1).toDouble())
+                    );
+                  }),),
+                  Text('${nota.toInt()} de 5 estrelas', style: TextStyle(fontWeight: FontWeight.bold)), SizedBox(height: 16),
+                  TextField( controller: comentarioController, decoration: InputDecoration( labelText: 'Comentário (opcional)', hintText: 'Sua opinião ajuda outros usuários...', border: OutlineInputBorder()), maxLines: 3, keyboardType: TextInputType.multiline),
+                ],),
+              ),
+              actions: [
+                TextButton( child: Text('Cancelar'), onPressed: () => closeLocalDialog(dialogContext)),
+                TextButton(
+                    child: Text('Enviar Avaliação'),
+                    onPressed: () async {
+                      // TODO: Implementar lógica real de envio da avaliação para o backend
+                      print('Avaliação: Nota ${nota.toInt()}, Comentário: ${comentarioController.text}');
+                      closeLocalDialog(dialogContext); // Fecha o dialog de avaliação
+
+                      _showLoadingDialog(context, message: "Enviando...");
+                      await Future.delayed(Duration(seconds: 1)); // Simula envio
+                      _hideLoadingDialog(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Obrigado pela sua avaliação!'), backgroundColor: Colors.green));
+                      onSuccess(); // Informa sucesso na operação (mesmo que simulada)
+                    }
+                ),
+              ],
+            );
+          });
+        }
+    );
+  }
+
+  // Cliente/Prestador: Ação para status 'recusado' - mostra motivo
+  static void verDetalhesRecusa(BuildContext context, Agendamento agendamento, Function onSuccess, Function onFailure, Function(BuildContext) closeLocalDialog) async {
+    if (agendamento.status != 'recusado') {
+      print("verDetalhesRecusa chamado para status não-recusado: ${agendamento.status}");
+      onSuccess(); // Ação concluída (não fez nada)
+      return;
+    }
+
+    String motivo = agendamento.motivoRecusa ?? '';
+
+    // Se o motivo já está no objeto, mostra direto. Senão, tenta buscar.
+    if (motivo.isNotEmpty) {
+      showDialog( context: context, builder: (BuildContext dialogContext) => AlertDialog(
+          title: Text('Motivo da Recusa'),
+          content: Text(motivo.isNotEmpty ? '"$motivo"' : 'Motivo não especificado.'),
+          actions: [ TextButton( onPressed: () => closeLocalDialog(dialogContext), child: Text('Fechar'))]
+      )
+      ).then((_) => onSuccess()); // Chama onSuccess quando o dialog for fechado
+    } else {
+      _showLoadingDialog(context, message: 'Buscando motivo...');
+      try {
+        final agendamentoService = AgendamentoService();
+        Agendamento detalhes = await agendamentoService.obterDetalhesAgendamento(agendamento.idAgendamento);
+        motivo = detalhes.motivoRecusa ?? 'Motivo não informado pelo prestador.';
+        _hideLoadingDialog(context);
+        showDialog( context: context, builder: (BuildContext dialogContext) => AlertDialog(
+            title: Text('Motivo da Recusa'),
+            content: Text(motivo),
+            actions: [ TextButton( onPressed: () => closeLocalDialog(dialogContext), child: Text('Fechar'))]
+        )
+        ).then((_) => onSuccess()); // Chama onSuccess quando o dialog for fechado
+      } catch (e) {
+        _hideLoadingDialog(context);
+        print("Erro ao buscar motivo da recusa: $e");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao buscar motivo: $e'), backgroundColor: Colors.red));
+        onFailure(); // Chama onFailure se erro ao buscar
+      }
+    }
   }
 
 } // Fim da classe AgendamentoActions
