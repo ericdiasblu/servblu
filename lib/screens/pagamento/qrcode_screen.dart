@@ -5,7 +5,9 @@ import 'package:servblu/models/servicos/agendamento.dart'; // Verifique o caminh
 import 'package:servblu/providers/pix_provider.dart'; // Verifique o caminho
 import 'package:servblu/screens/pagamento/status_pagamento_screen.dart'; // Verifique o caminho
 import 'package:servblu/widgets/build_header.dart';
-import 'package:servblu/widgets/pix_qrcode_widget.dart'; // Verifique o caminho
+import 'package:servblu/widgets/pix_qrcode_widget.dart';
+
+import '../../widgets/tool_loading.dart'; // Verifique o caminho
 
 class PaymentScreen extends StatefulWidget {
   final String description;
@@ -361,9 +363,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
-                            ),
+                            ToolLoadingIndicator(color: Colors.blue, size: 45),
                             SizedBox(height: 16),
                             Text('Gerando QR Code PIX...',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -506,9 +506,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                                   : Container(
                                 height: 250,
                                 child: Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
-                                  ),
+                                  child: ToolLoadingIndicator(color: Colors.blue, size: 45)
                                 ),
                               ),
           
@@ -518,10 +516,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                                     ? SizedBox(
                                   height: 24,
                                   width: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
+                                  child: ToolLoadingIndicator(color: Colors.blue, size: 45),
                                 )
                                     : Icon(Icons.refresh,color: Colors.white,),
                                 label: Text(
@@ -556,10 +551,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                                             SizedBox(
                                                 height: 16,
                                                 width: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
-                                                )
+                                                child: ToolLoadingIndicator(color: Colors.blue, size: 45)
                                             ),
                                             SizedBox(width: 10),
                                             Text(
@@ -609,9 +601,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF017DFE)),
-                          ),
+                          ToolLoadingIndicator(color: Colors.blue, size: 45),
                           SizedBox(height: 16),
                           Text('Carregando informações...', style: TextStyle(fontSize: 16)),
                         ],

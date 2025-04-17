@@ -9,6 +9,8 @@ import 'package:servblu/services/agendamento_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:servblu/utils/helpers/date_helper.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class AgendamentoScreen extends StatefulWidget {
   final String idServico;
   final String idPrestador;
@@ -223,7 +225,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45))
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

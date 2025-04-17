@@ -8,6 +8,7 @@ import 'package:servblu/screens/login_signup/email_validate_screen.dart';
 import '../../router/router.dart';
 import '../../router/routes.dart';
 import '../../widgets/input_field.dart';
+import '../../widgets/tool_loading.dart';
 import '../home_page/home_screen.dart';
 import 'signup_screen.dart';
 
@@ -143,9 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // Botão de login com indicador de carregamento
             _isLoading
-                ? const CircularProgressIndicator(
-              color: Color(0xFF017DFE),
-            )
+                ? ToolLoadingIndicator(color: Colors.blue, size: 45)
                 : BuildButton(
               textButton: "Entrar",
               onPressed: () => login(context),

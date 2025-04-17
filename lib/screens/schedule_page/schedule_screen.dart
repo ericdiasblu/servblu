@@ -5,7 +5,9 @@ import 'package:servblu/widgets/buildheaderwithtabs.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/utils/formatters/agendamento_formatter.dart';
 import 'package:servblu/utils/helpers/agendamento_status_helper.dart';
-import 'package:servblu/services/agendamento_actions.dart'; // Verifique o caminho
+import 'package:servblu/services/agendamento_actions.dart';
+
+import '../../widgets/tool_loading.dart'; // Verifique o caminho
 
 // Ordem das tabs de status - IMPORTANTE para os índices
 final List<String> tabItems = [
@@ -348,7 +350,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
+                            backgroundColor: Colors.blue,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: Text(
@@ -437,7 +439,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           // Conteúdo (Lista de Agendamentos)
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45))
                 : _errorMessage != null
                 ? Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red[700]))))
                 : _agendamentos.isEmpty
@@ -452,6 +454,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
             )
                 : RefreshIndicator(
+              color: Colors.blue,
               onRefresh: _carregarAgendamentos,
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 16.0), // Espaço no final da lista

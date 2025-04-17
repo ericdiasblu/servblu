@@ -3,6 +3,8 @@ import 'package:servblu/models/servicos/agendamento.dart';
 import 'package:servblu/services/agendamento_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class PaymentStatusScreen extends StatefulWidget {
   final bool successful;
   final String? errorMessage;
@@ -431,10 +433,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                                   ? SizedBox(
                                 height: 80,
                                 width: 80,
-                                child: CircularProgressIndicator(
-                                  color: statusColor,
-                                  strokeWidth: 5,
-                                ),
+                                child: ToolLoadingIndicator(color: Colors.blue, size: 45)
                               )
                                   : Icon(
                                 statusIcon,

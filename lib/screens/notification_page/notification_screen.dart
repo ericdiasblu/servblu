@@ -6,6 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../../models/notificacao/notificacao.dart';
 import '../../models/notificacao/notification_repository.dart';
+import '../../widgets/tool_loading.dart';
 
 class NotificationScreen extends StatefulWidget {
   @override
@@ -79,7 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           BuildHeader(title: 'Notificações', backPage: false, refresh: true,onRefresh: _carregarNotificacoes,),
           Expanded(
             child: _isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? Center(child:ToolLoadingIndicator(color: Colors.blue, size: 45))
                 : _notificacoes.isEmpty
                 ? Center(child: Text('Nenhuma notificação encontrada'))
                 : ListView.builder(

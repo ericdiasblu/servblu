@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 // --- Verifique se o import da PaymentScreen está correto ---
 import '../screens/pagamento/qrcode_screen.dart';
+import '../widgets/tool_loading.dart';
 // Remova o import da qrcode_screen se não for mais usada diretamente aqui
 // import '../screens/pagamento/qrcode_screen.dart';
 
@@ -99,7 +100,7 @@ class AgendamentoActions {
       useRootNavigator: false, // Geralmente false para dialogs de ação
       builder: (BuildContext dialogContext) => AlertDialog(
         content: Row(children: [
-          const CircularProgressIndicator(),
+          const ToolLoadingIndicator(color: Colors.blue, size: 45),
           const SizedBox(width: 20),
           Text(message)
         ]),

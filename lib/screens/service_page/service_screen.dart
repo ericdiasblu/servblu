@@ -9,6 +9,7 @@ import 'package:servblu/models/servicos/servico.dart';
 import 'package:servblu/services/servico_service.dart';
 
 import '../../widgets/build_header.dart';
+import '../../widgets/tool_loading.dart';
 
 class ServicoTestScreen extends StatefulWidget {
   @override
@@ -193,7 +194,7 @@ class _ServiceScreenState extends State<ServicoTestScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              ToolLoadingIndicator(color: Colors.blue, size: 45),
               SizedBox(height: 16),
               Text('Processando, por favor aguarde...'),
             ],

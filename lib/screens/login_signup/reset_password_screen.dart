@@ -7,6 +7,8 @@ import 'package:servblu/router/router.dart';
 import 'package:servblu/router/routes.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({Key? key}) : super(key: key);
 
@@ -169,7 +171,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             const SizedBox(height: 30),
 
             _isLoading
-                ? const CircularProgressIndicator(color: Color(0xFF017DFE))
+                ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
                 : BuildButton(
               textButton: "Redefinir senha",
               onPressed: resetPassword,

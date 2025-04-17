@@ -17,6 +17,8 @@ import '../../services/notification_service.dart';
 import 'package:servblu/router/router.dart';
 import 'package:servblu/router/routes.dart';
 
+import '../../widgets/tool_loading.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -195,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
-          child: CircularProgressIndicator(),
+          child: ToolLoadingIndicator(color: Colors.blue, size: 45),
         ),
       );
     }
@@ -341,7 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       alignment: Alignment.center,
                       children: [
                         if (isLoading)
-                          const CircularProgressIndicator()
+                          const ToolLoadingIndicator(color: Colors.blue, size: 45)
                         else if (fotoPerfil == null)
                           const Icon(
                             Icons.person,
@@ -373,13 +375,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       nomeUsuario == null
-                          ? const CircularProgressIndicator()
+                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
                           : Text(
                         nomeUsuario!,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       telefoneUsuario == null
-                          ? const CircularProgressIndicator()
+                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
                           : Text(
                         telefoneUsuario!,
                         style: const TextStyle(fontWeight: FontWeight.w300),
@@ -389,7 +391,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w300),
                       ),
                       saldoUsuario == null
-                          ? const CircularProgressIndicator()
+                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
                           : Text(
                         "Saldo: ${saldoUsuario!}",
                         style: const TextStyle(fontWeight: FontWeight.w300),
@@ -428,7 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           child: enderecoUsuario == null
-                              ? const CircularProgressIndicator()
+                              ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
                               : Text(
                             '$enderecoUsuario',
                             style: const TextStyle(
