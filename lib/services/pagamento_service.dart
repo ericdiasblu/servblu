@@ -5,7 +5,7 @@ import '../models/pagamento/pix_qrcode.dart';
 
 class PixService {
   // Substitua pela URL do seu backend
-  final String baseUrl = 'http://10.0.2.2:3000/api/pix';
+  final String baseUrl = 'https://efi-pix-backend.onrender.com/api/pix';
 
   // Cria uma cobrança PIX
   Future<PixCharge> createCharge({
@@ -24,7 +24,7 @@ class PixService {
       Uri.parse('$baseUrl/charges'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'amount': amount.toString(), // Converter para string ao invés de int
+      'amount': (amount * 100).toInt(), // Converter para string ao invés de int
         // Ou se o backend espera inteiros, mantenha como está: 'amount': (amount * 100).toInt(),
         'description': description,
         'expiresIn': expiresIn,
