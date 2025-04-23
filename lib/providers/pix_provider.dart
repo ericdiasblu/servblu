@@ -10,11 +10,14 @@ class PixProvider with ChangeNotifier {
   PixQRCode? _currentQRCode;
   bool _isLoading = false;
   String? _error;
+  Map<String, dynamic>? _withdrawalResult; // NOVA VARIAVEL
 
   PixCharge? get currentCharge => _currentCharge;
   PixQRCode? get currentQRCode => _currentQRCode;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  Map<String, dynamic>? get withdrawalResult => _withdrawalResult; // NOVA VARIAVEL
+
 
   // Método para criar uma nova cobrança PIX
   Future<void> createCharge({
@@ -77,10 +80,52 @@ class PixProvider with ChangeNotifier {
     }
   }
 
+// NOVO METODO
+  // Método para realizar um saque (withdrawal)
+  Future<Map<String, dynamic>> createWithdrawal({
+    required double amount,
+    required String pixKey,
+    required String pixKeyType,
+    String description = 'Saque',
+
+  }) async {
+    _isLoading = true;
+    _error = null;
+    _withdrawalResult = null;
+    notifyListeners();
+
+    try {
+      // Validações básicas
+      if (amount < 1) {
+        throw Exception('O valor mínimo para saque é R\$ 1,00');
+      }
+
+      // Chama o serviço de saque
+      final result = await _pixService.createWithdrawal(
+        amount: amount,
+        pixKey: pixKey,
+        pixKeyType: pixKeyType,
+        description: description,
+      );
+      
+      _withdrawalResult = result;
+      _isLoading = false;
+      notifyListeners();
+      
+      return result;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   // Limpa os dados atuais
   void clear() {
     _currentCharge = null;
     _currentQRCode = null;
+    _withdrawalResult = null; // NOVO CLEAR
     _error = null;
     notifyListeners();
   }

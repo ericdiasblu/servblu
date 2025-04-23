@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:servblu/auth/auth_service.dart';
 import 'package:servblu/models/servicos/servico.dart';
+import 'package:servblu/screens/pagamento/saque_screen.dart';
 import 'package:servblu/services/servico_service.dart';
 import 'package:servblu/widgets/build_services_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +19,6 @@ import 'package:servblu/router/router.dart';
 import 'package:servblu/router/routes.dart';
 
 import '../../widgets/tool_loading.dart';
-
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -32,7 +32,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final supabase = Supabase.instance.client;
   final ServicoService _servicoService = ServicoService();
 
-  String? nomeUsuario, telefoneUsuario, enderecoUsuario, saldoUsuario, fotoPerfil;
+  String? nomeUsuario,
+      telefoneUsuario,
+      enderecoUsuario,
+      saldoUsuario,
+      fotoPerfil;
   bool isLoading = false;
   bool isLoadingServicos = true;
   List<Servico> servicosUsuario = [];
@@ -78,7 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final user = supabase.auth.currentUser;
       if (user != null) {
-        final servicos = await _servicoService.obterServicosPorPrestador(user.id);
+        final servicos =
+            await _servicoService.obterServicosPorPrestador(user.id);
 
         setState(() {
           servicosUsuario = servicos;
@@ -125,28 +130,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       final String fileExtension = path.extension(image.path);
-      final String fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}$fileExtension';
+      final String fileName =
+          '${user.id}_${DateTime.now().millisecondsSinceEpoch}$fileExtension';
       final String filePath = 'fotos/$fileName';
 
       // Upload da imagem para o bucket do Supabase
       final File file = File(image.path);
       await supabase.storage.from('bucket1').upload(
-        filePath,
-        file,
-        fileOptions: const FileOptions(
-          cacheControl: '3600',
-          upsert: true,
-        ),
-      );
+            filePath,
+            file,
+            fileOptions: const FileOptions(
+              cacheControl: '3600',
+              upsert: true,
+            ),
+          );
 
       // Obter o URL público da imagem
-      final String imageUrl = supabase.storage.from('bucket1').getPublicUrl(filePath);
+      final String imageUrl =
+          supabase.storage.from('bucket1').getPublicUrl(filePath);
 
       // Atualizar o perfil do usuário no banco de dados
       await supabase
           .from('usuarios')
-          .update({'foto_perfil': imageUrl})
-          .eq('id_usuario', user.id);
+          .update({'foto_perfil': imageUrl}).eq('id_usuario', user.id);
 
       // Atualizar a UI
       setState(() {
@@ -179,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void navegarParaDetalheServico(String idServico) {
     // Find the service
     final servico = servicosUsuario.firstWhere(
-          (s) => s.idServico == idServico,
+      (s) => s.idServico == idServico,
     );
 
     if (servico != null) {
@@ -275,214 +281,234 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final currentEmail = authService.getCurrentUserEmail();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: RefreshIndicator(  // Add this RefreshIndicator
-      onRefresh: () async {
-      await carregarServicosUsuario();
-      await carregarDadosUsuario();
-      },
-      child:SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF017DFE),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              width: double.infinity,
-              height: 100,
-              padding: const EdgeInsets.only(top: 37, bottom: 40),
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Text(
-                    "Perfil",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 22,
-                    ),
-                  ),
-                  Positioned(
-                    right: 10,
-                    child: IconButton(
-                      onPressed: () async {
-                        await _logout();
-                      },
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: RefreshIndicator(
+          // Add this RefreshIndicator
+          onRefresh: () async {
+            await carregarServicosUsuario();
+            await carregarDadosUsuario();
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: _pickAndUploadImage,
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 20),
-                    width: 111,
-                    height: 111,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: Colors.black),
-                      image: fotoPerfil != null
-                          ? DecorationImage(
-                        image: NetworkImage(fotoPerfil!),
-                        fit: BoxFit.cover,
-                      )
-                          : null,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (isLoading)
-                          const ToolLoadingIndicator(color: Colors.blue, size: 45)
-                        else if (fotoPerfil == null)
-                          const Icon(
-                            Icons.person,
-                            size: 80,
-                          ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF017DFE),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF017DFE),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
                   ),
-                ),
-                const SizedBox(width: 40),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  width: double.infinity,
+                  height: 100,
+                  padding: const EdgeInsets.only(top: 37, bottom: 40),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      nomeUsuario == null
-                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
-                          : Text(
-                        nomeUsuario!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      telefoneUsuario == null
-                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
-                          : Text(
-                        telefoneUsuario!,
-                        style: const TextStyle(fontWeight: FontWeight.w300),
-                      ),
-                      Text(
-                        currentEmail ?? "Email não disponível",
-                        style: const TextStyle(fontWeight: FontWeight.w300),
-                      ),
-                      saldoUsuario == null
-                          ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
-                          : Text(
-                        "Saldo: ${saldoUsuario!}",
-                        style: const TextStyle(fontWeight: FontWeight.w300),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          context.go(Routes.disponibilidadePage);
-                        },
-                        child: const
-                        Text(
-                          "Editar Disponibilidade",
-                          style: TextStyle(
-                            color: Color(0xFF017DFE),
-                          ),
+                      Positioned(
+                        left: 10,
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WithdrawalScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.money, color: Colors.white),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          context.go(Routes.editarPerfil);
-                        },
-                        child: const
-                        Text(
-                          "Editar Perfil",
-                          style: TextStyle(
-                            color: Color(0xFF017DFE),
-                          ),
+                      const Text(
+                        "Perfil",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 22,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          child: enderecoUsuario == null
-                              ? const ToolLoadingIndicator(color: Colors.blue, size: 45)
-                              : Text(
-                            '$enderecoUsuario',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
+                      Positioned(
+                        right: 10,
+                        child: IconButton(
+                          onPressed: () async {
+                            await _logout();
+                          },
+                          icon: const Icon(Icons.logout, color: Colors.white),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 70),
-            const Padding(
-              padding: EdgeInsets.only(left: 30, bottom: 10),
-              child: Text(
-                "Serviços",
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-              ),
-            ),
-            _buildServicosSection(),
-            const SizedBox(height: 40),
-            const Padding(
-              padding: EdgeInsets.only(left: 30),
-              child: Text(
-                "Avaliações",
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
-              child: Row(
-                children: List.generate(
-                  5,
-                      (index) => const Icon(
-                    Icons.star,
-                    color: Color(0xFFFFB703),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickAndUploadImage,
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 20),
+                        width: 111,
+                        height: 111,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          image: fotoPerfil != null
+                              ? DecorationImage(
+                                  image: NetworkImage(fotoPerfil!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (isLoading)
+                              const ToolLoadingIndicator(
+                                  color: Colors.blue, size: 45)
+                            else if (fotoPerfil == null)
+                              const Icon(
+                                Icons.person,
+                                size: 80,
+                              ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF017DFE),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          nomeUsuario == null
+                              ? const ToolLoadingIndicator(
+                                  color: Colors.blue, size: 45)
+                              : Text(
+                                  nomeUsuario!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                          telefoneUsuario == null
+                              ? const ToolLoadingIndicator(
+                                  color: Colors.blue, size: 45)
+                              : Text(
+                                  telefoneUsuario!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w300),
+                                ),
+                          Text(
+                            currentEmail ?? "Email não disponível",
+                            style: const TextStyle(fontWeight: FontWeight.w300),
+                          ),
+                          saldoUsuario == null
+                              ? const ToolLoadingIndicator(
+                                  color: Colors.blue, size: 45)
+                              : Text(
+                                  "Saldo: ${saldoUsuario!}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w300),
+                                ),
+                          GestureDetector(
+                            onTap: () {
+                              context.go(Routes.disponibilidadePage);
+                            },
+                            child: const Text(
+                              "Editar Disponibilidade",
+                              style: TextStyle(
+                                color: Color(0xFF017DFE),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              context.go(Routes.editarPerfil);
+                            },
+                            child: const Text(
+                              "Editar Perfil",
+                              style: TextStyle(
+                                color: Color(0xFF017DFE),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              child: enderecoUsuario == null
+                                  ? const ToolLoadingIndicator(
+                                      color: Colors.blue, size: 45)
+                                  : Text(
+                                      '$enderecoUsuario',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 70),
+                const Padding(
+                  padding: EdgeInsets.only(left: 30, bottom: 10),
+                  child: Text(
+                    "Serviços",
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
                   ),
                 ),
-              ),
+                _buildServicosSection(),
+                const SizedBox(height: 40),
+                const Padding(
+                  padding: EdgeInsets.only(left: 30),
+                  child: Text(
+                    "Avaliações",
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 30, bottom: 30, top: 10),
+                  child: Row(
+                    children: List.generate(
+                      5,
+                      (index) => const Icon(
+                        Icons.star,
+                        color: Color(0xFFFFB703),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 400,
+                )
+              ],
             ),
-
-            Container(
-              height: 400,
-            )
-          ],
-        ),
-      ),
-    )
-    );
+          ),
+        ));
   }
 
   Future<void> _logout() async {

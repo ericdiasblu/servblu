@@ -139,4 +139,35 @@ class PixService {
       throw Exception('Falha ao obter detalhes do PIX: ${response.body}');
     }
   }
+
+  // METODO MODIFICADO
+
+  // Método para realizar saque (PIX out)
+Future<Map<String, dynamic>> createWithdrawal({
+  required double amount,
+  required String pixKey,
+  required String pixKeyType,
+  String description = 'Saque',
+}) async {
+  if (amount < 1) {
+    throw Exception('O valor mínimo para saque é R\$ 1,00');
+  }
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/withdrawal'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'amount': (amount * 100).toInt(), // Convertendo para centavos
+      'pixKey': pixKey,
+      'pixKeyType': pixKeyType,
+      'description': description,
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Falha ao processar saque: ${response.body}');
+  }
+}
 }
