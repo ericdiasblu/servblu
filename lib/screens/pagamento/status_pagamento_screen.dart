@@ -271,9 +271,12 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
       }
 
       double saldoAtual = (userResponse[colSaldoUsuario] as num?)?.toDouble() ?? 0.0;
-      double valorASomar = widget.valorServico!;
-      double novoSaldo = saldoAtual + valorASomar;
 
+      double valorASomar = widget.valorServico!;
+      double taxa = valorASomar * 0.0219; // 2.19% do valor
+      double valorLiquido = valorASomar - taxa; // Valor após descontar a taxa
+      double novoSaldo = saldoAtual + valorLiquido;
+      
       await _supabase
           .from(tabelaUsuarios)
           .update({colSaldoUsuario: novoSaldo})
