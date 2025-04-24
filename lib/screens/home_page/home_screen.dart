@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../router/routes.dart';
 import '../../widgets/build_categories.dart';
 import '../../router/router.dart';
+import '../../widgets/tool_loading.dart';
 import '../login_signup/enter_screen.dart';
 import '../login_signup/login_screen.dart';
 import '../../services/notification_service.dart';
@@ -219,7 +220,7 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Widget _buildBestOffers() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45));
     }
 
     return Padding(

@@ -7,6 +7,7 @@ import 'package:servblu/widgets/build_header.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/input_dropdown_field.dart';
 import '../../widgets/input_field.dart';
+import '../../widgets/tool_loading.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -154,7 +155,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45))
           : Column(
           children: [
             // Use BuildHeader with GoRouter navigation

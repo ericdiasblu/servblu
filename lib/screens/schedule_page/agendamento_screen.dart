@@ -9,16 +9,20 @@ import 'package:servblu/services/agendamento_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:servblu/utils/helpers/date_helper.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class AgendamentoScreen extends StatefulWidget {
   final String idServico;
   final String idPrestador;
   final String? nomeServico; // Novo parâmetro para o nome do serviço
+  final double? precoServico;
 
   const AgendamentoScreen({
     Key? key,
     required this.idServico,
     required this.idPrestador,
     this.nomeServico,
+    this.precoServico,
   }) : super(key: key);
 
   @override
@@ -173,6 +177,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         isPix: isPix,
         formaPagamento: _formaPagamento,
         nomeServico: widget.nomeServico,
+        precoServico: widget.precoServico
       );
 
       await _agendamentoService.criarAgendamento(novoAgendamento);
@@ -220,7 +225,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45))
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

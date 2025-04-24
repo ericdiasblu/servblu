@@ -8,6 +8,8 @@ import '../../router/routes.dart';
 
 import 'package:servblu/utils/navigation_helper.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -330,7 +332,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (_isLoading)
                       const Expanded(
                         child: Center(
-                          child: CircularProgressIndicator(),
+                          child: ToolLoadingIndicator(color: Colors.blue, size: 45),
                         ),
                       )
                     else if (_filteredServices.isEmpty)

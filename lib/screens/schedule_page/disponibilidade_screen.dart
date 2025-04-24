@@ -7,6 +7,8 @@ import 'package:servblu/services/disponibilidade_service.dart';
 import 'package:servblu/models/servicos/disponibilidade.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class DisponibilidadeScreen extends StatefulWidget {
   const DisponibilidadeScreen({super.key});
 
@@ -206,7 +208,7 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> with Tick
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+        child: ToolLoadingIndicator(color: Colors.blue, size: 45),
       ),
     );
 
@@ -338,7 +340,7 @@ class _DisponibilidadeScreenState extends State<DisponibilidadeScreen> with Tick
   Widget build(BuildContext context) {
     return Scaffold(
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child:ToolLoadingIndicator(color: Colors.blue, size: 45))
           : Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

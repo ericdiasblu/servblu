@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/servicos/servico.dart';
 import '../../router/routes.dart';
 import '../../utils/navigation_helper.dart';
+import '../../widgets/tool_loading.dart';
 
 class ServiceListScreen extends StatefulWidget {
   final String title;
@@ -145,7 +146,7 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
                     if (_isLoading)
                       const Expanded(
                         child: Center(
-                          child: CircularProgressIndicator(),
+                          child: ToolLoadingIndicator(color: Colors.blue, size: 45),
                         ),
                       )
                     else if (_services.isEmpty)

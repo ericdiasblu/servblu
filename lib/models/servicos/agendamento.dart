@@ -12,6 +12,7 @@ class Agendamento {
   String? nomeServico;
   String? nomePrestador;
   String? nomeCliente;
+  double? precoServico;
 
   Agendamento({
     required this.idAgendamento,
@@ -27,6 +28,7 @@ class Agendamento {
     this.nomeServico,
     this.nomePrestador,
     this.nomeCliente,
+    this.precoServico
   });
 
   factory Agendamento.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class Agendamento {
       formaPagamento: json['forma_pagamento']?.toString(),
       motivoRecusa: json['motivo_recusa']?.toString(),
       nomeServico: json['nome_servico']?.toString(),
+      precoServico: json['preco_servico'] != null ? double.parse(json['preco_servico'].toString()) : null,
       nomePrestador: json['nome_prestador']?.toString(),
       nomeCliente: json['nome_cliente']?.toString(),
     );

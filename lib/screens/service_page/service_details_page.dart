@@ -7,6 +7,7 @@ import 'package:servblu/widgets/build_circle_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:servblu/screens/service_page/edit_servico_screen.dart';
 
+import '../../widgets/tool_loading.dart';
 import '../schedule_page/agendamento_screen.dart';
 
 class ServiceDetailsPage extends StatefulWidget {
@@ -142,7 +143,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
 
   Widget _buildUserInfoSection() {
     if (userDetails == null) {
-      return Center(child: CircularProgressIndicator());
+      return Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45));
     }
 
     return Column(
@@ -252,7 +253,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
             ),
       backgroundColor: Colors.white,
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45))
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
