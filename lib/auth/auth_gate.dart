@@ -4,6 +4,7 @@ import 'package:servblu/screens/login_signup/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../screens/home_page/home_screen.dart';
+import '../widgets/tool_loading.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -14,8 +15,8 @@ class AuthGate extends StatelessWidget {
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context,snapshot) {
         if(snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator(),),
+          return Scaffold(
+            body: Center(child: ToolLoadingIndicator(color: Colors.blue, size: 45),),
           );
         }
 

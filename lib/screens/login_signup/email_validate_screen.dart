@@ -5,6 +5,8 @@ import 'package:servblu/screens/login_signup/reset_password_screen.dart';
 import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/widgets/input_field.dart';
 
+import '../../widgets/tool_loading.dart';
+
 class EmailValidateScreen extends StatefulWidget {
   const EmailValidateScreen({Key? key}) : super(key: key);
 
@@ -120,9 +122,7 @@ class _EmailValidateScreenState extends State<EmailValidateScreen> {
         ),
         const SizedBox(height: 30),
         _isLoading
-            ? const CircularProgressIndicator(
-          color: Color(0xFF017DFE),
-        )
+            ? ToolLoadingIndicator(color: Colors.blue, size: 45)
             : BuildButton(
           textButton: "Enviar token de recuperação",
           onPressed: resetPassword,
