@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:servblu/providers/pix_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../profile_page/profile_screen.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({Key? key}) : super(key: key);
@@ -10,11 +14,14 @@ class WithdrawalScreen extends StatefulWidget {
 }
 
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
+  final supabase = Supabase.instance.client;
+
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _pixKeyController = TextEditingController();
   String _selectedPixKeyType = 'cpf';
   bool _isProcessing = false;
+  String? saldoUsuario;
 
   final List<Map<String, dynamic>> _pixKeyTypes = [
     {'value': 'cpf', 'label': 'CPF'},
@@ -29,6 +36,33 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     _amountController.dispose();
     _pixKeyController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    carregarSaldoUsuario();
+  }
+
+  Future<void> carregarSaldoUsuario() async {
+    final user = supabase.auth.currentUser;
+    if (user != null) {
+      final response = await supabase
+          .from('usuarios')
+          .select('saldo')
+          .eq('id_usuario', user.id)
+          .maybeSingle();
+
+      setState(() {
+        // Formata o saldo para duas casas decimais, por exemplo
+        if (response?['saldo'] != null) {
+          final saldo = response!['saldo'];
+          saldoUsuario = NumberFormat("#,##0.00", "pt_BR").format(saldo);
+        } else {
+          saldoUsuario = "Saldo indisponível";
+        }
+      });
+    }
   }
 
   Future<void> _processWithdrawal() async {
@@ -106,7 +140,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       const SizedBox(height: 8),
                       // Substitua pelo seu getter de saldo real
                       Text(
-                        'R\$ 100,00', // Exemplo - substitua pelo saldo real do usuário
+                        'R\$ $saldoUsuario', // Exemplo - substitua pelo saldo real do usuário
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ],
