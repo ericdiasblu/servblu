@@ -7,25 +7,28 @@ listarAvaliacoesPorPrestador(int idPrestador)
 Descrição: Retorna todas as avaliações recebidas por um prestador para exibição em
 seu perfil.
 */
-
 import 'package:uuid/uuid.dart';
 
 class Avaliacao {
   final String idAvaliacao;
   final String idAgendamento;
+  final String? idServico; // Novo campo
   final double nota;
   final String comentario;
   final DateTime dataAvaliacao;
-  String? nomeCliente; // Campo adicional para exibição
-  String? nomePrestador; // Campo adicional para exibição
+  String? nomeCliente;
+  String? fotoPerfilCliente; // Nova propriedade para armazenar URL da foto
+  String? nomePrestador;
 
   Avaliacao({
     String? idAvaliacao,
     required this.idAgendamento,
+    this.idServico,  // Agora é opcional para compatibilidade
     required this.nota,
     required this.comentario,
     DateTime? dataAvaliacao,
     this.nomeCliente,
+    this.fotoPerfilCliente,
     this.nomePrestador,
   })  : this.idAvaliacao = idAvaliacao ?? const Uuid().v4(),
         this.dataAvaliacao = dataAvaliacao ?? DateTime.now();
@@ -35,9 +38,12 @@ class Avaliacao {
     return {
       'id_avaliacao': idAvaliacao,
       'id_agendamento': idAgendamento,
+      'id_servico': idServico, // Incluir no JSON
       'nota': nota,
       'comentario': comentario,
       'data_avaliacao': dataAvaliacao.toIso8601String(),
+      'nome_cliente': nomeCliente, // Incluir nome do cliente
+      'foto_perfil_cliente': fotoPerfilCliente,
     };
   }
 
@@ -46,11 +52,14 @@ class Avaliacao {
     return Avaliacao(
       idAvaliacao: json['id_avaliacao'],
       idAgendamento: json['id_agendamento'],
+      idServico: json['id_servico'],
       nota: json['nota'] is int ? json['nota'].toDouble() : json['nota'],
       comentario: json['comentario'] ?? '',
       dataAvaliacao: json['data_avaliacao'] != null
           ? DateTime.parse(json['data_avaliacao'])
           : DateTime.now(),
+      nomeCliente: json['nome_cliente'],
+      fotoPerfilCliente: json['foto_perfil_cliente'],
     );
   }
 

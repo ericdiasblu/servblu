@@ -114,7 +114,7 @@ class AgendamentoActions {
     showDialog(
       context: context,
       barrierDismissible: false, // Impede fechar clicando fora
-      useRootNavigator: false, // Geralmente false para dialogs de ação
+      useRootNavigator: false, // Mantém o mesmo que você estava usando
       builder: (BuildContext dialogContext) => AlertDialog(
         content: Row(children: [
           const ToolLoadingIndicator(color: Colors.blue, size: 45),
@@ -127,15 +127,10 @@ class AgendamentoActions {
 
   /// Esconde o dialog de loading (se existir).
   static void _hideLoadingDialog(BuildContext context) {
-    // Tenta fechar o dialog associado ao contexto atual
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
+    // Usar o mesmo método de navegação que foi usado para abrir o diálogo
+    if (context.mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     }
-    // Se não conseguiu, pode ser que o contexto mudou ou o dialog foi mostrado de outra forma
-    // Tentar com rootNavigator como fallback PODE fechar o dialog errado se houver outros
-    // else if (Navigator.of(context, rootNavigator: true).canPop()) {
-    //   Navigator.of(context, rootNavigator: true).pop();
-    // }
   }
 
   // --- Métodos de Ação Específicos ---
@@ -678,24 +673,53 @@ class AgendamentoActions {
       Function(BuildContext) closeLocalDialog) {
     if (!context.mounted) return;
 
-    // Mostra dialog para coletar nota e comentário
-    showDialog(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          double nota = 3.0;
-          final comentarioController = TextEditingController();
+    // Variáveis para armazenar os dados da avaliação
+    double nota = 3.0;
+    final comentarioController = TextEditingController();
+    bool isLoading = false;
 
-          return StatefulBuilder(builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('Avaliar Serviço'),
-              content: SingleChildScrollView(
+    // Criamos um overlay entry manual
+    final overlay = Overlay.of(context);
+
+    // Declaração antecipada da variável
+    late final OverlayEntry overlayEntry;
+
+    // Função para fechar o overlay e limpar recursos
+    void fecharOverlay() {
+      overlayEntry.remove();
+      comentarioController.dispose();
+    }
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Material(
+            color: Colors.black54,  // Fundo semi-transparente
+            child: Center(
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                width: MediaQuery.of(context).size.width * 0.85,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                        'Avalie o serviço prestado por ${agendamento.nomePrestador ?? "prestador"}'),
+                      'Avaliar Serviço',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 15),
-                    // Slider para selecionar nota de 1 a 5
+                    Text(
+                      'Avalie o serviço prestado por ${agendamento.nomePrestador ?? "prestador"}',
+                    ),
+                    const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -705,12 +729,11 @@ class AgendamentoActions {
                             return IconButton(
                               icon: Icon(
                                 index < nota ? Icons.star : Icons.star_border,
-                                color:
-                                    index < nota ? Colors.amber : Colors.grey,
+                                color: index < nota ? Colors.amber : Colors.grey,
                                 size: 30,
                               ),
                               onPressed: () {
-                                setStateDialog(() {
+                                setState(() {
                                   nota = (index + 1).toDouble();
                                 });
                               },
@@ -728,73 +751,98 @@ class AgendamentoActions {
                       ),
                       maxLines: 3,
                     ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Botão cancelar
+                        TextButton(
+                          onPressed: fecharOverlay,
+                          child: const Text('Cancelar'),
+                        ),
+                        const SizedBox(width: 10),
+                        // Botão enviar
+                        ElevatedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+
+                            final int notaInt = nota.toInt();
+                            final String comentario = comentarioController.text.trim();
+
+                            try {
+                              final avaliacaoService = AvaliacaoService();
+                              final jaAvaliado = await avaliacaoService.verificarAgendamentoAvaliado(
+                                  agendamento.idAgendamento);
+
+                              if (jaAvaliado) {
+                                throw Exception('Este serviço já foi avaliado anteriormente.');
+                              }
+
+                              final avaliacao = Avaliacao(
+                                idAgendamento: agendamento.idAgendamento,
+                                nota: notaInt.toDouble(),
+                                comentario: comentario,
+                              );
+
+                              await avaliacaoService.criarAvaliacao(avaliacao);
+
+                              fecharOverlay();
+
+                              // Feedback de sucesso
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Obrigado pela sua avaliação!'),
+                                  backgroundColor: Colors.green,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+
+                              onSuccess();
+                            } catch (e) {
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              // Feedback de erro
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao enviar avaliação: ${e.toString().replaceAll('Exception: ', '')}'),
+                                  backgroundColor: Colors.red,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+
+                              onFailure();
+                            }
+                          },
+                          child: isLoading
+                              ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                              : const Text('Enviar Avaliação'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                    child: const Text('Cancelar'),
-                    onPressed: () => closeLocalDialog(dialogContext)),
-                TextButton(
-                    child: const Text('Enviar Avaliação'),
-                    onPressed: () async {
-                      final int notaInt = nota.toInt();
-                      final String comentario =
-                          comentarioController.text.trim();
+            ),
+          );
+        },
+      ),
+    );
 
-                      closeLocalDialog(
-                          dialogContext); // Fecha este dialog ANTES
-
-                      if (!context.mounted)
-                        return; // Verifica contexto original
-                      _showLoadingDialog(context,
-                          message: "Enviando avaliação...");
-
-                      try {
-                        // Criar instância do serviço de avaliação
-                        final avaliacaoService = AvaliacaoService();
-
-                        // Verificar se o agendamento já foi avaliado
-                        final jaAvaliado =
-                            await avaliacaoService.verificarAgendamentoAvaliado(
-                                agendamento.idAgendamento);
-
-                        if (jaAvaliado) {
-                          throw Exception(
-                              'Este serviço já foi avaliado anteriormente.');
-                        }
-
-                        // Criar objeto de avaliação
-                        final avaliacao = Avaliacao(
-                          idAgendamento: agendamento.idAgendamento,
-                          nota: notaInt.toDouble(),
-                          comentario: comentario,
-                        );
-
-                        // Enviar avaliação para o banco de dados
-                        await avaliacaoService.criarAvaliacao(avaliacao);
-
-                        if (!context.mounted) return;
-                        _hideLoadingDialog(context);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Obrigado pela sua avaliação!'),
-                            backgroundColor: Colors.green));
-                        onSuccess();
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        _hideLoadingDialog(context);
-                        print("Erro ao enviar avaliação: $e");
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(
-                                'Erro ao enviar avaliação: ${e.toString().replaceAll('Exception: ', '')}'),
-                            backgroundColor: Colors.red));
-                        onFailure();
-                      }
-                    }),
-              ],
-            );
-          });
-        });
+    // Inserimos o overlay na árvore de widgets
+    overlay.insert(overlayEntry);
   }
 
   /// Cliente/Prestador: Mostra dialog com o motivo da recusa.
