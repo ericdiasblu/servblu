@@ -163,8 +163,8 @@ class _HomePageContentState extends State<HomePageContent> {
                 ),
                 // Elemento alinhado à direita
                 GestureDetector(
-                onTap: () => context.go(Routes.notificationPage),
-                child: Icon(Icons.notifications, color: Colors.white, size: 30),
+                  onTap: () => context.go(Routes.notificationPage),
+                  child: Icon(Icons.notifications, color: Colors.white, size: 30),
                 ),
               ],
             ),

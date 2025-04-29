@@ -119,6 +119,13 @@ final router = GoRouter(
             GoRoute(
               path: Routes.homePage,
               builder: (context, state) => HomePageContent(),
+              routes: [
+                // Subrotas da Home
+                GoRoute(
+                  path: 'notificacoes',
+                  builder: (context, state) => NotificationScreen(),
+                ),
+              ],
             ),
           ],
         ),
