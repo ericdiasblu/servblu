@@ -141,20 +141,31 @@ class _HomePageContentState extends State<HomePageContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 26, left: 26),
+          Padding(
+            padding: EdgeInsets.only(left: 26, right: 26, bottom: 26),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribui os elementos na row
               children: [
-                Text(
-                  "ServBlu",
-                  style: TextStyle(
-                    color: Color(0xFFFFFFFF),
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // Grupo de elementos alinhados à esquerda
+                Row(
+                  children: [
+                    Text(
+                      "ServBlu",
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.home_repair_service, color: Colors.white, size: 30),
+                  ],
                 ),
-                SizedBox(width: 8),
-                Icon(Icons.home_repair_service, color: Colors.white, size: 30),
+                // Elemento alinhado à direita
+                GestureDetector(
+                onTap: () => context.go(Routes.notificationPage),
+                child: Icon(Icons.notifications, color: Colors.white, size: 30),
+                ),
               ],
             ),
           ),

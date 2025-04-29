@@ -16,6 +16,7 @@ import '../screens/service_page/service_screen.dart';
 import 'package:servblu/screens/service_page/service_list_screen.dart';
 import 'package:servblu/screens/schedule_page/disponibilidade_screen.dart';
 import 'package:servblu/screens/profile_page/edit_profile.dart';
+import 'package:servblu/screens/pagamento/carteira_screen.dart';
 
 // Chave global do navegador
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -140,8 +141,8 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: Routes.notificationPage,
-              builder: (context, state) => NotificationScreen(),
+              path: Routes.carteiraPage,
+              builder: (context, state) => CarteiraScreen(),
             ),
           ],
         ),
