@@ -6,6 +6,7 @@ class Servico {
   final String? imgServico; // img_servico no banco (opcional)
   final double? preco; // preco no banco
   final String idPrestador; // id_prestador no banco (uuid)
+  final double? avaliacaoMedia; // avaliacao_media no banco (float8)
 
   Servico({
     this.idServico,
@@ -15,6 +16,7 @@ class Servico {
     this.imgServico,
     this.preco,
     required this.idPrestador,
+    this.avaliacaoMedia,
   });
 
   // Método copyWith
@@ -26,6 +28,7 @@ class Servico {
     String? imgServico,
     double? preco,
     String? idPrestador,
+    double? avaliacaoMedia,
   }) {
     return Servico(
       idServico: idServico ?? this.idServico,
@@ -35,6 +38,7 @@ class Servico {
       imgServico: imgServico ?? this.imgServico,
       preco: preco ?? this.preco,
       idPrestador: idPrestador ?? this.idPrestador,
+      avaliacaoMedia: avaliacaoMedia ?? this.avaliacaoMedia,
     );
   }
 
@@ -48,6 +52,7 @@ class Servico {
       imgServico: json['img_servico'],
       preco: json['preco']?.toDouble(),
       idPrestador: json['id_prestador'],
+      avaliacaoMedia: json['avaliacao_media']?.toDouble(),
     );
   }
 
@@ -61,6 +66,7 @@ class Servico {
       'img_servico': imgServico, // Sempre inclui, mesmo se for nulo
       if (preco != null) 'preco': preco,
       'id_prestador': idPrestador,
+      if (avaliacaoMedia != null) 'avaliacao_media': avaliacaoMedia,
     };
   }
 }
