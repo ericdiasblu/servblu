@@ -35,6 +35,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   double mediaAvaliacoes = 0.0;
   int totalAvaliacoes = 0;
   final PageController _pageController = PageController();
+  double mediaAvaliacoesUsuario = 0.0;
 
   @override
   void initState() {
@@ -69,6 +70,8 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
               .calcularMediaAvaliacoesServico(widget.servico.idServico!);
         }
 
+        final avaliacaoUsuario = await _avaliacaoService .calcularMediaAvaliacoesPrestador(widget.servico.idPrestador);
+
         // Contar total de avaliações
         final total = await _avaliacaoService
             .contarAvaliacoesServico(widget.servico.idServico!);
@@ -77,6 +80,8 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           avaliacoes = listaAvaliacoes;
           mediaAvaliacoes = media;
           totalAvaliacoes = total;
+          //AVALIAÇÃO DO USUÁRIO
+          mediaAvaliacoesUsuario = avaliacaoUsuario;
         });
       }
     } catch (e) {
@@ -258,6 +263,12 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
+                  ),
+                  Text(
+                    //AVALIAÇÃO DO USUÁRIO
+                    '${mediaAvaliacoesUsuario.toStringAsFixed(1)} (${totalAvaliacoes} ${totalAvaliacoes == 1 ? 'avaliação' : 'avaliações'})',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w400, fontSize: 12),
                   ),
                   // Endereço
                 ],
@@ -683,6 +694,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                         ),
                         SizedBox(width: 4),
                         Text(
+                          //AVALIAÇÂO EM CIMA
                           '${mediaAvaliacoes.toStringAsFixed(1)} (${totalAvaliacoes} ${totalAvaliacoes == 1 ? 'avaliação' : 'avaliações'})',
                           style: TextStyle(
                               fontWeight: FontWeight.w400, fontSize: 12),

@@ -96,17 +96,17 @@ class AvaliacaoService {
     }
   }
 
-  /// Atualiza a média de avaliações em todos os serviços do prestador
+  /// Atualiza média de avaliações do prestador
   Future<void> _atualizarMediaAvaliacoes(String idPrestador) async {
     try {
       // Calcular a média das avaliações
       final media = await calcularMediaAvaliacoesPrestador(idPrestador);
 
-      // Atualizar a média em todos os serviços do prestador
+      // Atualizar a média do prestador
       await supabase
-          .from('servicos')
-          .update({'avaliacao_media': media})
-          .eq('id_prestador', idPrestador);
+          .from('usuarios')
+          .update({'avaliacao_usuarios': media})
+          .eq('id_usuario', idPrestador);
 
     } catch (e) {
       print('Erro ao atualizar média de avaliações: $e');
@@ -277,6 +277,7 @@ class AvaliacaoService {
   }
 
   /// Calcula a média das avaliações de um prestador
+  /// Está calculando média de todos os serviços para todos os prestadores
   Future<double> calcularMediaAvaliacoesPrestador(String idPrestador) async {
     try {
       // Consulta join entre avaliacoes e agendamentos
