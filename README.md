@@ -14,11 +14,47 @@ Criado no contexto do programa **+DEVS2BLU**, o projeto é parte integrante das 
 - Gestão e Gerenciamento de Projetos de TI
 
 ---
+## Veja abaixo algumas telas do aplicativo **ServBlu**:
+
+Veja abaixo algumas telas do aplicativo **ServBlu**:
+
+<div align="center">
+
+  <img src="assets/images_app/home.jpg" alt="Tela 1" width="250"/> 
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="assets/images_app/schedules.jpg" alt="Tela 2" width="250"/> 
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="assets/images_app/publish_service.jpg" alt="Tela 3" width="250"/>
+
+  <br/><br/>
+
+  <img src="assets/images_app/notifications.jpg" alt="Tela 4" width="250"/> 
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="assets/images_app/profile.jpg" alt="Tela 5" width="250"/>
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="assets/images_app/search.jpg" alt="Tela 6" width="250"/>
+
+</div>
 
 ## 📌 Objetivo Principal
 
 Criar uma **plataforma eficiente e segura** para conectar clientes e prestadores de serviços, proporcionando uma experiência de contratação **simplificada**, **confiável** e **acessível**.
-
 ---
 
 ## 🎯 Objetivos Secundários
@@ -78,8 +114,4 @@ Muitas pessoas enfrentam dificuldades ao buscar profissionais de confiança. A a
   _Java, Dart, Word, Excel, PowerPoint, Flutter, HTML, CSS, MySQL, Figma, MVC_
 
 ---
-
----
-
-## 📂 Estrutura do Repositório (exemplo sugerido)
 
