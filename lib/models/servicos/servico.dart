@@ -1,18 +1,72 @@
-/*
-listarServicos()
-Descrição: Retorna a lista de todos os serviços disponíveis para contratantes, aplicando
-filtros e buscas conforme necessário.
+class Servico {
+  final String? idServico; // id_servico no banco agora é UUID
+  final String nome; // nome no banco
+  final String descricao; // descricao no banco
+  final String categoria; // categoria no banco
+  final String? imgServico; // img_servico no banco (opcional)
+  final double? preco; // preco no banco
+  final String idPrestador; // id_prestador no banco (uuid)
+  final double? avaliacaoMedia; // avaliacao_media no banco (float8)
 
-cadastrarServico(Servico servico)
-Descrição: Permite que um prestador adicione um novo serviço, vinculando-o ao seu
-perfil.
+  Servico({
+    this.idServico,
+    required this.nome,
+    required this.descricao,
+    required this.categoria,
+    this.imgServico,
+    this.preco,
+    required this.idPrestador,
+    this.avaliacaoMedia,
+  });
 
-editarServico(Servico servico)
-Descrição: Atualiza as informações de um serviço previamente cadastrado.
+  // Método copyWith
+  Servico copyWith({
+    String? idServico,
+    String? nome,
+    String? descricao,
+    String? categoria,
+    String? imgServico,
+    double? preco,
+    String? idPrestador,
+    double? avaliacaoMedia,
+  }) {
+    return Servico(
+      idServico: idServico ?? this.idServico,
+      nome: nome ?? this.nome,
+      descricao: descricao ?? this.descricao,
+      categoria: categoria ?? this.categoria,
+      imgServico: imgServico ?? this.imgServico,
+      preco: preco ?? this.preco,
+      idPrestador: idPrestador ?? this.idPrestador,
+      avaliacaoMedia: avaliacaoMedia ?? this.avaliacaoMedia,
+    );
+  }
 
-removerServico(int idServico)
-Descrição: Remove um serviço do portfólio do prestador.
+  // Método fromJson
+  factory Servico.fromJson(Map<String, dynamic> json) {
+    return Servico(
+      idServico: json['id_servico'],
+      nome: json['nome'],
+      descricao: json['descricao'],
+      categoria: json['categoria'],
+      imgServico: json['img_servico'],
+      preco: json['preco']?.toDouble(),
+      idPrestador: json['id_prestador'],
+      avaliacaoMedia: json['avaliacao_media']?.toDouble(),
+    );
+  }
 
-obterServicosPorPrestador(int idPrestador)
-Descrição: Recupera os serviços cadastrados por um determinado prestador.
-*/
+  // Método toJson
+  Map<String, dynamic> toJson() {
+    return {
+      if (idServico != null) 'id_servico': idServico,
+      'nome': nome,
+      'descricao': descricao,
+      'categoria': categoria,
+      'img_servico': imgServico, // Sempre inclui, mesmo se for nulo
+      if (preco != null) 'preco': preco,
+      'id_prestador': idPrestador,
+      if (avaliacaoMedia != null) 'avaliacao_media': avaliacaoMedia,
+    };
+  }
+}

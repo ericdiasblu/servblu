@@ -1,14 +1,52 @@
-/*
-definirDisponibilidade(int idPrestador, List<DiaDisponivel> diasDisponiveis)
-Descrição: Permite que o prestador defina os dias em que estará disponível para
-agendamentos.
+// models/disponibilidade.dart
+class DiaDisponivel {
+  final String idDisponibilidade; // Gerado automaticamente pelo banco
+  final String idPrestador;
+  final String dia; // Ex.: 'Segunda-feira'
 
-adicionarHorarios(int idDiaDisponivel, List<int> horarios)
-Descrição: Associa horários disponíveis a um dia previamente definido.
+  DiaDisponivel({
+    required this.idDisponibilidade,
+    required this.idPrestador,
+    required this.dia,
+  });
 
-obterDisponibilidade(int idPrestador)
-Descrição: Retorna os dias e horários disponíveis para um prestador.
+  factory DiaDisponivel.fromJson(Map<String, dynamic> json) {
+    return DiaDisponivel(
+      idDisponibilidade: json['id_disponibilidade'],
+      idPrestador: json['id_prestador'],
+      dia: json['dia'],
+    );
+  }
 
-editarDisponibilidade(int idDisponibilidade, List<int> novosHorarios)
-Descrição: Atualiza os horários disponíveis de um dia já definido.
-*/
+  Map<String, dynamic> toJson() {
+    return {
+      'id_disponibilidade': idDisponibilidade,
+      'id_prestador': idPrestador,
+      'dia': dia,
+    };
+  }
+}
+
+class HorarioDisponivel {
+  final String idDisponibilidade;
+  final int horario;
+
+  HorarioDisponivel({
+    required this.idDisponibilidade,
+    required this.horario,
+  });
+
+  factory HorarioDisponivel.fromJson(Map<String, dynamic> json) {
+    return HorarioDisponivel(
+      idDisponibilidade: json['id_disponibilidade'],
+      horario: json['horario'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_disponibilidade': idDisponibilidade,
+      'horario': horario,
+    };
+  }
+}

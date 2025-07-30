@@ -1,0 +1,17 @@
+class Routes {
+  Routes._();
+
+  static const String splashScreen = '/splash';
+  static const String enterPage = '/enter';
+  static const String homePage = '/home';
+  static const String schedulePage = '/agenda';
+  static const String servicePage = '/anunciar';
+  static const String notificationPage = '/home/notificacoes';
+  static const String profilePage = '/perfil';
+  static const String resetPasswordPage = '/reset';
+  static const String searchPage = '/search';
+  static const String serviceListPage = '/service-list';
+  static const String disponibilidadePage = '/disponibilidade';
+  static const String editarPerfil = '/editarperfil';
+  static const String carteiraPage = '/carteira';
+}

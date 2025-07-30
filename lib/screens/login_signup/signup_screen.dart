@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:servblu/models/build_button.dart';
-import 'package:servblu/models/input_dropdown_field.dart';
-import 'package:servblu/models/input_field.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
+import 'package:servblu/widgets/build_button.dart';
 import 'package:servblu/screens/login_signup/login_screen.dart';
 import '../../auth/auth_service.dart';
+import '../../widgets/input_dropdown_field.dart';
+import '../../widgets/input_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,12 +15,20 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   // Controllers
-  final TextEditingController _nameController = TextEditingController(); // Controlador para o nome
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(); // Controlador para o telefone
+  final MaskedTextController _phoneController = MaskedTextController(mask: '(00) 00000-0000');
   final TextEditingController _addressController = TextEditingController();
+
+  BuildContext? _context; // Armazenar a referência do contexto
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _context = context; // Armazenar o contexto
+  }
 
   @override
   void dispose() {
@@ -49,9 +58,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final address = _addressController.text;
 
       if (password != confirmPassword) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("As senhas não coincidem")),
-        );
+        if (_context != null) {
+          ScaffoldMessenger.of(_context!).showSnackBar(
+            const SnackBar(content: Text("As senhas não coincidem")),
+          );
+        }
         return;
       }
 
@@ -62,7 +73,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Se o cadastro foi realizado com sucesso, response.user conterá o usuário
         if (response.user != null) {
           // Atualiza os detalhes do usuário na tabela 'usuarios'
-          // Note que passamos null para newPassword, pois não precisamos atualizar a senha
           await authService.updateUserDetails(
             response.user!.id,
             response.user!.email ?? email,
@@ -71,21 +81,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
             address,
             null,
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Cadastro realizado com sucesso!")),
-          );
+
+          if (_context != null) {
+            ScaffoldMessenger.of(_context!).showSnackBar(
+              const SnackBar(content: Text("Cadastro realizado com sucesso!")),
+            );
+          }
 
           // Volta para a tela de login
-          Navigator.pop(context);
+          Navigator.pop(_context!);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Falha ao cadastrar usuário.")),
-          );
+          if (_context != null) {
+            ScaffoldMessenger.of(_context!).showSnackBar(
+              const SnackBar(content: Text("Falha ao cadastrar usuário.")),
+            );
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro: ${e.toString()}")),
-        );
+        if (_context != null) {
+          ScaffoldMessenger.of(_context!).showSnackBar(
+            SnackBar(content: Text("Erro: ${e.toString()}")),
+          );
+        }
       }
     }
 
@@ -120,10 +137,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // Campos de entrada
               InputField(icon: Icons.person, hintText: "Nome", controller: _nameController, obscureText: false),
               InputField(icon: Icons.email, hintText: "Email", controller: _emailController, obscureText: false),
-              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true),
-              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true),
-              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false),
-              BuildDropdownField(icon: Icons.home,hintText: "Bairro",controller: _addressController,),
+              InputField(icon: Icons.lock, hintText: "Senha", controller: _passwordController, obscureText: true,isPassword: true,),
+              InputField(icon: Icons.lock, hintText: "Confirmar senha", controller: _confirmPasswordController, obscureText: true,isPassword: true,),
+              InputField(icon: Icons.phone, hintText: "Telefone", controller: _phoneController, obscureText: false, maskedController: _phoneController),
+              BuildDropdownField(icon: Icons.home, hintText: "Bairro", controller: _addressController),
               const SizedBox(height: 20),
 
               // Botão de inscrição
