@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:servblu/router/router.dart';
@@ -12,6 +13,7 @@ import 'services/notification_service.dart';
 
 
 void main() async {
+  await dotenv.load();
   timeago.setLocaleMessages('pt_br', timeago_pt.PtBrMessages());
 
   WidgetsFlutterBinding.ensureInitialized();

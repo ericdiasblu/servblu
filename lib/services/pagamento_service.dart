@@ -1,25 +1,24 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/pagamento/pix_charge.dart';
 import '../models/pagamento/pix_qrcode.dart';
 
 class PixService {
-  // Substitua pela URL do seu backend
-  final String baseUrl = 'https://efi-pix-backend.onrender.com/api/pix';
+  // URL do backend agora vem do .env
+  final String baseUrl = dotenv.env['PIX_BASE_URL'] ?? '';
 
   // Cria uma cobrança PIX
   Future<PixCharge> createCharge({
     required double? amount,
     required String description,
-    int expiresIn = 3600,  // 1 hora por padrão
+    int expiresIn = 3600, // 1 hora por padrão
   }) async {
-
     // Validate amount is not null and at least 1
     if (amount == null || amount < 1) {
       throw Exception('O valor mínimo para pagamento PIX é R\$ 1,00');
     }
-
 
     final response = await http.post(
       Uri.parse('$baseUrl/charges'),
@@ -92,7 +91,8 @@ class PixService {
     if (cpf != null) queryParams['cpf'] = cpf;
     if (cnpj != null) queryParams['cnpj'] = cnpj;
 
-    final uri = Uri.parse('$baseUrl/charges').replace(queryParameters: queryParams);
+    final uri =
+        Uri.parse('$baseUrl/charges').replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -111,7 +111,7 @@ class PixService {
   Future<Map<String, dynamic>> refundPix(String e2eId, {double? amount}) async {
     final Map<String, dynamic> payload = {};
     if (amount != null) {
-      payload['amount'] = (amount * 100).toInt();  // Convertendo para centavos
+      payload['amount'] = (amount * 100).toInt(); // Convertendo para centavos
     }
 
     final response = await http.post(
@@ -156,7 +156,8 @@ class PixService {
 
     // --- INÍCIO DA MODIFICAÇÃO ---
     // Obter o token de acesso do usuário logado
-    final accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
+    final accessToken =
+        Supabase.instance.client.auth.currentSession?.accessToken;
     if (accessToken == null) {
       // Lidar com caso de usuário não logado ou sessão inválida
       // Pode ser lançar uma exceção, redirecionar para login, etc.
@@ -169,7 +170,6 @@ class PixService {
       'Authorization': 'Bearer $accessToken', // Adiciona o token aqui!
     };
     // --- FIM DA MODIFICAÇÃO ---
-
 
     final response = await http.post(
       Uri.parse('$baseUrl/withdrawal'),
@@ -191,16 +191,20 @@ class PixService {
         final errorBody = jsonDecode(response.body);
         // Tenta pegar a mensagem de erro específica do backend
         final message = errorBody['message'] ?? 'Erro desconhecido do servidor';
-        final details = errorBody['details']?.toString() ?? ''; // Para mais detalhes se houver
+        final details = errorBody['details']?.toString() ??
+            ''; // Para mais detalhes se houver
         if (errorBody['error'] == true && errorBody['balance'] != null) {
           // Caso específico de saldo insuficiente
-          final currentBalance = (errorBody['balance'] / 100.0).toStringAsFixed(2);
+          final currentBalance =
+              (errorBody['balance'] / 100.0).toStringAsFixed(2);
           throw Exception('Saldo insuficiente (R\$ $currentBalance). $message');
         }
-        throw Exception('Falha ao processar saque (Status ${response.statusCode}): $message $details');
+        throw Exception(
+            'Falha ao processar saque (Status ${response.statusCode}): $message $details');
       } catch (e) {
         // Se não conseguir decodificar o JSON do erro ou for outro tipo de erro
-        throw Exception('Falha ao processar saque (Status ${response.statusCode}): ${response.body}');
+        throw Exception(
+            'Falha ao processar saque (Status ${response.statusCode}): ${response.body}');
       }
     }
   }

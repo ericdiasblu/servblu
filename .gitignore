@@ -43,3 +43,28 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Firebase/Google Services
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+firebase.json
+
+# Supabase
+supabase
+
+# macOS/Pods
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/Flutter.framework/
+macos/Flutter/Flutter.podspec
+
+# Android Gradle
+android/.gradle/
+android/local.properties
+
+# VS Code
+.vscode/
+
+# Outros arquivos sensíveis
+*.lock
+.env
