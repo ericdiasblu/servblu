@@ -37,7 +37,7 @@ Veja abaixo algumas telas do aplicativo **ServBlu**:
 
 ## 📌 Objetivo Principal
 
-Criar uma **plataforma eficiente e segura** para conectar clientes e prestadores de serviços, proporcionando uma experiência de contratação **simplificada**, **confiável** e **acessível**.
+- Criar uma **plataforma eficiente e segura** para conectar clientes e prestadores de serviços, proporcionando uma experiência de contratação **simplificada**, **confiável** e **acessível**.
 ---
 
 ## 🎯 Objetivos Secundários
