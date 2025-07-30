@@ -21,33 +21,16 @@ Veja abaixo algumas telas do aplicativo **ServBlu**:
 <div align="center">
 
   <img src="assets/images_app/home.jpg" alt="Tela 1" width="250"/> 
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
+ 
   <img src="assets/images_app/schedules.jpg" alt="Tela 2" width="250"/> 
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
+  
   <img src="assets/images_app/publish_service.jpg" alt="Tela 3" width="250"/>
 
   <br/><br/>
 
   <img src="assets/images_app/notifications.jpg" alt="Tela 4" width="250"/> 
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
+ 
   <img src="assets/images_app/profile.jpg" alt="Tela 5" width="250"/>
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
-  &nbsp;
   <img src="assets/images_app/search.jpg" alt="Tela 6" width="250"/>
 
 </div>
